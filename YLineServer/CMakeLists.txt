@@ -9,7 +9,12 @@ set(YLineServer_BUILD_PATH ${YSolowork_BINARY_DIR}/build/bin/YLineServer)
 message("YLineServer_BUILD_PATH: ${YLineServer_BUILD_PATH}")
 
 # 创建 YLineServer 可执行文件
-add_executable(YLineServer main.cpp)
+add_executable(
+    YLineServer 
+    main.cpp
+    logger.cpp
+    config.cpp
+)
 # 设置 YLineServer 编译选项
 set_target_properties(YLineServer PROPERTIES
     CXX_STANDARD 17
@@ -17,9 +22,24 @@ set_target_properties(YLineServer PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${YLineServer_BUILD_PATH}
 )
 
-# add include directory for vendor lib
-# toml++ hpp for toml file parser
-target_include_directories(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor)
+
+target_include_directories(
+    # add include directory for vendor lib
+    YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor
+    # add YSolowork include directory
+    YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/src
+)
+
+# 添加 YSolowork 库
+target_link_libraries(YLineServer PRIVATE YSolowork)
+
+# 添加 spdlog 库
+find_package(spdlog REQUIRED)
+target_link_libraries(YLineServer PRIVATE spdlog::spdlog)
+
+# 添加 Drogon 库
+find_package(Drogon REQUIRED)
+target_link_libraries(YLineServer PRIVATE Drogon::Drogon)
 
 # 设置预编译头文件
 target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)

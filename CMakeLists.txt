@@ -12,5 +12,11 @@ project(
 # message("YSolowork_BINARY_DIR: ${YSolowork_BINARY_DIR}")
 # message("YSolowork_SOURCE_DIR: ${YSolowork_SOURCE_DIR}")
 
+# 使用 GLOB 来找到所有的 .cpp 文件
+file(GLOB YSolowork_SOURCES "${YSolowork_SOURCE_DIR}/src/*.cpp")
+# 添加 YSolowork 库
+add_library(YSolowork STATIC ${YSolowork_SOURCES})
+
+
 # 添加模块
 add_subdirectory(YLineServer)

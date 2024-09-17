@@ -1,38 +1,35 @@
-#include <iostream>
-#include <sstream>
-#include <vendor_include/toml.hpp>
-using namespace std::string_view_literals;
+#include "logger.h"
+#include "config.h"
 
 int main()
 {
-    static constexpr std::string_view some_toml = R"(
-        [library]
-        name = "toml++"
-        authors = ["Mark Gillard <mark.gillard@outlook.com.au>"]
-        cpp = 17
-    )"sv;
+    // create logger
+    auto logger = YLineServer::createLogger();
+    spdlog::set_default_logger(logger);
 
-    try
-    {
-        // parse directly from a string view:
-        {
-        toml::table tbl = toml::parse(some_toml);
-        std::cout << tbl << "\n";
-        }
+    spdlog::info("YLineServer starting 启动中...");
+    try {
+        // parse config file
+        YLineServer::Config config = YLineServer::parseConfig();
+        spdlog::info("Config file parsed successfully 配置文件解析成功");
 
-        // parse from a string stream:
-        {
-        std::stringstream ss{ std::string{ some_toml } };
-        toml::table tbl = toml::parse(ss);
-        std::cout << tbl << "\n";
-        }
-    }
+        // set log level
+        logger->set_level(config.logLevel);
+        
+        // debug log
+        spdlog::debug("Server IP 服务器地址: {}, Port 服务器端口: {}", config.server_ip, config.server_port);
+        spdlog::debug("Database Host 数据库地址: {}, Port 数据库端口: {}", config.db_host, config.db_port);
+
+    } 
     catch (const toml::parse_error& err)
     {
-        std::cerr << "Parsing failed:\n" << err << "\n";
-        return 1;
+        spdlog::critical("Config Parsing failed 配置文件解析失败:{}", err.what());
+        return EXIT_FAILURE;
     }
-
+    catch (const std::exception& e) {
+        spdlog::critical("Unknown 未知错误:{}", e.what());
+        return EXIT_FAILURE;
+    }
     
     return 0;
 }
