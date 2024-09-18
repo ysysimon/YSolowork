@@ -34,7 +34,7 @@ target_include_directories(
 target_link_libraries(YLineServer PRIVATE YSolowork)
 
 # 添加 spdlog 库
-find_package(spdlog REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 target_link_libraries(YLineServer PRIVATE spdlog::spdlog)
 
 # 添加 Drogon 库

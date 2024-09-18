@@ -1,0 +1,3 @@
+@echo off
+echo Running CMake with Ninja generator...
+cmake -G Ninja -B target -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_TOOLCHAIN_FILE="D:/Dev/tools/vcpkg/scripts/buildsystems/vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows

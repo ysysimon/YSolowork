@@ -7,8 +7,8 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
 ### 开发依赖
 
 #### YLineServer
+- spdlog
 - Drogon
-    - spdlog
     - jsoncpp
     - uuid
     - zlib
