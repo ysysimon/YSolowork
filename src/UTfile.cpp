@@ -6,6 +6,8 @@
 #include <stdexcept>    // 用于抛出异常
 #include <cstring>      // 用于 strerror
 #include <cerrno>       // 用于 errno
+#elif defined(_WIN32) || defined(_WIN64)
+#include <windows.h>    // Windows API 头文件，用于 MAX_PATH 和 GetModuleFileName
 #endif
 
 

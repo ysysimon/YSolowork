@@ -12,11 +12,22 @@ project(
 # message("YSolowork_BINARY_DIR: ${YSolowork_BINARY_DIR}")
 # message("YSolowork_SOURCE_DIR: ${YSolowork_SOURCE_DIR}")
 
+# 编译器特定的设置
+if (MSVC)
+    # Visual Studio 中使用 /utf-8 编译选项
+    add_compile_options("/utf-8")
+endif()
+
 # 使用 GLOB 来找到所有的 .cpp 文件
 file(GLOB YSolowork_SOURCES "${YSolowork_SOURCE_DIR}/src/*.cpp")
 # 添加 YSolowork 库
 add_library(YSolowork STATIC ${YSolowork_SOURCES})
 
+# 设置 YSolowork 库编译选项
+set_target_properties(YSolowork PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED YES
+)
 
 # 添加模块
 add_subdirectory(YLineServer)

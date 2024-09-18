@@ -1,6 +1,7 @@
 #include "UTtime.h"
 #include <chrono>
 #include <iomanip>
+#include <sstream>
 
 namespace YSolowork::untility {
 
