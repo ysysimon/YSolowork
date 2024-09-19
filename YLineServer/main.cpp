@@ -1,5 +1,6 @@
 #include "logger.h"
 #include "config.h"
+#include "app.h"
 
 int main()
 {
@@ -15,11 +16,15 @@ int main()
 
         // set log level
         logger->set_level(config.logLevel);
+        // log level output here
+        spdlog::info("Log level 日志等级: {}", YLineServer::reverseLogLevelMap.at(logger->level()));
         
         // debug log
         spdlog::debug("Server IP 服务器地址: {}, Port 服务器端口: {}", config.server_ip, config.server_port);
         spdlog::debug("Database Host 数据库地址: {}, Port 数据库端口: {}", config.db_host, config.db_port);
 
+        YLineServer::spawnApp(config, logger);
+        spdlog::info("YLineServer stopped 停止");
     } 
     catch (const toml::parse_error& err)
     {

@@ -5,6 +5,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <memory>
 
+
 namespace YLineServer {
 
 // 创建日志记录器
@@ -28,10 +29,13 @@ std::shared_ptr<spdlog::logger> createLogger() {
     // 设置日志级别
     logger->set_level(spdlog::level::debug);
 
+    // 设置为默认日志记录器
+    spdlog::set_default_logger(logger);
+
     return logger;
 }
 
-// 创建一个哈希表来映射字符串到 spdlog 的日志等级
+// 哈希表: 映射字符串到 spdlog 的日志等级
 const std::unordered_map<std::string, spdlog::level::level_enum> logLevelMap = {
     {"trace", spdlog::level::trace},
     {"debug", spdlog::level::debug},
@@ -40,5 +44,26 @@ const std::unordered_map<std::string, spdlog::level::level_enum> logLevelMap = {
     {"err", spdlog::level::err},
     {"critical", spdlog::level::critical}
 };
+
+// 反向映射：从 spdlog 日志级别到字符串
+const std::unordered_map<spdlog::level::level_enum, const std::string> reverseLogLevelMap = {
+    {spdlog::level::trace, "trace"},
+    {spdlog::level::debug, "debug"},
+    {spdlog::level::info, "info"},
+    {spdlog::level::warn, "warn"},
+    {spdlog::level::err, "err"},
+    {spdlog::level::critical, "critical"}
+};
+
+// 哈希表: 将 spdlog 的日志级别映射到 Drogon/Trantor 的日志级别
+const std::unordered_map<spdlog::level::level_enum, trantor::Logger::LogLevel> spdlogToDrogonLogLevel = {
+    {spdlog::level::trace, trantor::Logger::LogLevel::kTrace},
+    {spdlog::level::debug, trantor::Logger::LogLevel::kDebug},
+    {spdlog::level::info, trantor::Logger::LogLevel::kInfo},
+    {spdlog::level::warn, trantor::Logger::LogLevel::kWarn},
+    {spdlog::level::err, trantor::Logger::LogLevel::kError},
+    {spdlog::level::critical, trantor::Logger::LogLevel::kFatal}
+};
+
 
 }

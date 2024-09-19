@@ -2,12 +2,16 @@
 #include "UTfile.h"
 #include "logger.h"
 
+#include <spdlog/spdlog.h>
+#include <stdexcept>
+
 namespace YLineServer {
 
 Config parseConfig() {
     // get executable path and YLine config path
     std::filesystem::path exePath = YSolowork::untility::getExecutablePath();
     std::filesystem::path YLineServerConfigPath = exePath / "YLineServer_Config.toml";
+    spdlog::info("Config file path 配置文件路径: {}", YLineServerConfigPath.string());
 
     // parse YLine config
     toml::table YLineServerConfig = toml::parse_file(YLineServerConfigPath.string());
@@ -25,10 +29,16 @@ Config parseConfig() {
     // 读取 logger 部分
     auto &loggerTbl = *YLineServerConfig["logger"].as_table();
     std::string logLevelStr = loggerTbl["level"].value_or("debug");
-    auto &logLevel = YLineServer::logLevelMap.at(logLevelStr);
-    
-    // log level output here
-    spdlog::info("Log level 日志等级: {}", logLevelStr);
+
+    auto logLevel = spdlog::level::info;
+    try {
+        logLevel = YLineServer::logLevelMap.at(logLevelStr);
+    } 
+    catch (const std::out_of_range& e) 
+    {
+        spdlog::warn("Invalid log level 无效的日志等级: {}", logLevelStr);
+        spdlog::warn("Using default log level 使用默认日志等级: info");
+    }
 
     return Config{serverIp, serverPort, dbHost, dbPort, logLevel};
 }

@@ -14,6 +14,7 @@ add_executable(
     main.cpp
     logger.cpp
     config.cpp
+    app.cpp
 )
 # 设置 YLineServer 编译选项
 set_target_properties(YLineServer PROPERTIES
