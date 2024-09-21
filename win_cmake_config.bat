@@ -1,3 +1,3 @@
 @echo off
 echo Running CMake with Ninja generator...
-cmake -G Ninja -B target -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake -G Ninja -B target -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DUSE_SPDLOG=ON -DBUILD_SQLITE=OFF

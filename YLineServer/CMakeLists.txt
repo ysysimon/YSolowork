@@ -37,7 +37,8 @@ target_link_libraries(YLineServer PRIVATE YSolowork)
 
 # 添加 spdlog 库
 find_package(spdlog REQUIRED)
-target_link_libraries(YLineServer PRIVATE spdlog::spdlog)
+# need to use header only version for building on Windows
+target_link_libraries(YLineServer PRIVATE spdlog::spdlog_header_only)
 
 # 添加 Drogon 库
 # find_package(Drogon REQUIRED) 在 Windows 上编译导致错误，改用下面的方式
