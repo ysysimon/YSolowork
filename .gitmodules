@@ -1,0 +1,3 @@
+[submodule "vendor/drogon"]
+	path = vendor/drogon
+	url = git@github.com:drogonframework/drogon.git
