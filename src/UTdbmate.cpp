@@ -30,9 +30,18 @@ void downloadDbmate(const std::string& DOWNLOAD_URL, const std::string& DOWNLOAD
     fs::path download_path = DBMATE_PATH / DBMATE_BINARY;
 
     #if defined(_WIN32) || defined(_WIN64)
-        const std::string DOWNLOAD_CMD = "powershell -Command \"Invoke-WebRequest -Uri " + FULL_DOWNLOAD_URL + " -OutFile " + download_path.string() + "\"";
+        const std::string DOWNLOAD_CMD = std::format(
+            "powershell -Command \"Invoke-WebRequest -Uri {} -OutFile {}\"",
+            FULL_DOWNLOAD_URL, 
+            download_path.string()
+        );
     #elif defined(__linux__)
-        const std::string DOWNLOAD_CMD = "wget " + FULL_DOWNLOAD_URL + " -O " + download_path.string() + " && chmod +x " + download_path.string();
+        const std::string DOWNLOAD_CMD = std::format(
+            "wget {} -O {} && chmod +x {}",
+            FULL_DOWNLOAD_URL, 
+            download_path.string(), 
+            download_path.string()
+        );
     #else
         throw std::runtime_error("Unsupported platform 不支持的系统");
     #endif

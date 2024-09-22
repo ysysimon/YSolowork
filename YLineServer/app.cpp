@@ -30,6 +30,9 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     resp404->setBody("404 Not Found, YLineServer 不存在该端点");
     drogon::app().setCustom404Page(resp404);
 
+    // 启用 Brotli 和 Gzip 压缩
+    drogon::app().enableBrotli(true).enableGzip(true);
+
     spdlog::info("Start Listening 开始监听");
     drogon::app().run();
 
