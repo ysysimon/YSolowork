@@ -22,6 +22,14 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     trantor::Logger::setLogLevel(YLineServer::spdlogToDrogonLogLevel.at(config.logLevel));
 
     drogon::app().addListener(config.server_ip, config.server_port);
+
+    // 设置自定义 404 页面
+    auto resp404 = drogon::HttpResponse::newNotFoundResponse();
+    resp404->setStatusCode(drogon::k404NotFound);
+    resp404->setContentTypeCode(drogon::CT_TEXT_HTML);
+    resp404->setBody("404 Not Found, YLineServer 不存在该端点");
+    drogon::app().setCustom404Page(resp404);
+
     spdlog::info("Start Listening 开始监听");
     drogon::app().run();
 

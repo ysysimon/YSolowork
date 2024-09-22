@@ -1,11 +1,11 @@
-#include "TestCtrl.h"
+#include "HealthCheckCtrl.h"
 
-void TestCtrl::asyncHandleHttpRequest(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback)
+void HealthCheckCtrl::asyncHandleHttpRequest(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback)
 {
     // write your application logic here
     auto resp = HttpResponse::newHttpResponse();
     resp->setStatusCode(drogon::k200OK);
     resp->setContentTypeCode(drogon::CT_TEXT_PLAIN);
-    resp->setBody("Hello, World!");
+    resp->setBody("Living! YLineServer 活着!");
     callback(resp);
 }

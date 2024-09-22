@@ -25,7 +25,7 @@ add_library(YSolowork STATIC ${YSolowork_SOURCES})
 
 # 设置 YSolowork 库编译选项
 set_target_properties(YSolowork PROPERTIES
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
 )
 

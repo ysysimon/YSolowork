@@ -15,15 +15,14 @@ add_executable(
     logger.cpp
     config.cpp
     app.cpp
-    controllers/TestCtrl.cc
+    controllers/HealthCheckCtrl.cc
 )
 # 设置 YLineServer 编译选项
 set_target_properties(YLineServer PROPERTIES
-    CXX_STANDARD 17
+    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
     RUNTIME_OUTPUT_DIRECTORY ${YLineServer_BUILD_PATH}
 )
-
 
 target_include_directories(
     # add include directory for vendor lib
@@ -56,6 +55,10 @@ target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/ven
 add_custom_command(
     TARGET YLineServer POST_BUILD  # 在 YLineServer 构建完成后执行
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${YSolowork_SOURCE_DIR}/config_manifest/YLineServer_Config.toml  # 源文件路径
+            ${YSolowork_SOURCE_DIR}/config_manifest/YLineServer_Config.toml  # 配置文件源路径
             ${YLineServer_BUILD_PATH}/YLineServer_Config.toml  # 目标路径
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${YLineServer_SOURCE_DIR}/docker-compose.yml  # docker-compose.yml 源路径
+            ${YLineServer_BUILD_PATH}/docker-compose.yml  # 目标路径
+    COMMENT "Copying config files to build directory"
 )

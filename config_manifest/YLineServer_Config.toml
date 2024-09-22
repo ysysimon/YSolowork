@@ -3,8 +3,19 @@ ip = "0.0.0.0"
 port = 33383
 
 [database]
+# 注意保证这里的参数和 docker-compose 中的参数一致 (如果使用docker)
+# postgres://username:password@host:port/database
 host = "localhost"
 port = 5432
+username = "postgres"
+password = "postgresPassword"
+database = "yline"
 
 [logger]
 level = "info"
+
+[dbmate]
+migration = true
+download_url = "https://github.com/amacneil/dbmate/releases/download/v2.21.0"
+win_name = "dbmate.exe"
+linux_name = "dbmate-linux-amd64"
