@@ -19,7 +19,7 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
 
     // set drogon logger
     trantor::Logger::enableSpdLog(custom_logger);
-    trantor::Logger::setLogLevel(YLineServer::spdlogToDrogonLogLevel.at(config.logLevel));
+    trantor::Logger::setLogLevel(YLineServer::spdlogToDrogonLogLevel.at(config.log_level));
 
     drogon::app().addListener(config.server_ip, config.server_port);
 

@@ -1,6 +1,7 @@
 #include "logger.h"
 #include "config.h"
 #include "app.h"
+#include "database.h"
 
 int main()
 {
@@ -15,13 +16,16 @@ int main()
         spdlog::info("Config file parsed successfully 配置文件解析成功");
 
         // set log level
-        logger->set_level(config.logLevel);
+        logger->set_level(config.log_level);
         // log level output here
         spdlog::info("Log level 日志等级: {}", YLineServer::reverseLogLevelMap.at(logger->level()));
         
         // debug log
         spdlog::debug("Server IP 服务器地址: {}, Port 服务器端口: {}", config.server_ip, config.server_port);
         spdlog::debug("Database Host 数据库地址: {}, Port 数据库端口: {}", config.db_host, config.db_port);
+
+        // database
+        YLineServer::downloadDBMATEifNotExist(config);
 
         YLineServer::spawnApp(config, logger);
         spdlog::info("YLineServer stopped 停止");

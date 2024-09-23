@@ -7,9 +7,9 @@ port = 33383
 # postgres://username:password@host:port/database
 host = "localhost"
 port = 5432
-username = "postgres"
-password = "postgresPassword"
-database = "yline"
+db_user = "postgres"
+db_password = "postgresPassword"
+db_name = "yline"
 
 [logger]
 level = "info"
@@ -17,5 +17,5 @@ level = "info"
 [dbmate]
 migration = true
 download_url = "https://github.com/amacneil/dbmate/releases/download/v2.21.0"
-win_name = "dbmate.exe"
+win_name = "dbmate-windows-amd64.exe"
 linux_name = "dbmate-linux-amd64"
