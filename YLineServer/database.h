@@ -4,6 +4,7 @@
 #include <string>
 
 #include "config.h"
+#include <drogon/orm/DbConfig.h>
 
 namespace YLineServer {
 
@@ -12,6 +13,9 @@ std::string getPostgresConnectionString(const Config& config);
 
 // 函数: 如果不存在则下载 dbmate
 void downloadDBMATEifNotExist(const Config& config);
+
+// 函数: 获取 Drogon Postgres 配置
+drogon::orm::DbConfig getDrogonPostgresConfig (const Config& config);
 
 }
 

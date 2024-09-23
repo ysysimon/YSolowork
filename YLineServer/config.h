@@ -1,6 +1,7 @@
 #ifndef YLINESERVER_CONFIG_H
 #define YLINESERVER_CONFIG_H
 
+#include <cstddef>
 #include <filesystem>
 #include <spdlog/spdlog.h>
 
@@ -18,6 +19,8 @@ struct Config {
     std::string db_user;
     std::string db_password;
     std::string db_name;
+    size_t db_connection_number;
+    float db_timeout;
 
     // log
     spdlog::level::level_enum log_level;

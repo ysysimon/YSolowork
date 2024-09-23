@@ -2,6 +2,7 @@
 #include "UTfile.h"
 #include "logger.h"
 
+#include <cstddef>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 
@@ -26,8 +27,10 @@ Config parseConfig() {
     std::string dbHost = database["host"].value_or("localhost");
     int dbPort = database["port"].value_or(5432); // postgresql 默认端口
     std::string dbUser = database["db_user"].value_or("postgres");
-    std::string dbPassword = database["db_password"].value_or("postgres");
+    std::string dbPassword = database["db_password"].value_or("postgresPassword");
     std::string dbName = database["db_name"].value_or("yline");
+    size_t dbConnectionNumber = database["connection_number"].value_or(10);
+    float dbTimeout = database["timeout"].value_or(5.0);
 
     // 读取 logger 部分
     auto &loggerTbl = *YLineServerConfig["logger"].as_table();
@@ -60,6 +63,8 @@ Config parseConfig() {
         dbUser,
         dbPassword,
         dbName,
+        dbConnectionNumber,
+        dbTimeout,
         logLevel,
         migration,
         dbmate_download_url,

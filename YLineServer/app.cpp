@@ -1,5 +1,6 @@
 #include "app.h"
 #include "logger.h"
+#include "database.h"
 
 #include <spdlog/spdlog.h>
 #include <drogon/drogon.h>
@@ -32,6 +33,9 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
 
     // 启用 Brotli 和 Gzip 压缩
     drogon::app().enableBrotli(true).enableGzip(true);
+
+    // 添加 postgresql 数据库客户端
+    drogon::app().addDbClient(YLineServer::getDrogonPostgresConfig(config));
 
     spdlog::info("Start Listening 开始监听");
     drogon::app().run();

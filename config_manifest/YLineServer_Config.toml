@@ -10,6 +10,8 @@ port = 5432
 db_user = "postgres"
 db_password = "postgresPassword"
 db_name = "yline"
+connection_number = 10
+timeout = 5.0
 
 [logger]
 level = "info"
