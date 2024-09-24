@@ -1,11 +1,16 @@
 #include "database.h"
+#include <stdexcept>
 #include <string>
 #include <format>
 
 #include "UTdbmate.h"
+#include "spdlog/spdlog.h"
+
+#include <drogon/orm/DbClient.h>
+
+namespace YLineServer::DB {
 
 
-namespace YLineServer {
 
 std::string getPostgresConnectionString(const Config& config) {
     // std::string conn_str = "postgres://username:password@host:port/database";
@@ -13,6 +18,40 @@ std::string getPostgresConnectionString(const Config& config) {
         "postgres://{}:{}@{}:{}/{}",
         config.db_user, config.db_password, config.db_host, config.db_port, config.db_name
     );
+
+}
+
+void initDataBasePostgres(const Config& config) {
+
+    try {
+        // 注意这不是真正用于数据库的连接池，只是在 Windows 上无法在安装 PgSQL 时指定数据库名称
+        // 所以我们需要进行一次连接以创建数据库，完成后这个 dbclient 就会被销毁
+        spdlog::info("Initializing database 初始化数据库...");
+        const auto& PgClient = drogon::orm::DbClient::newPgClient(
+            std::format(
+                "host={} port={} dbname={} user={} password={}",
+                config.db_host, config.db_port, "postgres", config.db_user, config.db_password
+            ), // connInfo
+            1 // connection number
+        );
+
+        // 查询是否存在目标数据库
+        const auto& result = PgClient->execSqlSync(
+            std::format("SELECT 1 FROM pg_database WHERE datname='{}'", config.db_name)
+        );
+
+        // 如果数据库不存在，则创建它
+        if (result.empty()) {
+            PgClient->execSqlSync(std::format("CREATE DATABASE {}", config.db_name));
+            spdlog::info("Database '{}' created successfully 数据库创建成功.", config.db_name);
+        } else {
+            spdlog::info("Database '{}' already exists 数据库已存在.", config.db_name);
+        }
+    } catch (const drogon::orm::DrogonDbException& e) {
+        throw std::runtime_error(
+            std::format("Database initialization failed 数据库初始化失败 - {}", e.base().what())
+        );
+    }
 
 }
 
@@ -41,5 +80,6 @@ drogon::orm::DbConfig getDrogonPostgresConfig (const Config& config) {
         .connectOptions = {}
     };
 }
+
 
 }

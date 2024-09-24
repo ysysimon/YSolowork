@@ -23,12 +23,15 @@ int main()
         // debug log
         spdlog::debug("Server IP 服务器地址: {}, Port 服务器端口: {}", config.server_ip, config.server_port);
         spdlog::debug("Database Host 数据库地址: {}, Port 数据库端口: {}", config.db_host, config.db_port);
-        spdlog::debug("Postgres url: {}", YLineServer::getPostgresConnectionString(config));
+        spdlog::debug("Postgres url: {}", YLineServer::DB::getPostgresConnectionString(config));
         spdlog::debug("DB Connection Number 数据库连接数: {}", config.db_connection_number);
         spdlog::debug("DB Timeout 数据库超时时间: {}", config.db_timeout);
 
+        // init database
+        YLineServer::DB::initDataBasePostgres(config);
+
         // dbmate for database migration
-        YLineServer::downloadDBMATEifNotExist(config);
+        YLineServer::DB::downloadDBMATEifNotExist(config);
 
         YLineServer::spawnApp(config, logger);
         spdlog::info("YLineServer stopped 停止");

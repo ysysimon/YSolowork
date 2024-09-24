@@ -35,7 +35,7 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     drogon::app().enableBrotli(true).enableGzip(true);
 
     // 添加 postgresql 数据库客户端
-    drogon::app().addDbClient(YLineServer::getDrogonPostgresConfig(config));
+    drogon::app().addDbClient(YLineServer::DB::getDrogonPostgresConfig(config));
 
     spdlog::info("Start Listening 开始监听");
     drogon::app().run();
