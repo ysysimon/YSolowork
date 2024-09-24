@@ -81,5 +81,16 @@ drogon::orm::DbConfig getDrogonPostgresConfig (const Config& config) {
     };
 }
 
-
+void migrateDatabase(const Config& config) {
+    spdlog::info("Migrating database... 数据库迁移...");
+    try {
+        spdlog::debug("Dbmate Path: {}", (config.dbmate_path / YSolowork::untility::DBMATE_BINARY).string());
+        YSolowork::untility::runDbmate(config.dbmate_path, "up");
+    } catch (const std::exception& e) {
+        throw std::runtime_error(
+            std::format("Database migration failed 数据库迁移失败 - {}", e.what())
+        );
+    }
 }
+
+} // namespace YLineServer::DB

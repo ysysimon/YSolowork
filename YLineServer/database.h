@@ -20,6 +20,9 @@ drogon::orm::DbConfig getDrogonPostgresConfig (const Config& config);
 // 函数: 初始化数据库
 void initDataBasePostgres(const Config& config);
 
+// 函数: 迁移数据库
+void migrateDatabase(const Config& config);
+
 }
 
 #endif // YLINESERVER_DATABASE_H

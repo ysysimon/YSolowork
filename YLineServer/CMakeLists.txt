@@ -65,3 +65,27 @@ add_custom_command(
             ${YLineServer_BUILD_PATH}/docker-compose.yml  # 目标路径
     COMMENT "Copying config files to build directory"
 )
+
+# 自定义命令：复制数据库迁移文件
+# file(GLOB DB_MIGRATIONS_FILES "${YLineServer_SOURCE_DIR}/db/migrations/*.sql")
+# foreach(DB_MIGRATIONS_FILE ${DB_MIGRATIONS_FILES})
+#     # 获取文件名
+#     get_filename_component(DB_MIGRATIONS_FILE_NAME ${DB_MIGRATIONS_FILE} NAME)
+#     add_custom_command(
+#         TARGET YLineServer POST_BUILD  # 在 YLineServer 构建完成后执行
+#         # 创建目录, 放在 foreach 里是安全的，只会创建一次，不会覆盖和报错
+#         COMMAND ${CMAKE_COMMAND} -E make_directory ${YLineServer_BUILD_PATH}/db/migrations
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+#                 ${DB_MIGRATIONS_FILE}  # 数据库迁移文件源路径
+#                 ${YLineServer_BUILD_PATH}/db/migrations/${DB_MIGRATIONS_FILE_NAME}  # 目标路径
+#         COMMENT "Copying database migration files to build directory"
+#     )
+# endforeach()
+# 用 copy_directory 代替上面的 foreach, 保持迁移文件的一致性
+add_custom_command(
+    TARGET YLineServer POST_BUILD  # 在 YLineServer 构建完成后执行
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${YLineServer_SOURCE_DIR}/db  # 数据库迁移文件源路径
+            ${YLineServer_BUILD_PATH}/db  # 目标路径
+    COMMENT "Copying database migration files to build directory"
+)

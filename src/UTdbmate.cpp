@@ -19,8 +19,21 @@ namespace YSolowork::untility {
 
 // 检查文件是否存在
 bool isDbmateInstalled(const fs::path& DBMATE_PATH) {
-    fs::path dbmate_path = DBMATE_PATH / DBMATE_BINARY;
+    const fs::path& dbmate_path = DBMATE_PATH / DBMATE_BINARY;
     return fs::exists(dbmate_path);
+}
+
+// 运行 dbmate
+void runDbmate(const fs::path& DBMATE_PATH, const std::string& DBMATE_CMD) {
+    // set dbmate path
+    const fs::path& dbmate_path = DBMATE_PATH / DBMATE_BINARY;
+
+    // run dbmate migrate
+    try {
+        system(std::format("{} {}", dbmate_path.string(), DBMATE_CMD).c_str());
+    } catch (const std::exception& e) {
+        throw std::runtime_error(e.what());
+    }
 }
 
 // 下载 dbmate

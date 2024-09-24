@@ -27,12 +27,14 @@ int main()
         spdlog::debug("DB Connection Number 数据库连接数: {}", config.db_connection_number);
         spdlog::debug("DB Timeout 数据库超时时间: {}", config.db_timeout);
 
-        // init database
-        YLineServer::DB::initDataBasePostgres(config);
-
         // dbmate for database migration
         YLineServer::DB::downloadDBMATEifNotExist(config);
 
+        // database
+        YLineServer::DB::initDataBasePostgres(config); // init database
+        YLineServer::DB::migrateDatabase(config); // migrate database
+
+        // start server
         YLineServer::spawnApp(config, logger);
         spdlog::info("YLineServer stopped 停止");
     } 

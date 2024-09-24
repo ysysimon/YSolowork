@@ -16,6 +16,9 @@ bool isDbmateInstalled(const fs::path& DBMATE_PATH);
 // 函数: 下载 dbmate
 void downloadDbmate(const std::string& DOWNLOAD_URL, const std::string& DOWNLOAD_NAME, const fs::path& DBMATE_PATH);
 
+// 函数: 运行 dbmate
+void runDbmate(const fs::path& DBMATE_PATH, const std::string& DBMATE_CMD);
+
 }
 
 #endif // UTDBMATE_H
