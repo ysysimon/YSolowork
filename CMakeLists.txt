@@ -18,10 +18,20 @@ if (MSVC)
     add_compile_options("/utf-8")
 endif()
 
+# 引入 Boost::process 和 Boost::system
+find_package(Boost REQUIRED COMPONENTS process system)
+
 # 使用 GLOB 来找到所有的 .cpp 文件
 file(GLOB YSolowork_SOURCES "${YSolowork_SOURCE_DIR}/src/*.cpp")
 # 添加 YSolowork 库
 add_library(YSolowork STATIC ${YSolowork_SOURCES})
+# 链接 Boost::process 和 Boost::system
+target_link_libraries(YSolowork PRIVATE Boost::process Boost::system)
+if (MSVC)
+    # Windows 平台需要定义 _WIN32_WINNT=0x0A00 表示 Windows 10
+    # 这是 boost 需要的
+    target_compile_definitions(YSolowork PRIVATE _WIN32_WINNT=0x0A00)
+endif()
 
 # 设置 YSolowork 库编译选项
 set_target_properties(YSolowork PROPERTIES

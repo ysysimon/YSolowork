@@ -3,6 +3,7 @@
 
 #include <string>
 #include <filesystem>
+#include <utility>  // for std::pair
 
 namespace YSolowork::untility{
 
@@ -17,7 +18,7 @@ bool isDbmateInstalled(const fs::path& DBMATE_PATH);
 void downloadDbmate(const std::string& DOWNLOAD_URL, const std::string& DOWNLOAD_NAME, const fs::path& DBMATE_PATH);
 
 // 函数: 运行 dbmate
-void runDbmate(const fs::path& DBMATE_PATH, const std::string& DBMATE_CMD);
+std::pair<std::string, int> runDbmate(const fs::path& DBMATE_PATH, const std::string& DBMATE_CMD, const std::string& DB_URL);
 
 }
 

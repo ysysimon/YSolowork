@@ -15,7 +15,7 @@ namespace YLineServer::DB {
 std::string getPostgresConnectionString(const Config& config) {
     // std::string conn_str = "postgres://username:password@host:port/database";
     return std::format(
-        "postgres://{}:{}@{}:{}/{}",
+        "postgres://{}:{}@{}:{}/{}?sslmode=disable",
         config.db_user, config.db_password, config.db_host, config.db_port, config.db_name
     );
 
@@ -85,7 +85,12 @@ void migrateDatabase(const Config& config) {
     spdlog::info("Migrating database... 数据库迁移...");
     try {
         spdlog::debug("Dbmate Path: {}", (config.dbmate_path / YSolowork::untility::DBMATE_BINARY).string());
-        YSolowork::untility::runDbmate(config.dbmate_path, "up");
+        const auto& [result_log, exit_code] = YSolowork::untility::runDbmate(config.dbmate_path, "up", getPostgresConnectionString(config));
+        spdlog::info("Migration log 迁移日志: {}", result_log);
+        if (exit_code != 0) {
+            throw;
+        }
+        spdlog::info("Database migrated successfully 数据库迁移成功.");
     } catch (const std::exception& e) {
         throw std::runtime_error(
             std::format("Database migration failed 数据库迁移失败 - {}", e.what())
