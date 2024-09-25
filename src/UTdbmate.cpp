@@ -1,6 +1,6 @@
 #include "UTdbmate.h"
-#include "boost/process/io.hpp"
-#include "boost/process/pipe.hpp"
+#include <boost/process/v1/io.hpp>
+#include <boost/process/v1/pipe.hpp>
 
 #include <cstdlib>
 #include <stdexcept>
@@ -40,7 +40,8 @@ std::pair<std::string, int> runDbmate(const fs::path& DBMATE_PATH, const std::st
     _env["DATABASE_URL"] = DB_URL;
 
     // set pipe stream
-    bp::ipstream pipe_stream;
+    bp::ipstream out_stream;
+    bp::ipstream err_stream;
 
     // set result log
     std::ostringstream result_log; 
@@ -49,12 +50,19 @@ std::pair<std::string, int> runDbmate(const fs::path& DBMATE_PATH, const std::st
     int exit_code = -1;
     // run dbmate migrate
     try {
-        
-        bp::child c(dbmate_path.string(), DBMATE_CMD, bp::std_out > pipe_stream, bp::std_err > pipe_stream, bp::env = _env);
+        // 注意 bp::std_out 和 bd::std_err 在 Linux 上不能同时输出到同一个流，在 Windows 却可以，所以需要进行分离
+        bp::child c(dbmate_path.string(), DBMATE_CMD, bp::std_out > out_stream, bp::std_err > err_stream, bp::env = _env);
 
         // 提前开始读取输出
         std::string line;
-        while (pipe_stream && std::getline(pipe_stream, line)) {
+        // result_log << "Out Stream 输出流: " << std::endl;
+        while (out_stream && std::getline(out_stream, line)) {
+            result_log << line << std::endl;
+        }
+
+        // result_log << "Error Stream 错误流: " << std::endl;
+
+        while (err_stream && std::getline(err_stream, line)) {
             result_log << line << std::endl;
         }
 
