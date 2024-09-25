@@ -1,4 +1,6 @@
-#include "HealthCheckCtrl.h"
+#include "YLineServer_HealthCheckCtrl.h"
+
+using namespace YLineServer;
 
 void HealthCheckCtrl::asyncHandleHttpRequest(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback)
 {

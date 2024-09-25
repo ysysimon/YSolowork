@@ -16,7 +16,7 @@ add_executable(
     config.cpp
     app.cpp
     database.cpp
-    controllers/HealthCheckCtrl.cc
+    controllers/YLineServer_HealthCheckCtrl.cc
 )
 # 设置 YLineServer 编译选项
 set_target_properties(YLineServer PROPERTIES

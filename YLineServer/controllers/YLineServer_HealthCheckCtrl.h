@@ -1,10 +1,11 @@
 #pragma once
 
 #include <drogon/HttpSimpleController.h>
-#include <drogon/HttpTypes.h>
 
 using namespace drogon;
 
+namespace YLineServer
+{
 class HealthCheckCtrl : public drogon::HttpSimpleController<HealthCheckCtrl>
 {
   public:
@@ -18,3 +19,4 @@ class HealthCheckCtrl : public drogon::HttpSimpleController<HealthCheckCtrl>
 
     PATH_LIST_END
 };
+}

@@ -1,0 +1,11 @@
+{
+    "rdbms": "postgresql",
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "yline",
+    "user": "postgres",
+    "passwd": "postgresPassword",
+    "tables": [
+        "users"
+    ]
+}
