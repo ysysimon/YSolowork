@@ -11,6 +11,8 @@ message("YLineServer_BUILD_PATH: ${YLineServer_BUILD_PATH}")
 # 匹配 ORM 源文件
 file(GLOB ORM_SOURCES "${YLineServer_SOURCE_DIR}/controllers/models/*.cc")
 
+file(GLOB CTRLS_UT_SOURCES "${YLineServer_SOURCE_DIR}/controllers/utils/*.cpp")
+
 # 创建 YLineServer 可执行文件
 add_executable(
     YLineServer 
@@ -20,6 +22,7 @@ add_executable(
     app.cpp
     database.cpp
     ${ORM_SOURCES}
+    ${CTRLS_UT_SOURCES}
     controllers/YLineServer_HealthCheckCtrl.cc
     controllers/YLineServer_UserCtrl.cc
 )
@@ -55,6 +58,10 @@ add_subdirectory(
     ${YSolowork_BINARY_DIR}/vendor/drogon
 )
 target_link_libraries(YLineServer PRIVATE drogon) # 注意大小写!!!
+
+# 添加 botan 库
+find_package(botan REQUIRED)
+target_link_libraries(YLineServer PRIVATE Botan::Botan)
 
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)

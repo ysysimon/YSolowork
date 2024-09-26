@@ -16,3 +16,4 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
 - toml++ (header only) 项目已自带
 - Boost.process
     - Boost.system
+- botan

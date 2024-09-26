@@ -63,7 +63,7 @@ void downloadDBMATEifNotExist(const Config& config) {
     }
 }
 
-drogon::orm::DbConfig getDrogonPostgresConfig (const Config& config) {
+drogon::orm::PostgresConfig getDrogonPostgresConfig (const Config& config) {
 
     return drogon::orm::PostgresConfig{
         .host = config.db_host,

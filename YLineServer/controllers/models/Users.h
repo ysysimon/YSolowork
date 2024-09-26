@@ -47,6 +47,7 @@ class Users
         static const std::string _id;
         static const std::string _username;
         static const std::string _password_hash;
+        static const std::string _salt;
         static const std::string _email;
         static const std::string _is_admin;
         static const std::string _created_at;
@@ -128,6 +129,16 @@ class Users
     void setPasswordHash(const std::string &pPasswordHash) noexcept;
     void setPasswordHash(std::string &&pPasswordHash) noexcept;
 
+    /**  For column salt  */
+    ///Get the value of the column salt, returns the default value if the column is null
+    const std::string &getValueOfSalt() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getSalt() const noexcept;
+    ///Set the value of the column salt
+    void setSalt(const std::string &pSalt) noexcept;
+    void setSalt(std::string &&pSalt) noexcept;
+    void setSaltToNull() noexcept;
+
     /**  For column email  */
     ///Get the value of the column email, returns the default value if the column is null
     const std::string &getValueOfEmail() const noexcept;
@@ -165,7 +176,7 @@ class Users
     void setUpdatedAtToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 7;  }
+    static size_t getColumnNumber() noexcept {  return 8;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -189,6 +200,7 @@ class Users
     std::shared_ptr<int32_t> id_;
     std::shared_ptr<std::string> username_;
     std::shared_ptr<std::string> passwordHash_;
+    std::shared_ptr<std::string> salt_;
     std::shared_ptr<std::string> email_;
     std::shared_ptr<bool> isAdmin_;
     std::shared_ptr<::trantor::Date> createdAt_;
@@ -204,7 +216,7 @@ class Users
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[7]={ false };
+    bool dirtyFlag_[8]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
@@ -236,24 +248,29 @@ class Users
         }
         if(dirtyFlag_[3])
         {
+            sql += "salt,";
+            ++parametersCount;
+        }
+        if(dirtyFlag_[4])
+        {
             sql += "email,";
             ++parametersCount;
         }
         sql += "is_admin,";
         ++parametersCount;
-        if(!dirtyFlag_[4])
+        if(!dirtyFlag_[5])
         {
             needSelection=true;
         }
         sql += "created_at,";
         ++parametersCount;
-        if(!dirtyFlag_[5])
+        if(!dirtyFlag_[6])
         {
             needSelection=true;
         }
         sql += "updated_at,";
         ++parametersCount;
-        if(!dirtyFlag_[6])
+        if(!dirtyFlag_[7])
         {
             needSelection=true;
         }
@@ -290,10 +307,6 @@ class Users
             n = snprintf(placeholderStr,sizeof(placeholderStr),"$%d,",placeholder++);
             sql.append(placeholderStr, n);
         }
-        else
-        {
-            sql +="default,";
-        }
         if(dirtyFlag_[5])
         {
             n = snprintf(placeholderStr,sizeof(placeholderStr),"$%d,",placeholder++);
@@ -304,6 +317,15 @@ class Users
             sql +="default,";
         }
         if(dirtyFlag_[6])
+        {
+            n = snprintf(placeholderStr,sizeof(placeholderStr),"$%d,",placeholder++);
+            sql.append(placeholderStr, n);
+        }
+        else
+        {
+            sql +="default,";
+        }
+        if(dirtyFlag_[7])
         {
             n = snprintf(placeholderStr,sizeof(placeholderStr),"$%d,",placeholder++);
             sql.append(placeholderStr, n);

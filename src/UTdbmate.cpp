@@ -1,6 +1,6 @@
 #include "UTdbmate.h"
-#include <boost/process/v1/io.hpp>
-#include <boost/process/v1/pipe.hpp>
+
+
 
 #include <cstdlib>
 #include <stdexcept>
@@ -13,10 +13,14 @@ namespace YSolowork::untility {
 
 #if defined(_WIN32) || defined(_WIN64)
     const std::string DBMATE_BINARY = "dbmate.exe";
+    #include <boost/process/io.hpp>
+    #include <boost/process/pipe.hpp>
     // const std::string DBMATE_INSTALL_URL = "https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-windows-amd64.exe";
     // const std::string DOWNLOAD_CMD = "powershell -Command \"Invoke-WebRequest -Uri " + DBMATE_INSTALL_URL + " -OutFile dbmate.exe\"";
 #elif defined(__linux__)
     const std::string DBMATE_BINARY = "dbmate";
+    #include <boost/process/v1/io.hpp>
+    #include <boost/process/v1/pipe.hpp>
     // const std::string DBMATE_INSTALL_URL = "https://github.com/amacneil/dbmate/releases/download/v1.15.0/dbmate-linux-amd64";
     // const std::string DOWNLOAD_CMD = "wget " + DBMATE_INSTALL_URL + " -O dbmate && chmod +x dbmate";
 #endif

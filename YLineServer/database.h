@@ -15,7 +15,7 @@ std::string getPostgresConnectionString(const Config& config);
 void downloadDBMATEifNotExist(const Config& config);
 
 // 函数: 获取 Drogon Postgres 配置
-drogon::orm::DbConfig getDrogonPostgresConfig (const Config& config);
+drogon::orm::PostgresConfig getDrogonPostgresConfig (const Config& config);
 
 // 函数: 初始化数据库
 void initDataBasePostgres(const Config& config);

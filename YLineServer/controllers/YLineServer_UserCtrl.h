@@ -17,11 +17,11 @@ class UserCtrl : public drogon::HttpController<UserCtrl>
     METHOD_LIST_BEGIN
     // use METHOD_ADD to add your custom processing function here;
     ADD_METHOD_TO(UserCtrl::getUserById, "/user/{1}", Get);
-    // METHOD_ADD(UserCtrl::createUser, "/user", Post);
+    ADD_METHOD_TO(UserCtrl::createUser, "/user", Post);
 
     METHOD_LIST_END
     // your declaration of processing function maybe like this:
     drogon::Task<void> getUserById(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback, int userId);
-    // drogon::Task<void> createUser(const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback);
+    drogon::Task<void> createUser(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback);
 };
 }
