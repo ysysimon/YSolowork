@@ -46,7 +46,7 @@ class Users
     {
         static const std::string _id;
         static const std::string _username;
-        static const std::string _password_hash;
+        static const std::string _password;
         static const std::string _salt;
         static const std::string _email;
         static const std::string _is_admin;
@@ -120,14 +120,14 @@ class Users
     void setUsername(const std::string &pUsername) noexcept;
     void setUsername(std::string &&pUsername) noexcept;
 
-    /**  For column password_hash  */
-    ///Get the value of the column password_hash, returns the default value if the column is null
-    const std::string &getValueOfPasswordHash() const noexcept;
+    /**  For column password  */
+    ///Get the value of the column password, returns the default value if the column is null
+    const std::string &getValueOfPassword() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getPasswordHash() const noexcept;
-    ///Set the value of the column password_hash
-    void setPasswordHash(const std::string &pPasswordHash) noexcept;
-    void setPasswordHash(std::string &&pPasswordHash) noexcept;
+    const std::shared_ptr<std::string> &getPassword() const noexcept;
+    ///Set the value of the column password
+    void setPassword(const std::string &pPassword) noexcept;
+    void setPassword(std::string &&pPassword) noexcept;
 
     /**  For column salt  */
     ///Get the value of the column salt, returns the default value if the column is null
@@ -199,7 +199,7 @@ class Users
     void updateId(const uint64_t id);
     std::shared_ptr<int32_t> id_;
     std::shared_ptr<std::string> username_;
-    std::shared_ptr<std::string> passwordHash_;
+    std::shared_ptr<std::string> password_;
     std::shared_ptr<std::string> salt_;
     std::shared_ptr<std::string> email_;
     std::shared_ptr<bool> isAdmin_;
@@ -243,13 +243,14 @@ class Users
         }
         if(dirtyFlag_[2])
         {
-            sql += "password_hash,";
+            sql += "password,";
             ++parametersCount;
         }
-        if(dirtyFlag_[3])
+        sql += "salt,";
+        ++parametersCount;
+        if(!dirtyFlag_[3])
         {
-            sql += "salt,";
-            ++parametersCount;
+            needSelection=true;
         }
         if(dirtyFlag_[4])
         {
@@ -301,6 +302,10 @@ class Users
         {
             n = snprintf(placeholderStr,sizeof(placeholderStr),"$%d,",placeholder++);
             sql.append(placeholderStr, n);
+        }
+        else
+        {
+            sql +="default,";
         }
         if(dirtyFlag_[4])
         {
