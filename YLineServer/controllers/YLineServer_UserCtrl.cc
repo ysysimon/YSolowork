@@ -157,6 +157,7 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
     // 查询用户
     try {
         // 不要使用引用接收查询结果，很危险，会导致登陆一定成功
+        // 常量引用 无法延长协程返回值的 生命周期 ！！！
         const Users user = co_await mapper.findOne(
             Criteria(Users::Cols::_username, 
             CompareOperator::EQ, 
