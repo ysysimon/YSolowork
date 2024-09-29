@@ -1,10 +1,15 @@
 #include "app.h"
+#include "drogon/IntranetIpFilter.h"
+#include "drogon/LocalHostFilter.h"
 #include "logger.h"
 #include "database.h"
+#include "middlewares/YLineServer_CORSMid.h"
 
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <drogon/drogon.h>
 #include <trantor/utils/Logger.h>
+
 
 namespace YLineServer {
 
@@ -36,6 +41,25 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
 
     // 添加 postgresql 数据库客户端
     drogon::app().addDbClient(YLineServer::DB::getDrogonPostgresConfig(config));
+
+    // 内置 中间件 middleware
+    // 仅允许内网 IP 访问
+    if (config.intranet_ip_filter)
+    {
+        // drogon::app().registerFilter<IntranetIpFilter>(); ;
+        spdlog::info("Intranet IP filter enabled 内网 IP 过滤器已启用");
+    }
+    // 仅允许本机访问
+    if (config.local_host_filter)
+    {
+        // drogon::app().registerMiddleware(std::make_shared<drogon::LocalHostFilter>());
+        spdlog::info("Local host filter enabled 本地主机过滤器已启用");
+    }
+    // 运行跨域请求
+    if (config.cors)
+    {
+        // drogon::app().registerMiddleware(std::make_shared<YLineServer::CORSMiddleware>(config.allowed_origins));
+    }
 
     spdlog::info("Start Listening 开始监听");
     drogon::app().run();

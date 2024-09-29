@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <spdlog/spdlog.h>
+#include <unordered_set>
 
 namespace YLineServer {
 
@@ -12,6 +13,12 @@ struct Config {
     // server
     std::string server_ip;
     int server_port;
+
+    // middleware
+    bool intranet_ip_filter;
+    bool local_host_filter;
+    bool cors;
+    std::unordered_set<std::string> allowed_origins;
 
     // db
     std::string db_host;

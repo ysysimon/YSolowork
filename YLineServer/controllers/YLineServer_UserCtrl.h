@@ -16,9 +16,9 @@ class UserCtrl : public drogon::HttpController<UserCtrl>
   public:
     METHOD_LIST_BEGIN
     // use METHOD_ADD to add your custom processing function here;
-    ADD_METHOD_TO(UserCtrl::getUserById, "/user/{1}", Get);
-    ADD_METHOD_TO(UserCtrl::createUser, "/user", Post);
-    ADD_METHOD_TO(UserCtrl::login, "/login", Post);
+    ADD_METHOD_TO(UserCtrl::getUserById, "/api/user/{1}", Get);
+    ADD_METHOD_TO(UserCtrl::createUser, "/api/user", Post);
+    ADD_METHOD_TO(UserCtrl::login, "/api/auth/login", Post);
 
     METHOD_LIST_END
     // your declaration of processing function maybe like this:

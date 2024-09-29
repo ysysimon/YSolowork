@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
+#include <string>
 
 namespace YLineServer {
 
@@ -21,6 +22,25 @@ Config parseConfig() {
     auto &server = *YLineServerConfig["server"].as_table();
     const std::string& serverIp = server["ip"].value_or("0.0.0.0"); // 默认值 ip
     int serverPort = server["port"].value_or(33383);         // 默认端口
+
+    // 读取 middleware 部分
+    auto &middleware = *YLineServerConfig["middleware"].as_table();
+    bool intranetIpFilter = middleware["IntranetIpFilter"].value_or(false);
+    bool localHostFilter = middleware["LocalHostFilter"].value_or(false);
+    // 跨域部分 CORS
+    bool cors = middleware["CORS"].value_or(false);
+    std::unordered_set<std::string> allowedOrigins;
+    if (cors) {
+        spdlog::info("CORS enabled 跨域请求已启用");
+        auto &corsTbl = *middleware["middleware"]["CORSAllowOrigins"].as_array();
+        std::string allowedOriginsStr;
+        for (const auto &origin : corsTbl) {
+            // 使用 value_or("") 来安全获取字符串，默认为空字符串
+            allowedOriginsStr = origin.value_or<std::string>("");
+            allowedOrigins.insert(allowedOriginsStr);
+            spdlog::debug("Allowed origins 允许的跨域来源: {}", allowedOriginsStr);
+        }
+    }
 
     // 读取 database 部分
     auto &database = *YLineServerConfig["database"].as_table();
@@ -57,7 +77,11 @@ Config parseConfig() {
 
     return Config{
         serverIp, 
-        serverPort, 
+        serverPort,
+        intranetIpFilter,
+        localHostFilter,
+        cors,
+        allowedOrigins,
         dbHost, 
         dbPort, 
         dbUser,

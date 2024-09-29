@@ -8,9 +8,9 @@ project(
 set(YLineServer_BUILD_PATH ${YSolowork_BINARY_DIR}/build/bin/YLineServer)
 message("YLineServer_BUILD_PATH: ${YLineServer_BUILD_PATH}")
 
-# 匹配 ORM 源文件
+# 匹配 ORM 源文件 match orm source files
 file(GLOB ORM_SOURCES "${YLineServer_SOURCE_DIR}/controllers/models/*.cc")
-
+# 匹配控制器工具源文件 match controller utils source files
 file(GLOB CTRLS_UT_SOURCES "${YLineServer_SOURCE_DIR}/controllers/utils/*.cpp")
 
 # 创建 YLineServer 可执行文件
@@ -23,8 +23,12 @@ add_executable(
     database.cpp
     ${ORM_SOURCES}
     ${CTRLS_UT_SOURCES}
+    # 添加控制器源文件 add controller source files
     controllers/YLineServer_HealthCheckCtrl.cc
     controllers/YLineServer_UserCtrl.cc
+    # 添加中间件源文件 add middleware source files
+    middlewares/YLineServer_CORSMid.cc
+    
 )
 # 设置 YLineServer 编译选项
 set_target_properties(YLineServer PROPERTIES
