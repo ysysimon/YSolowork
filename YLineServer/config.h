@@ -42,6 +42,9 @@ struct Config {
 // 函数: 解析配置文件
 Config parseConfig();
 
+// 函数: 获取表
+toml::table getTable(const std::string& tablename, const toml::table& table);
+
 }
 
 #endif // YLINESERVER_CONFIG_H

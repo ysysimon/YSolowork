@@ -1,6 +1,7 @@
 #include "config.h"
 #include "UTfile.h"
 #include "logger.h"
+#include "vendor_include/toml.hpp"
 
 #include <cstddef>
 #include <spdlog/spdlog.h>
@@ -8,6 +9,22 @@
 #include <string>
 
 namespace YLineServer {
+
+toml::table getTable(const std::string& tablename, const toml::table& table) {
+    if (table.contains(tablename) == false) {
+        spdlog::error("Table {} not found in config file 配置文件中没有找到 {} 项", tablename, tablename);
+        throw std::runtime_error("Table not found in config file");
+    }
+
+    if (!table[tablename].as_table())
+    {
+        spdlog::error("Table {} is not a table 不是一个表", tablename, tablename);
+        throw std::runtime_error("Table is not a table");
+    }
+
+    return *table[tablename].as_table();
+    
+}
 
 Config parseConfig() {
     // get executable path and YLine config path
@@ -17,14 +34,15 @@ Config parseConfig() {
 
     // parse YLine config
     toml::table YLineServerConfig = toml::parse_file(YLineServerConfigPath.string());
+
     // get YLineServer config
     // 读取 server 部分
-    auto &server = *YLineServerConfig["server"].as_table();
+    const auto& server = getTable("server", YLineServerConfig);
     const std::string& serverIp = server["ip"].value_or("0.0.0.0"); // 默认值 ip
     int serverPort = server["port"].value_or(33383);         // 默认端口
 
     // 读取 middleware 部分
-    auto &middleware = *YLineServerConfig["middleware"].as_table();
+    const auto& middleware = getTable("middleware", YLineServerConfig);
     bool intranetIpFilter = middleware["IntranetIpFilter"].value_or(false);
     bool localHostFilter = middleware["LocalHostFilter"].value_or(false);
     // 跨域部分 CORS
@@ -32,18 +50,26 @@ Config parseConfig() {
     std::unordered_set<std::string> allowedOrigins;
     if (cors) {
         spdlog::info("CORS enabled 跨域请求已启用");
-        auto &corsTbl = *middleware["middleware"]["CORSAllowOrigins"].as_array();
+        if (!middleware["CORSAllowOrigins"].as_array())
+        {
+            spdlog::error("CORSAllowOrigins is not an array 不是一个数组");
+            throw std::runtime_error("CORSAllowOrigins is not an array");
+        }
+        const auto& corsTbl = *middleware["CORSAllowOrigins"].as_array();
         std::string allowedOriginsStr;
+        std::string allowedOriginStrs = "";
+        int index = 0;
         for (const auto &origin : corsTbl) {
             // 使用 value_or("") 来安全获取字符串，默认为空字符串
             allowedOriginsStr = origin.value_or<std::string>("");
             allowedOrigins.insert(allowedOriginsStr);
-            spdlog::debug("Allowed origins 允许的跨域来源: {}", allowedOriginsStr);
+            allowedOriginStrs += std::format("\t[{}] - {}\n", index++, allowedOriginsStr);
         }
+        spdlog::info("Allowed origins 允许的跨域来源:\n\n {}", allowedOriginStrs);
     }
 
     // 读取 database 部分
-    auto &database = *YLineServerConfig["database"].as_table();
+    const auto& database = getTable("database", YLineServerConfig);
     const std::string& dbHost = database["host"].value_or("localhost");
     int dbPort = database["port"].value_or(5432); // postgresql 默认端口
     const std::string& dbUser = database["db_user"].value_or("postgres");
@@ -53,7 +79,7 @@ Config parseConfig() {
     float dbTimeout = database["timeout"].value_or(5.0);
 
     // 读取 logger 部分
-    auto &loggerTbl = *YLineServerConfig["logger"].as_table();
+    const auto& loggerTbl = getTable("logger", YLineServerConfig);
     const std::string& logLevelStr = loggerTbl["level"].value_or("debug");
     auto logLevel = spdlog::level::info;
     try {
