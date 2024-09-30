@@ -6,15 +6,16 @@
 namespace YLineServer
 {
 
+using namespace drogon;
 
 class CORSMiddleware : public drogon::HttpCoroMiddleware<CORSMiddleware>
 {
 public:
+    static constexpr bool isAutoCreation = false;  // 明确设置为 false
     CORSMiddleware(const std::unordered_set<std::string>& allowedOrigins);
 
-    // 协程版本的 invoke 方法
-    drogon::Task<drogon::HttpResponsePtr> invoke(const drogon::HttpRequestPtr& req,
-                                                 drogon::MiddlewareNextAwaiter&& next) override;
+    Task<HttpResponsePtr> invoke(const HttpRequestPtr &req,
+                                MiddlewareNextAwaiter &&next) override;
 
 private:
     std::unordered_set<std::string> allowedOrigins_;

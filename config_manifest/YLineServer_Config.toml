@@ -11,7 +11,7 @@ LocalHostFilter = false
 CORS = false
 CORSAllowOrigins = [
         "http://localhost:5173", # 允许本地开发环境
-        # "*", # 允许所有来源
+        # "*", # 允许所有来源, 注意不支持通配符写法，这更像一个开关，表示运行所有跨域请求
         # "http://example.com", # 允许特定来源, 例如独立部署的前端
     ]
 
