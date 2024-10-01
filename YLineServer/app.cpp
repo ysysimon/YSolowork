@@ -58,42 +58,43 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     // 允许跨域请求
     if (config.cors)
     {
-        // auto corsMiddleware = std::make_shared<YLineServer::CORSMiddleware>(config.allowed_origins);
-        // drogon::app().registerMiddleware(corsMiddleware);
+        auto corsMiddleware = std::make_shared<YLineServer::CORSMiddleware>(config.allowed_origins);
+        drogon::app().registerMiddleware(corsMiddleware);
         // 将协程中间件注册为 Pre-Routing Advice
         // 注册 Pre-Routing Advice
-        // drogon::app().registerPreRoutingAdvice([corsMiddleware](const HttpRequestPtr &req, AdviceCallback &&callback, AdviceChainCallback &&chainCallback) {
-        //     // 调用中间件的 invoke 方法
-        //     corsMiddleware->invoke(req,
-        //         // nextCb：继续执行下一个中间件或控制器的回调
-        //     [chainCallback = std::move(chainCallback)](const std::function<void(const HttpResponsePtr &)>& nextResponseCb) {
-        //                 // 执行下一个 Pre-Routing Advice 或进入路由处理
-        //                 chainCallback();
-        //             },
-        //         // mcb：终止请求并返回响应的回调
-        //         [callback = std::move(callback)](const HttpResponsePtr &resp) {
-        //             // 返回响应
-        //             callback(resp);
-        //         }
-        //     );
-        // });
-
-        app().registerPreRoutingAdvice([](const HttpRequestPtr &req,
-                                  FilterCallback &&stop,
-                                  FilterChainCallback &&pass)
-        {
-            // Let anything not starting with /api or not a preflight request through
-            if(!req->path().starts_with("/api") || req->method() != Options) {
-                pass();
-                return;
-            }
-
-            auto resp = HttpResponse::newHttpResponse();
-            resp->addHeader("Access-Control-Allow-Origin", "*");
-            resp->addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-            // Add other CORS headers you need
-            stop(resp); // stops processing the request and sends the response
+        drogon::app().registerPreRoutingAdvice([corsMiddleware](const HttpRequestPtr &req, AdviceCallback &&callback, AdviceChainCallback &&chainCallback) {
+            // 调用中间件的 invoke 方法
+            corsMiddleware->invoke(req,
+                // nextCb：继续执行下一个中间件或控制器的回调
+            [chainCallback = std::move(chainCallback)](const std::function<void(const HttpResponsePtr &)>& nextResponseCb) {
+                        // 执行下一个 Pre-Routing Advice 或进入路由处理
+                        chainCallback();
+                    },
+                // mcb：终止请求并返回响应的回调
+                [callback = std::move(callback)](const HttpResponsePtr& resp) {
+                    // 返回响应
+                    spdlog::info("callback!");
+                    callback(resp);
+                }
+            );
         });
+
+        // app().registerPreRoutingAdvice([](const HttpRequestPtr &req,
+        //                           FilterCallback &&stop,
+        //                           FilterChainCallback &&pass)
+        // {
+        //     // Let anything not starting with /api or not a preflight request through
+        //     if(!req->path().starts_with("/api") || req->method() != Options) {
+        //         pass();
+        //         return;
+        //     }
+
+        //     auto resp = HttpResponse::newHttpResponse();
+        //     resp->addHeader("Access-Control-Allow-Origin", "*");
+        //     resp->addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        //     // Add other CORS headers you need
+        //     stop(resp); // stops processing the request and sends the response
+        // });
         
         spdlog::info("CORS middleware enabled 跨域请求中间件已启用");
     }

@@ -207,3 +207,85 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
 
     co_return;
 }
+
+// void UserCtrl::login(const HttpRequestPtr& req, std::function<void(const HttpResponsePtr &)>&& callback)
+// {
+//     // 获取数据库客户端, 数据库使用 fast 模式 需要使用 fastDbClient
+//     auto dbClient = drogon::app().getFastDbClient("YLinedb");
+    
+//     // 解析请求体
+//     const auto& json = req->getJsonObject();
+//     const auto& peerAddr = req->getPeerAddr();
+//     if (!json) {
+//         // 返回错误信息
+//         Json::Value respJson;
+//         respJson["error"] = "Invalid JSON 无效的 JSON";
+//         auto resp = HttpResponse::newHttpJsonResponse(respJson);
+//         resp->setStatusCode(drogon::k400BadRequest);
+//         callback(resp);
+//         spdlog::error("{} Login: Invalid JSON 无效的 JSON", peerAddr.toIpPort());
+//         return;
+//     }
+
+//     // 检查请求体是否包含用户名和密码
+//     if (!json->isMember("username") || !json->isMember("password")) {
+//         // 返回错误信息
+//         Json::Value respJson;
+//         respJson["error"] = "Invalid User info 无效的用户信息";
+//         auto resp = HttpResponse::newHttpJsonResponse(respJson);
+//         resp->setStatusCode(drogon::k400BadRequest);
+//         callback(resp);
+//         spdlog::error("{} Login: Invalid User info 无效的用户信息", peerAddr.toIpPort());
+//         return;
+//     }
+
+//     const auto& username = json->get("username", "").asString();
+//     const auto& inputPassword = json->get("password", "").asString();
+    
+//     // 查询用户
+//     auto mapper = drogon::orm::Mapper<Users>(dbClient);
+//     mapper.findOne(Criteria(Users::Cols::_username, CompareOperator::EQ, username),
+//                    [=](const Users &user) {
+//                        // 查询成功，开始处理密码验证
+//                        const auto& DBpasswdHash = user.getValueOfPassword();
+//                        const auto& inputpasswdHash = Passwd::hashPassword(inputPassword, user.getValueOfSalt());
+
+//                        if (Passwd::compareHash(DBpasswdHash, inputpasswdHash)) {
+//                            // 密码正确，返回成功信息
+//                            Json::Value respJson;
+//                            respJson["message"] = "Login success 登录成功";
+//                            auto resp = HttpResponse::newHttpJsonResponse(respJson);
+//                            resp->setStatusCode(drogon::k200OK);
+//                            callback(resp);
+//                            spdlog::info("{} Login as {}: Login success 登录成功", peerAddr.toIpPort(), username);
+//                        } else {
+//                            // 密码错误
+//                            Json::Value respJson;
+//                            respJson["error"] = "Invalid password 密码错误";
+//                            auto resp = HttpResponse::newHttpJsonResponse(respJson);
+//                            resp->setStatusCode(drogon::k401Unauthorized);
+//                            callback(resp);
+//                            spdlog::warn("{} Login as {}: Invalid password 密码错误", peerAddr.toIpPort(), username);
+//                        }
+//                    },
+//                    [=](const DrogonDbException &e) {
+//                        // 查询用户失败
+//                        if (typeid(e) == typeid(UnexpectedRows)) {
+//                            // 用户不存在
+//                            Json::Value respJson;
+//                            respJson["error"] = "User not found 用户不存在";
+//                            auto resp = HttpResponse::newHttpJsonResponse(respJson);
+//                            resp->setStatusCode(drogon::k404NotFound);
+//                            callback(resp);
+//                            spdlog::warn("{} Login as {}: User not found 用户不存在", peerAddr.toIpPort(), username);
+//                        } else {
+//                            // 数据库错误
+//                            Json::Value respJson;
+//                            respJson["error"] = e.base().what();
+//                            auto resp = HttpResponse::newHttpJsonResponse(respJson);
+//                            resp->setStatusCode(drogon::k500InternalServerError);
+//                            callback(resp);
+//                            spdlog::error("{} Login as {}: {}", peerAddr.toIpPort(), username, e.base().what());
+//                        }
+//                    });
+// }

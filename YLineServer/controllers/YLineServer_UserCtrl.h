@@ -25,5 +25,6 @@ class UserCtrl : public drogon::HttpController<UserCtrl>
     drogon::Task<void> getUserById(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback, int userId);
     drogon::Task<void> createUser(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback);
     drogon::Task<void> login(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback);
+    // void login(const HttpRequestPtr& req, std::function<void(const HttpResponsePtr &)>&& callback);
 };
 }
