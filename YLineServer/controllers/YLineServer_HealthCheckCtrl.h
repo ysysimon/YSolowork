@@ -15,7 +15,7 @@ class HealthCheckCtrl : public drogon::HttpSimpleController<HealthCheckCtrl>
     // PATH_ADD("/path", "filter1", "filter2", HttpMethod1, HttpMethod2...);
 
     PATH_ADD("/api", Get, Post);
-    PATH_ADD("/alive", Get);
+    PATH_ADD("/alive", Get, Post);
 
     PATH_LIST_END
 };
