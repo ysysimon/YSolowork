@@ -73,29 +73,11 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
                 // mcb：终止请求并返回响应的回调
                 [callback = std::move(callback)](const HttpResponsePtr& resp) {
                     // 返回响应
-                    spdlog::info("callback!");
                     callback(resp);
                 }
             );
         });
 
-        // app().registerPreRoutingAdvice([](const HttpRequestPtr &req,
-        //                           FilterCallback &&stop,
-        //                           FilterChainCallback &&pass)
-        // {
-        //     // Let anything not starting with /api or not a preflight request through
-        //     if(!req->path().starts_with("/api") || req->method() != Options) {
-        //         pass();
-        //         return;
-        //     }
-
-        //     auto resp = HttpResponse::newHttpResponse();
-        //     resp->addHeader("Access-Control-Allow-Origin", "*");
-        //     resp->addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        //     // Add other CORS headers you need
-        //     stop(resp); // stops processing the request and sends the response
-        // });
-        
         spdlog::info("CORS middleware enabled 跨域请求中间件已启用");
     }
     

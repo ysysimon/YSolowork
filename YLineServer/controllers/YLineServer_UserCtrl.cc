@@ -3,12 +3,12 @@
 #include "drogon/orm/CoroMapper.h"
 #include "drogon/orm/Criteria.h"
 #include "models/Users.h" // ORM Model
-#include "json/value.h"
 #include <json/json.h>
 #include <spdlog/spdlog.h>
 #include <string>
 
 #include "utils/passwd.h"
+#include "utils/api.h"
 
 using namespace YLineServer;
 
@@ -174,16 +174,18 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
             // 返回成功信息
             Json::Value respJson;
             respJson["message"] = "Login success 登录成功";
-            auto resp = HttpResponse::newHttpJsonResponse(respJson);
-            resp->setStatusCode(drogon::k200OK);
+            // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+            // resp->setStatusCode(drogon::k200OK);
+            auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k200OK, req);
             callback(resp);
             spdlog::info("{} Login as {}: Login success 登录成功", peerAddr.toIpPort(), username);
         } else {
             // 返回错误信息
             Json::Value respJson;
             respJson["error"] = "Invalid password 密码错误";
-            auto resp = HttpResponse::newHttpJsonResponse(respJson);
-            resp->setStatusCode(drogon::k401Unauthorized);
+            // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+            // resp->setStatusCode(drogon::k401Unauthorized);
+            auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k401Unauthorized, req);
             callback(resp);
             spdlog::warn("{} Login as {}: Invalid password 密码错误", peerAddr.toIpPort(), username);
         }

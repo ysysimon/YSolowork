@@ -15,6 +15,8 @@ int main()
         // parse config file
         YLineServer::Config config = YLineServer::parseConfig();
         spdlog::info("Config file parsed successfully 配置文件解析成功");
+        // 构造单例 配置类
+        YLineServer::ConfigSingleton::getInstance().setConfigData(config);
 
         // set log level
         logger->set_level(config.log_level);

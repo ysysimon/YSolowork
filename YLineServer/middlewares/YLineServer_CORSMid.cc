@@ -13,7 +13,7 @@ void CORSMiddleware::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&
     const std::string& origin = req->getHeader("Origin");
     // 检查是否允许所有来源 (通配符 *)
     bool allowAllOrigins = (allowedOrigins_.find("*") != allowedOrigins_.end());
-    spdlog::info("被调用！！！");
+    // spdlog::info("被调用！！！");
 
     // 处理 OPTIONS 预检请求
     if (req->method() == Options)

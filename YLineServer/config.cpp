@@ -123,4 +123,22 @@ Config parseConfig() {
         };
 }
 
+// 单例类: 配置 config 定义
+
+ConfigSingleton& ConfigSingleton::getInstance() 
+{
+    static ConfigSingleton instance; // 单例实例
+    return instance;
+}
+
+Config& ConfigSingleton::getConfigData() 
+{
+    return configData_;
+}
+
+void ConfigSingleton::setConfigData(const Config& configData) 
+{
+    configData_ = configData;
+}
+
 } // namespace YLineServer
