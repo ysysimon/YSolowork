@@ -8,12 +8,13 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
 
 #### YLineServer
 - spdlog
-- Drogon
+- Boost.process (建议使用官方repo安装)
+    - Boost.system
+- botan (建议使用官方repo安装)
+- Drogon (build with project)
     - jsoncpp
     - uuid
     - zlib
     - libpq (PostgreSQL)
-- toml++ (header only) 项目已自带
-- Boost.process
-    - Boost.system
-- botan
+- toml++ (header only) (build with project)
+- jwt++ (build with project)

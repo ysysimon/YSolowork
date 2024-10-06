@@ -4,6 +4,7 @@
 #include "drogon/orm/Criteria.h"
 #include "models/Users.h" // ORM Model
 #include <json/json.h>
+#include <json/value.h>
 #include <spdlog/spdlog.h>
 #include <string>
 
@@ -32,8 +33,9 @@ drogon::Task<void> UserCtrl::getUserById(const HttpRequestPtr req, std::function
         Json::Value userJson = user.toJson();
         userJson.removeMember("password");
         userJson.removeMember("salt");
-        auto resp = HttpResponse::newHttpJsonResponse(userJson);
-        resp->setStatusCode(drogon::k200OK);
+        // auto resp = HttpResponse::newHttpJsonResponse(userJson);
+        // resp->setStatusCode(drogon::k200OK);
+        auto resp = YLineServer::Api::makeJsonResponse(userJson, drogon::k200OK, req);
         callback(resp);
         spdlog::info("{} Get User: User found 用户查询成功", peerAddr.toIpPort());
     } catch (const UnexpectedRows &e) {
@@ -41,8 +43,9 @@ drogon::Task<void> UserCtrl::getUserById(const HttpRequestPtr req, std::function
         Json::Value respJson;
         respJson["error"] = "User not found";
         respJson["userId"] = userId;
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k404NotFound);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k404NotFound);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k404NotFound, req);
         callback(resp);
         spdlog::info("{} Get User: User not found 用户不存在", peerAddr.toIpPort());
     } catch (const DrogonDbException &e) {
@@ -50,8 +53,9 @@ drogon::Task<void> UserCtrl::getUserById(const HttpRequestPtr req, std::function
         Json::Value respJson;
         respJson["error"] = e.base().what();
         respJson["userId"] = userId;
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k500InternalServerError);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k500InternalServerError);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k500InternalServerError, req);
         callback(resp);
         spdlog::error("{} Get User: {}", peerAddr.toIpPort(), e.base().what());
     }
@@ -73,8 +77,9 @@ drogon::Task<void> UserCtrl::createUser(const HttpRequestPtr req, std::function<
         // 返回错误信息
         Json::Value respJson;
         respJson["error"] = "Invalid JSON 无效的 JSON";
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k400BadRequest);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k400BadRequest);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k400BadRequest, req);
         callback(resp);
         spdlog::error("{} Create User: Invalid JSON 无效的 JSON", peerAddr.toIpPort());
         co_return;
@@ -85,8 +90,9 @@ drogon::Task<void> UserCtrl::createUser(const HttpRequestPtr req, std::function<
         // 返回错误信息
         Json::Value respJson;
         respJson["error"] = "Invalid User info 无效的用户信息";
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k400BadRequest);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k400BadRequest);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k400BadRequest, req);
         callback(resp);
         spdlog::error("{} Create User: Invalid User info 无效的用户信息 \n {}", peerAddr.toIpPort(), err);
         co_return;
@@ -103,8 +109,11 @@ drogon::Task<void> UserCtrl::createUser(const HttpRequestPtr req, std::function<
     try {
         co_await mapper.insert(user);
         // 返回成功信息
-        auto resp = HttpResponse::newHttpResponse();
-        resp->setStatusCode(drogon::k201Created);
+        Json::Value respJson;
+        respJson["message"] = "User created 用户创建成功";
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k201Created);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k201Created, req);
         callback(resp);
         spdlog::info("{} Create User: User created 用户创建成功", peerAddr.toIpPort());
     } catch (const DrogonDbException &e) {
@@ -133,8 +142,9 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
         // 返回错误信息
         Json::Value respJson;
         respJson["error"] = "Invalid JSON 无效的 JSON";
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k400BadRequest);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k400BadRequest);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k400BadRequest, req);
         callback(resp);
         spdlog::error("{} Login: Invalid JSON 无效的 JSON", peerAddr.toIpPort());
         co_return;
@@ -145,8 +155,9 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
         // 返回错误信息
         Json::Value respJson;
         respJson["error"] = "Invalid User info 无效的用户信息";
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k400BadRequest);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k400BadRequest);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k400BadRequest, req);
         callback(resp);
         spdlog::error("{} Login: Invalid User info 无效的用户信息", peerAddr.toIpPort());
         co_return;
@@ -193,16 +204,18 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
         // 返回错误信息
         Json::Value respJson;
         respJson["error"] = "User not found 用户不存在";
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k404NotFound);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k404NotFound);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k404NotFound, req);
         callback(resp);
         spdlog::warn("{} Login as {}: User not found 用户不存在", peerAddr.toIpPort(), username);
     } catch (const DrogonDbException &e) {
         // 返回错误信息
         Json::Value respJson;
         respJson["error"] = e.base().what();
-        auto resp = HttpResponse::newHttpJsonResponse(respJson);
-        resp->setStatusCode(drogon::k500InternalServerError);
+        // auto resp = HttpResponse::newHttpJsonResponse(respJson);
+        // resp->setStatusCode(drogon::k500InternalServerError);
+        auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k500InternalServerError, req);
         callback(resp);
         spdlog::error("{} Login as {}: {}", peerAddr.toIpPort(), username, e.base().what());
     }

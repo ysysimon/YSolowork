@@ -1,3 +1,6 @@
 [submodule "vendor/drogon"]
 	path = vendor/drogon
 	url = git@github.com:drogonframework/drogon.git
+[submodule "vendor/jwt-cpp"]
+	path = vendor/jwt-cpp
+	url = git@github.com:Thalhammer/jwt-cpp.git

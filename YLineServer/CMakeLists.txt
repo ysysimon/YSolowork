@@ -63,6 +63,13 @@ add_subdirectory(
 )
 target_link_libraries(YLineServer PRIVATE drogon) # 注意大小写!!!
 
+# 添加 jwt++ 库
+add_subdirectory(
+    ${YSolowork_SOURCE_DIR}/vendor/jwt-cpp
+    ${YSolowork_BINARY_DIR}/vendor/jwt-cpp
+)
+target_link_libraries(YLineServer PRIVATE jwt-cpp)
+
 # 添加 botan 库
 find_package(botan REQUIRED)
 target_link_libraries(YLineServer PRIVATE Botan::Botan)
