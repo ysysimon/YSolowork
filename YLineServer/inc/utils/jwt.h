@@ -1,7 +1,7 @@
 #ifndef YLINESERVER_JWT_H
 #define YLINESERVER_JWT_H
 
-#include "../models/Users.h"
+#include "models/Users.h"
 
 namespace YLineServer::Jwt {
 

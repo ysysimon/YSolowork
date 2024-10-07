@@ -15,6 +15,8 @@ CORSAllowOrigins = [
         # "http://example.com", # 允许特定来源, 例如独立部署的前端
     ]
 
+[jwt]
+secret = "your_secret"
 
 [database]
 # 注意保证这里的参数和 docker-compose 中的参数一致 (如果使用docker)

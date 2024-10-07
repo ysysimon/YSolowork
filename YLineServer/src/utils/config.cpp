@@ -68,6 +68,14 @@ Config parseConfig() {
         spdlog::info("Allowed origins 允许的跨域来源:\n\n {}", allowedOriginStrs);
     }
 
+    // 读取 jwt 部分
+    const auto& jwt = getTable("jwt", YLineServerConfig);
+    const std::string& jwtSecret = jwt["secret"].value_or("");
+    if (jwtSecret.empty()) {
+        spdlog::error("JWT secret is empty JWT 密钥为空");
+        throw std::runtime_error("JWT secret is empty");
+    }
+
     // 读取 database 部分
     const auto& database = getTable("database", YLineServerConfig);
     const std::string& dbHost = database["host"].value_or("localhost");
@@ -108,6 +116,7 @@ Config parseConfig() {
         localHostFilter,
         cors,
         allowedOrigins,
+        jwtSecret,
         dbHost, 
         dbPort, 
         dbUser,
@@ -131,7 +140,7 @@ ConfigSingleton& ConfigSingleton::getInstance()
     return instance;
 }
 
-Config& ConfigSingleton::getConfigData() 
+const Config& ConfigSingleton::getConfigData() const
 {
     return configData_;
 }

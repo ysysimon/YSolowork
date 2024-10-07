@@ -20,6 +20,9 @@ struct Config {
     bool cors;
     std::unordered_set<std::string> allowed_origins;
 
+    // jwt
+    std::string jwt_secret;
+
     // db
     std::string db_host;
     int db_port;
@@ -56,7 +59,7 @@ public:
     ConfigSingleton& operator=(const ConfigSingleton&) = delete;
 
     // 获取配置数据
-    Config& getConfigData();
+    const Config& getConfigData() const;
 
     // 设置配置数据
     void setConfigData(const Config& configData);

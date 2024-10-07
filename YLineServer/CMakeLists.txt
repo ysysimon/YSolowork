@@ -3,7 +3,7 @@ project(
     VERSION 0.0.1
     DESCRIPTION "YLine is a distributed task scheduling system, YLineServer is the server side of YLine." 
     LANGUAGES CXX
-    )
+)
 
 set(YLineServer_BUILD_PATH ${YSolowork_BINARY_DIR}/build/bin/YLineServer)
 message("YLineServer_BUILD_PATH: ${YLineServer_BUILD_PATH}")
@@ -25,6 +25,7 @@ set(YLineServer_SOURCES
     src/utils/config.cpp
     src/utils/api.cpp
     src/utils/passwd.cpp
+    src/utils/jwt.cpp
 )
 
 # 创建 YLineServer 可执行文件

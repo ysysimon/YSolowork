@@ -10,6 +10,7 @@
 
 #include "utils/passwd.h"
 #include "utils/api.h"
+#include "utils/jwt.h"
 
 using namespace YLineServer;
 
@@ -183,8 +184,18 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
         // 检查密码
         if (Passwd::compareHash(DBpasswdHash,inputpasswdHash)) {
             // 返回成功信息
+            // set user info
+            Json::Value userJson = user.toJson();
+            userJson.removeMember("password");
+            userJson.removeMember("salt");
+
+            // set jwt
+            const std::string& jwt = Jwt::generateAuthJwt(user.getValueOfId(), user.getValueOfUsername(), user.getValueOfIsAdmin());
+
             Json::Value respJson;
             respJson["message"] = "Login success 登录成功";
+            respJson["user"] = userJson;
+            respJson["access_token"] = jwt;
             // auto resp = HttpResponse::newHttpJsonResponse(respJson);
             // resp->setStatusCode(drogon::k200OK);
             auto resp = YLineServer::Api::makeJsonResponse(respJson, drogon::k200OK, req);
