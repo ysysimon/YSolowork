@@ -1,7 +1,7 @@
 #ifndef YLINESERVER_APP_H
 #define YLINESERVER_APP_H
 
-#include "config.h"
+#include "utils/config.h"
 #include <spdlog/spdlog.h>
 #include <memory>
 

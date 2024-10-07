@@ -1,6 +1,6 @@
-#include "config.h"
+#include "utils/config.h"
 #include "UTfile.h"
-#include "logger.h"
+#include "utils/logger.h"
 #include "vendor_include/toml.hpp"
 
 #include <cstddef>

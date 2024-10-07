@@ -1,5 +1,5 @@
-#include "logger.h"
-#include "config.h"
+#include "utils/logger.h"
+#include "utils/config.h"
 #include "app.h"
 #include "database.h"
 

@@ -1,5 +1,5 @@
-#include "api.h"
-#include "../../config.h"
+#include "utils/api.h"
+#include "utils/config.h"
 
 namespace YLineServer::Api {
 

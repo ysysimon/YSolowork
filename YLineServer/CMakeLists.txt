@@ -8,27 +8,29 @@ project(
 set(YLineServer_BUILD_PATH ${YSolowork_BINARY_DIR}/build/bin/YLineServer)
 message("YLineServer_BUILD_PATH: ${YLineServer_BUILD_PATH}")
 
-# 匹配 ORM 源文件 match orm source files
-file(GLOB ORM_SOURCES "${YLineServer_SOURCE_DIR}/controllers/models/*.cc")
-# 匹配控制器工具源文件 match controller utils source files
-file(GLOB CTRLS_UT_SOURCES "${YLineServer_SOURCE_DIR}/controllers/utils/*.cpp")
+# 设置 YLineServer 源文件
+set(YLineServer_SOURCES
+    src/main.cpp
+    src/app.cpp
+    src/database.cpp
+    # ORM
+    src/models/Users.cc
+    # Controller
+    src/controllers/YLineServer_HealthCheckCtrl.cc
+    src/controllers/YLineServer_UserCtrl.cc
+    # Middleware
+    src/middlewares/YLineServer_CORSMid.cc
+    # UT
+    src/utils/logger.cpp
+    src/utils/config.cpp
+    src/utils/api.cpp
+    src/utils/passwd.cpp
+)
 
 # 创建 YLineServer 可执行文件
 add_executable(
     YLineServer 
-    main.cpp
-    logger.cpp
-    config.cpp
-    app.cpp
-    database.cpp
-    ${ORM_SOURCES}
-    ${CTRLS_UT_SOURCES}
-    # 添加控制器源文件 add controller source files
-    controllers/YLineServer_HealthCheckCtrl.cc
-    controllers/YLineServer_UserCtrl.cc
-    # 添加中间件源文件 add middleware source files
-    middlewares/YLineServer_CORSMid.cc
-    
+    ${YLineServer_SOURCES}
 )
 # 设置 YLineServer 编译选项
 set_target_properties(YLineServer PROPERTIES
@@ -38,6 +40,8 @@ set_target_properties(YLineServer PROPERTIES
 )
 
 target_include_directories(
+    # add include directory for YLineServer
+    YLineServer PRIVATE ${YLineServer_SOURCE_DIR}/inc
     # add include directory for vendor lib
     YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor
     # add YSolowork include directory

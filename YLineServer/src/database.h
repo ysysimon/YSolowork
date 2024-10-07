@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "config.h"
+#include "utils/config.h"
 #include <drogon/orm/DbConfig.h>
 
 namespace YLineServer::DB {
