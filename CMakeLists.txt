@@ -16,6 +16,8 @@ project(
 if (MSVC)
     # Visual Studio 中使用 /utf-8 编译选项
     add_compile_options("/utf-8")
+    #  Windows.h 定义了 min 和 max 与 std::numeric_limits 发生冲突 (jwt-cpp)
+    add_definitions(-DNOMINMAX)
 endif()
 
 # 引入 Boost::process 和 Boost::system
