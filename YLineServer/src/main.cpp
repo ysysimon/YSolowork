@@ -51,5 +51,5 @@ int main()
         return EXIT_FAILURE;
     }
     
-    return 0;
+    return EXIT_SUCCESS;
 }
