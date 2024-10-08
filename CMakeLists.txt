@@ -42,5 +42,16 @@ set_target_properties(YSolowork PROPERTIES
     CXX_STANDARD_REQUIRED YES
 )
 
-# 添加模块
-add_subdirectory(YLineServer)
+# 添加选项来控制是否构建 YLineServer 和 YLineWorker
+option(BUILD_YLINESERVER "Build YLineServer" ON)
+option(BUILD_YLINEWORKER "Build YLineWorker" ON)
+
+# 添加 YLineServer
+if (BUILD_YLINESERVER)
+    add_subdirectory(YLineServer)
+endif()
+
+# 添加 YLineWorker
+if (BUILD_YLINEWORKER)
+    add_subdirectory(YLineWorker)
+endif()

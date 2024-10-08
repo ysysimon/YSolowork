@@ -40,6 +40,7 @@ set_target_properties(YLineServer PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${YLineServer_BUILD_PATH}
 )
 
+# 添加 YLineServer 的 include 目录
 target_include_directories(
     # add include directory for YLineServer
     YLineServer PRIVATE ${YLineServer_SOURCE_DIR}/inc
