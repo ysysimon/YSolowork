@@ -31,6 +31,9 @@ Config parseConfig() {
     const std::filesystem::path& exePath = YSolowork::untility::getExecutablePath();
     const std::filesystem::path& YLineServerConfigPath = exePath / "YLineServer_Config.toml";
     spdlog::info("Config file path 配置文件路径: {}", YLineServerConfigPath.string());
+    spdlog::info(
+        "\n----------Start to parse YLineServer config file 开始解析 YLineServer 配置文件----------\n"
+        );
 
     // parse YLine config
     toml::table YLineServerConfig = toml::parse_file(YLineServerConfigPath.string());
@@ -75,6 +78,8 @@ Config parseConfig() {
         spdlog::error("JWT secret is empty JWT 密钥为空");
         throw std::runtime_error("JWT secret is empty");
     }
+    bool jwtexpire = jwt["expire"].value_or(true);
+    std::chrono::seconds jwtexpireTime = std::chrono::seconds(jwt["expire_time"].value_or(432000)); // 默认 5 天
 
     // 读取 database 部分
     const auto& database = getTable("database", YLineServerConfig);
@@ -109,6 +114,9 @@ Config parseConfig() {
         const std::string& dbmate_download_name = YLineServerConfig["dbmate"]["win_name"].value_or("dbmate-windows-amd64.exe");
     #endif
 
+    spdlog::info(
+        "\n----------End of parsing YLineServer config file 解析 YLineServer 配置文件结束----------\n"
+        );
     return Config{
         serverIp, 
         serverPort,
@@ -117,6 +125,8 @@ Config parseConfig() {
         cors,
         allowedOrigins,
         jwtSecret,
+        jwtexpire,
+        jwtexpireTime,
         dbHost, 
         dbPort, 
         dbUser,

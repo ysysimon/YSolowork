@@ -1,6 +1,7 @@
 #ifndef YLINESERVER_CONFIG_H
 #define YLINESERVER_CONFIG_H
 
+#include <chrono>
 #include <cstddef>
 #include <filesystem>
 #include <spdlog/spdlog.h>
@@ -22,6 +23,8 @@ struct Config {
 
     // jwt
     std::string jwt_secret;
+    bool jwt_expire;
+    std::chrono::seconds jwt_expire_time;
 
     // db
     std::string db_host;

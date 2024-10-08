@@ -43,7 +43,7 @@ void CORSMiddleware::invoke(const HttpRequestPtr &req, MiddlewareNextCallback &&
         resp->addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
         resp->addHeader("Access-Control-Allow-Credentials", "true");
         mcb(resp);  // 返回响应，终止进一步处理
-        spdlog::info("CORSMiddleware invoked by {} 跨域中间件被调用", origin);
+        spdlog::debug("CORSMiddleware invoked by {} 跨域中间件被调用", origin);
         return;
     }
 

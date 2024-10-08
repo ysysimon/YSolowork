@@ -3,23 +3,26 @@ ip = "0.0.0.0"
 port = 33383
 
 [middleware]
-# 只放行内网ip发来的http请求
+# 只放行内网ip发来的http请求 only allow intranet ip
 IntranetIpFilter = false
-# 只放行本机127.0.0.1或者::1发来的http请求
+# 只放行本机127.0.0.1或者::1发来的http请求 ony allow localhost ip
 LocalHostFilter = false
-# CORS跨域请求
-CORS = false
+# CORS跨域请求 CORS cross-origin request
+CORS = true
 CORSAllowOrigins = [
-        "http://localhost:5173", # 允许本地开发环境
-        # "*", # 允许所有来源, 注意不支持通配符写法，这更像一个开关，表示运行所有跨域请求
-        # "http://example.com", # 允许特定来源, 例如独立部署的前端
+        "http://localhost:5173", # 允许本地开发环境 allow local development
+        # "*", # 允许所有来源, 注意不支持通配符写法，这更像一个开关，表示运行所有跨域请求 allow all origins
+        # "http://example.com", # 允许特定来源, 例如独立部署的前端 allow specific origins
     ]
 
 [jwt]
 secret = "your_secret"
+expire = true # 是否开启过期时间 enable expire time
+expire_time = 432000 # 过期时间 expire time
 
 [database]
 # 注意保证这里的参数和 docker-compose 中的参数一致 (如果使用docker)
+# need to make sure the parameters here are consistent with the parameters in docker-compose (if using docker)
 # postgres://username:password@host:port/database
 host = "localhost"
 port = 5432

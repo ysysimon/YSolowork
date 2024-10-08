@@ -8,7 +8,7 @@ void addCORSHeader(const HttpResponsePtr& resp, const HttpRequestPtr& req)
     auto& config = ConfigSingleton::getInstance().getConfigData();
     if (config.cors)
     {
-        if (config.allowed_origins.find("*") != config.allowed_origins.end())
+        if (config.allowed_origins.find("*") != config.allowed_origins.end() || req == nullptr)
         {
             resp->addHeader("Access-Control-Allow-Origin", "*");
         }
@@ -39,5 +39,17 @@ HttpResponsePtr makeJsonResponse(const Json::Value& json, const HttpStatusCode& 
 
 } 
 
+HttpResponsePtr makeHttpResponse(const std::string& body, const HttpStatusCode& status, const HttpRequestPtr& req, const ContentType& contentType)
+{
+    auto resp = HttpResponse::newHttpResponse();
+    resp->setBody(body);
+    resp->setStatusCode(status);
+    resp->setContentTypeCode(contentType);
+
+    // 添加 CORS 头 这是由于 drogon 的中间件 似乎没有正确处理 Responds 的 CORS 头 先暂时在这里添加
+    addCORSHeader(resp, req);
+
+    return resp;
+}
 
 }

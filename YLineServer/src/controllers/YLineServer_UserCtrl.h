@@ -17,14 +17,20 @@ class UserCtrl : public drogon::HttpController<UserCtrl>
     METHOD_LIST_BEGIN
     // use METHOD_ADD to add your custom processing function here;
     ADD_METHOD_TO(UserCtrl::getUserById, "/api/user/{1}", Get);
+    ADD_METHOD_TO(UserCtrl::getAllUsers, "/api/users", Get);
     ADD_METHOD_TO(UserCtrl::createUser, "/api/user", Post);
+    ADD_METHOD_TO(UserCtrl::updateUser, "/api/user/{1}", Put);
     ADD_METHOD_TO(UserCtrl::login, "/api/auth/login", Post);
+    ADD_METHOD_TO(UserCtrl::logout, "/api/auth/logout", Post);
 
     METHOD_LIST_END
     // your declaration of processing function maybe like this:
     drogon::Task<void> getUserById(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback, int userId);
+    drogon::Task<void> getAllUsers(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback);
     drogon::Task<void> createUser(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback);
+    drogon::Task<void> updateUser(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback, int userId);
     drogon::Task<void> login(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback);
-    // void login(const HttpRequestPtr& req, std::function<void(const HttpResponsePtr &)>&& callback);
+    drogon::Task<void> logout(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback);
+    
 };
 }
