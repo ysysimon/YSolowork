@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.13)
 project(
     YSolowork 
     VERSION 0.0.0
@@ -41,6 +41,17 @@ target_compile_features(YSolowork PRIVATE cxx_std_20)
 set_target_properties(YSolowork PROPERTIES
     CXX_STANDARD_REQUIRED YES
 )
+
+# 添加 Drogon 库
+# find_package(Drogon REQUIRED) 在 Windows 上编译导致错误，改用下面的方式
+# 添加 Drogon 子模块
+# 不知为何 drogon 的 check_include_file_cxx(coroutine HAS_COROUTINE) 无法检测到 coroutine 头文件，所以这里强制开启 coroutine
+# set(HAS_COROUTINE ON CACHE BOOL "Force enable coroutine support for all subprojects" FORCE)
+add_subdirectory(
+    ${YSolowork_SOURCE_DIR}/vendor/drogon
+    ${YSolowork_BINARY_DIR}/vendor/drogon
+)
+cmake_policy(SET CMP0079 NEW) # 3.13 之后的版本需要设置这个来允许跨目录链接
 
 # 添加选项来控制是否构建 YLineServer 和 YLineWorker
 option(BUILD_YLINESERVER "Build YLineServer" ON)

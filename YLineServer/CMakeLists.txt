@@ -59,15 +59,7 @@ find_package(spdlog REQUIRED)
 target_link_libraries(YLineServer PRIVATE spdlog::spdlog_header_only)
 
 # 添加 Drogon 库
-# find_package(Drogon REQUIRED) 在 Windows 上编译导致错误，改用下面的方式
-# 添加 Drogon 子模块
-# 不知为何 drogon 的 check_include_file_cxx(coroutine HAS_COROUTINE) 无法检测到 coroutine 头文件，所以这里强制开启 coroutine
-# set(HAS_COROUTINE ON CACHE BOOL "Force enable coroutine support for all subprojects" FORCE)
-add_subdirectory(
-    ${YSolowork_SOURCE_DIR}/vendor/drogon
-    ${YSolowork_BINARY_DIR}/vendor/drogon
-)
-target_link_libraries(YLineServer PRIVATE drogon) # 注意大小写!!!
+target_link_libraries(YLineServer PRIVATE drogon) # 注意大小写!!! 作为 git 子模块的 drogon 项目名为小写
 
 # 添加 jwt++ 库
 add_subdirectory(
