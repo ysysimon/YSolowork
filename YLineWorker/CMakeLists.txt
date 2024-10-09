@@ -11,6 +11,7 @@ message("YLineWorker_BUILD_PATH: ${YLineWorker_BUILD_PATH}")
 # 设置 YLineWorker 源文件
 set(YLineWorker_SOURCES
     src/main.cpp
+    src/ui.cpp
 )
 
 # 创建 YLineWorker 可执行文件
