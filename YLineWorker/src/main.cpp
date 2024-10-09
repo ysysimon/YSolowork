@@ -1,3 +1,5 @@
+#include "UTconsoleUTF8.h"
+
 #include <cstdlib>
 #include <memory>  // for shared_ptr, allocator, __shared_ptr_access
  
@@ -10,6 +12,9 @@
 using namespace ftxui;
  
 int main() {
+  // set console to UTF-8
+  YSolowork::untility::setConsoleUTF8();
+
   auto screen = ScreenInteractive::Fullscreen();
  
   auto middle = Renderer([] { return text("middle") | center; });

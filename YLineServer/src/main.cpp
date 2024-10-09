@@ -3,8 +3,13 @@
 #include "app.h"
 #include "database.h"
 
+#include "UTconsoleUTF8.h"
+
 int main()
 {
+    // set console to UTF-8
+    YSolowork::untility::setConsoleUTF8();
+
     // create logger
     auto logger = YLineServer::createLogger();
     logger->flush_on(spdlog::level::err);

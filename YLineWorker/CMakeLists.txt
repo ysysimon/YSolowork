@@ -19,8 +19,8 @@ add_executable(
     ${YLineWorker_SOURCES}
 )
 # 设置 YLineWorker 编译选项
+target_compile_features(YLineWorker PRIVATE cxx_std_20)
 set_target_properties(YLineWorker PROPERTIES
-    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
     RUNTIME_OUTPUT_DIRECTORY ${YLineWorker_BUILD_PATH}
 )
@@ -46,3 +46,6 @@ target_link_libraries(
     ftxui::dom
     ftxui::component
 ) 
+
+# 添加 YSolowork 库
+target_link_libraries(YLineWorker PRIVATE YSolowork)

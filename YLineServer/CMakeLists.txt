@@ -34,8 +34,8 @@ add_executable(
     ${YLineServer_SOURCES}
 )
 # 设置 YLineServer 编译选项
+target_compile_features(YLineServer PRIVATE cxx_std_20)
 set_target_properties(YLineServer PROPERTIES
-    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
     RUNTIME_OUTPUT_DIRECTORY ${YLineServer_BUILD_PATH}
 )
