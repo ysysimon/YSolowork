@@ -28,6 +28,9 @@ std::shared_ptr<spdlog::logger> createLogger() {
 
     // 设置日志级别
     logger->set_level(spdlog::level::debug);
+    
+    // 设置日志级别为 err 时立即刷新
+    logger->flush_on(spdlog::level::err);
 
     // 设置为默认日志记录器
     spdlog::set_default_logger(logger);

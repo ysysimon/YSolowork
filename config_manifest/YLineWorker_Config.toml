@@ -1,0 +1,12 @@
+[server]
+ip = "0.0.0.0"
+port = 33393
+
+[middleware]
+# 只放行内网ip发来的http请求 only allow intranet ip
+IntranetIpFilter = false
+# 只放行本机127.0.0.1或者::1发来的http请求 ony allow localhost ip
+LocalHostFilter = false
+
+[logger]
+level = "info"

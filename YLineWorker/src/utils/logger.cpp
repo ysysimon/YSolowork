@@ -12,7 +12,7 @@ namespace YLineWorker {
 std::shared_ptr<spdlog::logger> createLogger() {
     // 获取当前时间戳作为日志文件名的一部分
     std::string timestamp = YSolowork::untility::getCurrentTimestampStr();
-    std::string logFilename = "logs/YLineServer_log_" + timestamp + ".log";
+    std::string logFilename = "logs/YLineWorkerService/" + timestamp + ".log";
 
     // 创建控制台输出 sink（带颜色）
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -28,6 +28,9 @@ std::shared_ptr<spdlog::logger> createLogger() {
 
     // 设置日志级别
     logger->set_level(spdlog::level::debug);
+
+    // 设置日志级别为 err 时立即刷新
+    logger->flush_on(spdlog::level::err);
 
     // 设置为默认日志记录器
     spdlog::set_default_logger(logger);

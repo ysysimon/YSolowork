@@ -64,8 +64,11 @@ target_link_libraries(YLineWorkerUI PRIVATE drogon) # 注意大小写!!! 作为 
 # 设置 YLineWorker 源文件
 set(YLineWorker_SOURCES
     src/YLineWorker.cpp
+    src/worker.cpp
     # UT
     src/utils/logger.cpp
+    src/utils/config.cpp
+    src/utils/api.cpp
 )
 
 # 创建 YLineWorker 可执行文件
@@ -103,3 +106,12 @@ target_link_libraries(YLineWorker PRIVATE drogon) # 注意大小写!!! 作为 gi
 
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineWorker PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)
+
+# 自定义命令：复制配置文件
+add_custom_command(
+    TARGET YLineWorker POST_BUILD  # 在 YLineWorker 构建完成后执行
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${YSolowork_SOURCE_DIR}/config_manifest/YLineWorker_Config.toml  # 配置文件源路径
+            ${YLineWorker_BUILD_PATH}/YLineWorker_Config.toml  # 目标路径
+    COMMENT "Copying config files to build directory"
+)

@@ -12,8 +12,6 @@ int main()
 
     // create logger
     auto logger = YLineServer::createLogger();
-    logger->flush_on(spdlog::level::err);
-    spdlog::set_default_logger(logger);
 
     spdlog::info("YLineServer starting 启动中...");
     try {
