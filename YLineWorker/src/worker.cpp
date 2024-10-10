@@ -1,5 +1,4 @@
 #include "worker.h"
-#include "drogon/HttpClient.h"
 #include "drogon/IntranetIpFilter.h"
 #include "drogon/LocalHostFilter.h"
 #include <drogon/drogon.h>
@@ -94,6 +93,8 @@ void WorkerSingleton::setWorkerData(const worker& workerData) {
     workerData_ = workerData;
 }
 
+// WebSocket 回调函数
+
 void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebSocketClientPtr& wsClient) {
     if (result == ReqResult::Ok) {
         spdlog::info("Connected to server 成功连接到服务器");
@@ -103,12 +104,30 @@ void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebS
 
 }
 
+
+Task<> msgAsyncCallback(std::string&& message,
+                       const WebSocketClientPtr& client,
+                       const WebSocketMessageType& type)
+{
+    // 打印接收到的消息
+    spdlog::info("Received message: {}", message);
+
+    // 可以执行其他异步任务，比如数据库查询、网络请求等
+    // co_await asyncDatabaseQuery();
+
+    client->getConnection()->send("hoho");
+    
+    co_return;
+}
+
+
 void WorkerSingleton::connectToServer() {
     // 获取 client
     auto client = getWorkerData().client;
     // 连接到服务器
     auto req = drogon::HttpRequest::newHttpRequest();
     req->setPath("/ws/worker");
+    client->setAsyncMessageHandler(msgAsyncCallback);
     client->connectToServer(
         req,
         WSconnectCallback

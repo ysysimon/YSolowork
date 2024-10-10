@@ -6,7 +6,8 @@ using namespace YLineServer;
 void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::string &&message, const WebSocketMessageType &type)
 {
     // write your application logic here
-    wsConnPtr->send(message);
+    wsConnPtr->send("haha");
+    spdlog::info("Received message: {}", message);
     
 }
 
@@ -17,6 +18,7 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::info("{} want to connect to WorkerCtrl WebSocket", reqPeerAddr.toIpPort());
     spdlog::info("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
+    wsConnPtr->send("hello");
 }
 
 void WorkerCtrl::handleConnectionClosed(const WebSocketConnectionPtr& wsConnPtr)
