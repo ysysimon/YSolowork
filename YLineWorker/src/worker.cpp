@@ -11,7 +11,6 @@
 #include <string>
 #include <trantor/utils/Logger.h>
 
-
 namespace YLineWorker {
 
 void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> custom_logger)

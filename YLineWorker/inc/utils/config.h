@@ -2,6 +2,7 @@
 #define YLINEWORKER_CONFIG_H
 
 #include <spdlog/spdlog.h>
+#include "UTmachineInfo.h"
 
 namespace YLineWorker {
 
@@ -21,6 +22,9 @@ struct Config {
 
     // log
     spdlog::level::level_enum log_level;
+
+    // Machine Info
+    YSolowork::untility::MachineInfo machineInfo;
 
 };
 
@@ -45,6 +49,9 @@ public:
 
     // 设置配置数据
     void setConfigData(const Config& configData);
+
+    // 打印机器信息
+    void logMachineInfo() const;
 
 private:
     ConfigSingleton() = default;  // 私有构造函数，防止外部实例化
