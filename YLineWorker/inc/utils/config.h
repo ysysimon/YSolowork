@@ -7,9 +7,13 @@ namespace YLineWorker {
 
 // 结构体: 配置
 struct Config {
-    // server
-    std::string server_ip;
-    int server_port;
+    // YLineWorker
+    std::string YLineWorker_ip;
+    int YLineWorker_port;
+
+    // YLineServer
+    std::string YLineServer_ip;
+    int YLineServer_port;
 
     // middleware
     bool intranet_ip_filter;

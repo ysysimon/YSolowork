@@ -24,7 +24,7 @@ int main() {
     spdlog::info("Log level 日志等级: {}", YLineWorker::reverseLogLevelMap.at(logger->level()));
 
     // debug log
-    spdlog::debug("YLineWorker Service IP 服务器地址: {}, Port 服务器端口: {}", config.server_ip, config.server_port);
+    spdlog::debug("YLineWorker Service IP 服务器地址: {}, Port 服务器端口: {}", config.YLineWorker_ip, config.YLineWorker_port);
 
     // start server
     YLineWorker::spawnWorker(config, logger);

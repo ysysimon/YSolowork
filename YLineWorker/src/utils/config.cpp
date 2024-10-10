@@ -29,28 +29,33 @@ toml::table getTable(const std::string& tablename, const toml::table& table) {
 Config parseConfig() {
     // get executable path and YLine config path
     const std::filesystem::path& exePath = YSolowork::untility::getExecutablePath();
-    const std::filesystem::path& YLineServerConfigPath = exePath / "YLineWorker_Config.toml";
-    spdlog::info("Config file path 配置文件路径: {}", YLineServerConfigPath.string());
+    const std::filesystem::path& YLineWorkerConfigPath = exePath / "YLineWorker_Config.toml";
+    spdlog::info("Config file path 配置文件路径: {}", YLineWorkerConfigPath.string());
     spdlog::info(
         "\n----------Start to parse YLineServer config file 开始解析 YLineWorker 配置文件----------\n"
         );
 
     // parse YLine config
-    toml::table YLineServerConfig = toml::parse_file(YLineServerConfigPath.string());
+    toml::table YLineWorkerConfig = toml::parse_file(YLineWorkerConfigPath.string());
 
-    // get YLineServer config
-    // 读取 server 部分
-    const auto& server = getTable("server", YLineServerConfig);
-    const std::string& serverIp = server["ip"].value_or("0.0.0.0"); // 默认值 ip
-    int serverPort = server["port"].value_or(33383);         // 默认端口
+    // get YLineWorker config
+    // 读取 YLineWorker 部分
+    const auto& YLineWorker = getTable("YLineWorker", YLineWorkerConfig);
+    const std::string& YLineWorkerIp = YLineWorker["ip"].value_or("0.0.0.0"); // 默认值 ip
+    int YLineWorkerPort = YLineWorker["port"].value_or(33393);         // 默认端口
+
+    // 读取 YLineServer 部分
+    const auto& YLineServer = getTable("YLineServer", YLineWorkerConfig);
+    const std::string& YLineServerIp = YLineServer["ip"].value_or("0.0.0.0");
+    int YLineServerPort = YLineServer["port"].value_or(33383);
 
     // 读取 middleware 部分
-    const auto& middleware = getTable("middleware", YLineServerConfig);
+    const auto& middleware = getTable("middleware", YLineWorkerConfig);
     bool intranetIpFilter = middleware["IntranetIpFilter"].value_or(false);
     bool localHostFilter = middleware["LocalHostFilter"].value_or(false);
 
     // 读取 logger 部分
-    const auto& loggerTbl = getTable("logger", YLineServerConfig);
+    const auto& loggerTbl = getTable("logger", YLineWorkerConfig);
     const std::string& logLevelStr = loggerTbl["level"].value_or("debug");
     auto logLevel = spdlog::level::info;
     try {
@@ -66,8 +71,10 @@ Config parseConfig() {
         "\n----------End of parsing YLineServer config file 解析 YLineWorker 配置文件结束----------\n"
         );
     return Config{
-        serverIp, 
-        serverPort,
+        YLineWorkerIp,
+        YLineWorkerPort,
+        YLineServerIp,
+        YLineServerPort,
         intranetIpFilter,
         localHostFilter,
         logLevel

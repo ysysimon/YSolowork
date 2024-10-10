@@ -1,12 +1,15 @@
 #include "worker.h"
+#include "drogon/HttpClient.h"
 #include "drogon/IntranetIpFilter.h"
 #include "drogon/LocalHostFilter.h"
+#include <drogon/drogon.h>
 #include "utils/logger.h"
 #include "utils/api.h"
 
+#include <format>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
-#include <drogon/drogon.h>
+#include <string>
 #include <trantor/utils/Logger.h>
 
 
@@ -26,7 +29,7 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     trantor::Logger::enableSpdLog(custom_logger);
     trantor::Logger::setLogLevel(YLineWorker::spdlogToDrogonLogLevel.at(config.log_level));
 
-    drogon::app().addListener(config.server_ip, config.server_port);
+    drogon::app().addListener(config.YLineWorker_ip, config.YLineWorker_port);
 
     // 设置自定义 404 页面
     // auto resp404 = drogon::HttpResponse::newNotFoundResponse();
@@ -57,9 +60,59 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
         spdlog::info("Local host filter enabled 本地主机过滤器已启用");
     }
 
+    std::string conn_str = std::format("ws://{}:{}", config.YLineServer_ip, config.YLineServer_port);
+    spdlog::info("Connecting to server 连接到服务器: {}", conn_str);
+    auto client = drogon::WebSocketClient::newWebSocketClient(
+        conn_str
+    );
+    // 设置 worker 数据
+    WorkerSingleton::getInstance().setWorkerData({
+        .worker_id = "worker_id",
+        .worker_name = "worker_name",
+        .client = client
+    });
+    // 连接到服务器
+    WorkerSingleton::getInstance().connectToServer();
+    
+
     spdlog::info("YLineWorker Service started 服务已启动");
     drogon::app().run();
 
 }
 
+// 单例类: Worker 定义
+WorkerSingleton& WorkerSingleton::getInstance() {
+    static WorkerSingleton instance;  // 静态局部变量，确保只初始化一次
+    return instance;
 }
+
+const worker& WorkerSingleton::getWorkerData() const {
+    return workerData_;
+}
+
+void WorkerSingleton::setWorkerData(const worker& workerData) {
+    workerData_ = workerData;
+}
+
+void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebSocketClientPtr& wsClient) {
+    if (result == ReqResult::Ok) {
+        spdlog::info("Connected to server 成功连接到服务器");
+    } else {
+        spdlog::error("Failed to connect to server 连接服务器失败: {}", to_string(result));
+    }
+
+}
+
+void WorkerSingleton::connectToServer() {
+    // 获取 client
+    auto client = getWorkerData().client;
+    // 连接到服务器
+    auto req = drogon::HttpRequest::newHttpRequest();
+    req->setPath("/ws/worker");
+    client->connectToServer(
+        req,
+        WSconnectCallback
+    );
+}
+
+} // namespace YLineWorker

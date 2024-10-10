@@ -1,6 +1,14 @@
-[server]
+[YLineWorker]
+# YLineWorker 服务监听的ip和端口 
+# YLineWorker service listen ip and port
 ip = "0.0.0.0"
 port = 33393
+
+[YLineServer]
+# YLineServer 的ip和端口
+# YLineServer's ip and port
+ip = "localhost"
+port = 33383
 
 [middleware]
 # 只放行内网ip发来的http请求 only allow intranet ip
