@@ -1,5 +1,5 @@
-#ifndef UTmachineInfo
-#define UTmachineInfo
+#ifndef UTmachineInfo_H
+#define UTmachineInfo_H
 
 #include "string"
 #include <string>
@@ -81,7 +81,4 @@ double getTotalMemoryGB();
 SystomInfo getSystomInfo();
 
 } // namespace YSolowork::untility
-
-
-
-#endif // UTmachineInfo
+#endif // UTmachineInfo_H

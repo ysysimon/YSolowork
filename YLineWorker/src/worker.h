@@ -5,6 +5,7 @@
 #include "drogon/WebSocketClient.h"
 #include <spdlog/spdlog.h>
 #include <memory>
+#include <trantor/net/EventLoop.h>
 
 #include "UTmachineInfo.h"
 
@@ -21,6 +22,7 @@ struct worker {
 
     // machine info
     YSolowork::untility::MachineInfo worker_machineInfo;
+
 };
 
 class WorkerSingleton {
@@ -40,7 +42,9 @@ public:
 
     // 连接到服务器
     void connectToServer();
-
+    
+    // timer
+    trantor::TimerId usageInfoCPUtimer;
 private:
     // 私有构造函数，防止外部实例化
     WorkerSingleton() = default;

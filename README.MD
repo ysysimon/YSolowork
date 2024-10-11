@@ -38,4 +38,4 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
 
 #### Linux
 - intel-oneapi-runtime-opencl (for x86 CPU (Intel/AMD) device detect 用于 x86 CPU (Intel/AMD) 设备检测)
-- intel-oneapi-runtime-libs
+- intel-oneapi-runtime-libs (for libsvml.so)

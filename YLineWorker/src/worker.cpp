@@ -12,6 +12,8 @@
 #include <trantor/utils/Logger.h>
 #include <magic_enum.hpp>
 
+#include "UTusage.h"
+
 namespace YLineWorker {
 
 MachineInfo getMachineInfo()
@@ -170,6 +172,28 @@ void WorkerSingleton::setWorkerData(const worker& workerData) {
 void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebSocketClientPtr& wsClient) {
     if (result == ReqResult::Ok) {
         spdlog::info("Connected to server 成功连接到服务器");
+        // 获取当前的 event loop
+        auto loop = trantor::EventLoop::getEventLoopOfCurrentThread();
+        if (!loop) {
+            spdlog::error("Failed to get current event loop 获取当前事件循环失败");
+            return;
+        }
+
+        // 每秒 发送一次 CPU 和 内存 使用率
+        auto _usageInfoCPUtimer = loop->runEvery(1.0, [wsClient]() {
+            Json::Value json;
+            UsageInfoCPU usageInfoCPU = YSolowork::untility::getUsageInfoCPU();
+            json["cpuUsage"] = usageInfoCPU.cpuUsage;
+            json["memoryUsage"] = usageInfoCPU.memoryUsage;
+            if (wsClient)
+            {
+                wsClient->getConnection()->sendJson(json);
+            }
+        
+        });
+
+        WorkerSingleton::getInstance().usageInfoCPUtimer = _usageInfoCPUtimer;
+
     } else {
         spdlog::error("Failed to connect to server 连接服务器失败: {}", to_string(result));
     }
@@ -181,17 +205,29 @@ Task<> msgAsyncCallback(std::string&& message,
                        const WebSocketClientPtr& client,
                        const WebSocketMessageType& type)
 {
-    // 打印接收到的消息
-    spdlog::info("Received message: {}", message);
+    if (type == WebSocketMessageType::Text)
+    {
+        // 打印接收到的消息
+        spdlog::info("Received message: {}", message);
+    }
+    
 
     // 可以执行其他异步任务，比如数据库查询、网络请求等
     // co_await asyncDatabaseQuery();
-
-    client->getConnection()->send("hoho");
     
     co_return;
 }
 
+void WSconnectClosedCallback(const WebSocketClientPtr& wsClient) {
+    spdlog::warn("Server Connection closed 服务器连接已断开");
+    // 取消定时器
+    auto loop = trantor::EventLoop::getEventLoopOfCurrentThread();
+    if (!loop) {
+        spdlog::error("Failed to get current event loop 获取当前事件循环失败");
+        return;
+    }
+    loop->invalidateTimer(WorkerSingleton::getInstance().usageInfoCPUtimer);
+}
 
 void WorkerSingleton::connectToServer() {
     // 获取 client
@@ -200,6 +236,7 @@ void WorkerSingleton::connectToServer() {
     auto req = drogon::HttpRequest::newHttpRequest();
     req->setPath("/ws/worker");
     client->setAsyncMessageHandler(msgAsyncCallback);
+    client->setConnectionClosedHandler(WSconnectClosedCallback);
     client->connectToServer(
         req,
         WSconnectCallback

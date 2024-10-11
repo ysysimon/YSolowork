@@ -1,7 +1,7 @@
 #include "utils/logger.h"
 #include "UTtime.h"
 
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <memory>
 
@@ -17,8 +17,8 @@ std::shared_ptr<spdlog::logger> createLogger() {
     // 创建控制台输出 sink（带颜色）
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 
-    // 创建文件输出 sink
-    auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilename, true);
+    // 创建文件输出 sink （每个文件最大 5MB，最多保留 3 个文件）
+    auto file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logFilename, 1024 * 1024 * 5, 3);
 
     // 创建多 sink logger，将日志同时输出到控制台和文件
     auto logger = std::make_shared<spdlog::logger>("multi_sink", spdlog::sinks_init_list{console_sink, file_sink});
