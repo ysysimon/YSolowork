@@ -39,7 +39,7 @@ target_link_libraries(YSolowork PRIVATE Boost::process Boost::system)
 # endif()
 
 # 添加 OpenCL 库
-find_package(OpenCL CONFIG REQUIRED)
+find_package(OpenCL REQUIRED)
 target_link_libraries(YSolowork PRIVATE OpenCL::OpenCL)
 
 # 设置 YSolowork 库编译选项

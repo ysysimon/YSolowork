@@ -7,3 +7,6 @@
 [submodule "vendor/ftxui"]
 	path = vendor/ftxui
 	url = git@github.com:ArthurSonzogni/FTXUI.git
+[submodule "vendor/magic_enum"]
+	path = vendor/magic_enum
+	url = git@github.com:Neargye/magic_enum.git

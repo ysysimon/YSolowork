@@ -67,7 +67,7 @@ double getTotalMemoryGB() {
     return bytesToGB(getTotalMemoryBytes());
 }
 
-
+#if defined(_WIN32) || defined(_WIN64)
 // 宽字符转换为多字节字符
 std::string WideStringToString(const std::wstring& wstr) {
     if (wstr.empty()) return std::string();
@@ -77,6 +77,16 @@ std::string WideStringToString(const std::wstring& wstr) {
     WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &str[0], size_needed, NULL, NULL);
     return str;
 }
+#elif defined(__linux__)
+std::unordered_map<std::string, Architecture> archMap = {
+    {"x86_64", Architecture::x86_64},
+    {"i686", Architecture::x86},
+    {"x86", Architecture::x86},
+    {"arm64", Architecture::arm64},
+    {"aarch64", Architecture::arm64},
+    {"arm", Architecture::arm},
+};
+#endif
 
 SystomInfo getSystomInfo()
 {
@@ -144,7 +154,18 @@ SystomInfo getSystomInfo()
     systomInfo.osName = uts.sysname;
     systomInfo.osRelease = uts.release;
     systomInfo.osVersion = uts.version;
-    systomInfo.osArchitecture = uts.machine;
+
+    std::string machineStr = uts.machine;
+    std::transform(machineStr.begin(), machineStr.end(), machineStr.begin(), ::tolower);
+
+    // 查找架构并设置
+    auto it = archMap.find(machineStr);
+    if (it != archMap.end()) {
+        systomInfo.osArchitecture = it->second;
+    } else {
+        systomInfo.osArchitecture = Architecture::Unknown;
+    }
+
 #else
     #error "Unsupported platform"
 #endif
