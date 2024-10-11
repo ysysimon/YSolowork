@@ -29,5 +29,4 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
     - jsoncpp
     - uuid
     - zlib
-    - libpq (PostgreSQL)
 - toml++ (header only) (build with project)
