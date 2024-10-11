@@ -31,10 +31,7 @@ Config parseConfig() {
     const std::filesystem::path& exePath = YSolowork::untility::getExecutablePath();
     const std::filesystem::path& YLineWorkerConfigPath = exePath / "YLineWorker_Config.toml";
     spdlog::info("Config file path 配置文件路径: {}", YLineWorkerConfigPath.string());
-    spdlog::info(
-        "\n----------Start to parse YLineServer config file 开始解析 YLineWorker 配置文件----------\n"
-        );
-
+    
     // parse YLine config
     toml::table YLineWorkerConfig = toml::parse_file(YLineWorkerConfigPath.string());
 
@@ -67,9 +64,6 @@ Config parseConfig() {
         spdlog::warn("Using default log level 使用默认日志等级: info");
     }
 
-    spdlog::info(
-        "\n----------End of parsing YLineServer config file 解析 YLineWorker 配置文件结束----------\n"
-        );
     return Config{
         YLineWorkerIp,
         YLineWorkerPort,
@@ -78,7 +72,6 @@ Config parseConfig() {
         intranetIpFilter,
         localHostFilter,
         logLevel,
-        YSolowork::untility::getMachineInfo(),
         };
 }
 
@@ -98,32 +91,6 @@ const Config& ConfigSingleton::getConfigData() const
 void ConfigSingleton::setConfigData(const Config& configData) 
 {
     configData_ = configData;
-}
-
-void ConfigSingleton::logMachineInfo() const
-{
-    const YSolowork::untility::MachineInfo& machineInfo = configData_.machineInfo;
-
-    spdlog::info(
-        "\n---------- Machine Info 机器信息 ----------\n\n"
-        "Machine Name 机器名: {}\n"
-        "CPU Cores CPU 核心数: {}\n"
-        "CPU Info CPU 信息: {}\n"
-        "Total Memory 总内存: {:.2f} GB\n"
-        "OS Name 操作系统名: {}\n"
-        "OS Release 操作系统发行版: {}\n"
-        "OS Version 操作系统版本: {}\n"
-        "OS Architecture 操作系统架构: {}\n"
-        "\n---------- End of Machine Info 机器信息结束 ----------\n",
-        machineInfo.machineName,
-        machineInfo.cpuCores,
-        machineInfo.cpuInfo,
-        machineInfo.totalMemoryGB,
-        machineInfo.systomInfo.osName,
-        machineInfo.systomInfo.osRelease,
-        machineInfo.systomInfo.osVersion,
-        machineInfo.systomInfo.osArchitecture
-    );
 }
 
 } // namespace YLineWorker

@@ -6,10 +6,13 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
 
 ### 开发依赖
 
-#### YLineServer
-- spdlog
+#### YSolowork
 - Boost.process (建议使用官方repo安装)
     - Boost.system
+- OpenCL (for device info)
+
+#### YLineServer
+- spdlog
 - botan (建议使用官方repo安装)
 - Drogon (build with project)
     - jsoncpp
@@ -18,3 +21,13 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
     - libpq (PostgreSQL)
 - toml++ (header only) (build with project)
 - jwt++ (build with project)
+
+#### YLineWorker
+- magic_enum
+- spdlog
+- Drogon (build with project)
+    - jsoncpp
+    - uuid
+    - zlib
+    - libpq (PostgreSQL)
+- toml++ (header only) (build with project)

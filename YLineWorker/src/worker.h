@@ -6,6 +6,8 @@
 #include <spdlog/spdlog.h>
 #include <memory>
 
+#include "UTmachineInfo.h"
+
 namespace YLineWorker {
 
 // 结构体: worker
@@ -16,6 +18,9 @@ struct worker {
 
     // worker connection
     drogon::WebSocketClientPtr client;
+
+    // machine info
+    YSolowork::untility::MachineInfo worker_machineInfo;
 };
 
 class WorkerSingleton {
@@ -47,6 +52,13 @@ private:
 
 
 void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> custom_logger);
+
+
+using namespace YSolowork::untility;
+
+MachineInfo getMachineInfo();
+
+void logWorkerMachineInfo(const MachineInfo& machineInfo);
 
 }
 #endif // YLINEWORKER_APP_H

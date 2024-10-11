@@ -107,6 +107,10 @@ target_link_libraries(YLineWorker PRIVATE drogon) # 注意大小写!!! 作为 gi
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineWorker PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)
 
+# 添加 magic_enum 库
+find_package(magic_enum CONFIG REQUIRED)
+target_link_libraries(YLineWorker PRIVATE magic_enum::magic_enum)
+
 # 自定义命令：复制配置文件
 add_custom_command(
     TARGET YLineWorker POST_BUILD  # 在 YLineWorker 构建完成后执行

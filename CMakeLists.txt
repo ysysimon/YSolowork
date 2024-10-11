@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.15)
 project(
     YSolowork 
     VERSION 0.0.0
@@ -18,6 +18,8 @@ if (MSVC)
     add_compile_options("/utf-8")
     #  Windows.h 定义了 min 和 max 与 std::numeric_limits 发生冲突 (jwt-cpp)
     add_definitions(-DNOMINMAX)
+    # 设置为静态链接运行时库
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 # 引入 Boost::process 和 Boost::system
@@ -35,6 +37,10 @@ target_link_libraries(YSolowork PRIVATE Boost::process Boost::system)
 #     # 这是 boost 需要的
 #     target_compile_definitions(YSolowork PRIVATE _WIN32_WINNT=0x0A00)
 # endif()
+
+# 添加 OpenCL 库
+find_package(OpenCL CONFIG REQUIRED)
+target_link_libraries(YSolowork PRIVATE OpenCL::OpenCL)
 
 # 设置 YSolowork 库编译选项
 target_compile_features(YSolowork PRIVATE cxx_std_20)
