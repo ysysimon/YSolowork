@@ -32,6 +32,10 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
 - toml++ (header only) (build with project)
 
 ### runtime depend
+- dbmate (use to migrate database 用于数据库迁移)
+    - (will download automatically, if have download problem, download here)
+      (应当自动下载，如有下载问题，请在此处下载)
+        - https://github.com/amacneil/dbmate 
 
 #### Windows
 - intel-runtime-opencl (for x86 CPU (Intel/AMD) device detect 用于 x86 CPU (Intel/AMD) 设备检测)

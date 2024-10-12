@@ -9,7 +9,6 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
     // write your application logic here
     if (type == WebSocketMessageType::Text)
     {
-        Json::Value json;
         try {
             Json::Value root;
             Json::CharReaderBuilder reader;

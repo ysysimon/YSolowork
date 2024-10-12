@@ -12,14 +12,30 @@ project(
 # message("YSolowork_BINARY_DIR: ${YSolowork_BINARY_DIR}")
 # message("YSolowork_SOURCE_DIR: ${YSolowork_SOURCE_DIR}")
 
+if(CMAKE_BUILD_TYPE)
+    message(STATUS "Current Build Type: ${CMAKE_BUILD_TYPE}")
+elseif(CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "Available Configurations: ${CMAKE_CONFIGURATION_TYPES}")
+else()
+    message(STATUS "No build type or configuration specified.")
+endif()
+
 # 编译器特定的设置
 if (MSVC)
     # Visual Studio 中使用 /utf-8 编译选项
     add_compile_options("/utf-8")
     #  Windows.h 定义了 min 和 max 与 std::numeric_limits 发生冲突 (jwt-cpp)
     add_definitions(-DNOMINMAX)
-    # 设置为静态链接运行时库
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    # 强制子项目继承 MSVC 运行时库设置
+    set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+    # 仅在 Release 模式下设置 MSVC 静态运行时库
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        # 单配置生成器（如 Makefile 或 Ninja）
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+    elseif(CMAKE_CONFIGURATION_TYPES)
+        # 多配置生成器（如 Visual Studio）
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Release>:MultiThreaded>")
+    endif()
 endif()
 
 # 引入 Boost::process 和 Boost::system
@@ -31,12 +47,12 @@ file(GLOB YSolowork_SOURCES "${YSolowork_SOURCE_DIR}/src/*.cpp")
 add_library(YSolowork STATIC ${YSolowork_SOURCES})
 # 链接 Boost::process 和 Boost::system
 target_link_libraries(YSolowork PRIVATE Boost::process Boost::system)
-# _WIN32_WINNT 符号的定义已经转移至 cmake 配置脚本中
-# if (MSVC)
-#     # Windows 平台需要定义 _WIN32_WINNT=0x0A00 表示 Windows 10
-#     # 这是 boost 需要的
-#     target_compile_definitions(YSolowork PRIVATE _WIN32_WINNT=0x0A00)
-# endif()
+# _WIN32_WINNT 符号的定义
+if (MSVC)
+    # Windows 平台需要定义 _WIN32_WINNT=0x0A00 表示 Windows 10, 支持的最低 Windows 版本
+    # 这是 boost 需要的
+    target_compile_definitions(YSolowork PRIVATE _WIN32_WINNT=0x0A00)
+endif()
 
 # 添加 OpenCL 库
 find_package(OpenCL REQUIRED)

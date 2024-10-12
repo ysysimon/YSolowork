@@ -159,10 +159,6 @@ WorkerSingleton& WorkerSingleton::getInstance() {
     return instance;
 }
 
-const worker& WorkerSingleton::getWorkerData() const {
-    return workerData_;
-}
-
 void WorkerSingleton::setWorkerData(const worker& workerData) {
     workerData_ = workerData;
 }
@@ -170,6 +166,7 @@ void WorkerSingleton::setWorkerData(const worker& workerData) {
 // WebSocket 回调函数
 
 void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebSocketClientPtr& wsClient) {
+
     if (result == ReqResult::Ok) {
         spdlog::info("Connected to server 成功连接到服务器");
         // 获取当前的 event loop
@@ -181,15 +178,14 @@ void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebS
 
         // 每秒 发送一次 CPU 和 内存 使用率
         auto _usageInfoCPUtimer = loop->runEvery(1.0, [wsClient]() {
-            Json::Value json;
             UsageInfoCPU usageInfoCPU = YSolowork::untility::getUsageInfoCPU();
+            Json::Value json;
             json["cpuUsage"] = usageInfoCPU.cpuUsage;
             json["memoryUsage"] = usageInfoCPU.memoryUsage;
-            if (wsClient)
+            if (wsClient && wsClient->getConnection() && wsClient->getConnection()->connected())
             {
                 wsClient->getConnection()->sendJson(json);
             }
-        
         });
 
         WorkerSingleton::getInstance().usageInfoCPUtimer = _usageInfoCPUtimer;
@@ -231,7 +227,7 @@ void WSconnectClosedCallback(const WebSocketClientPtr& wsClient) {
 
 void WorkerSingleton::connectToServer() {
     // 获取 client
-    auto client = getWorkerData().client;
+    const auto& client = WorkerSingleton::getInstance().workerData_.client;
     // 连接到服务器
     auto req = drogon::HttpRequest::newHttpRequest();
     req->setPath("/ws/worker");

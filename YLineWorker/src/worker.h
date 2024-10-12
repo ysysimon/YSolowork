@@ -34,9 +34,6 @@ public:
     WorkerSingleton(const WorkerSingleton&) = delete;
     WorkerSingleton& operator=(const WorkerSingleton&) = delete;
 
-    // 获取 worker 数据
-    const worker& getWorkerData() const;
-
     // 设置 worker 数据
     void setWorkerData(const worker& workerData);
 
@@ -45,6 +42,7 @@ public:
     
     // timer
     trantor::TimerId usageInfoCPUtimer;
+
 private:
     // 私有构造函数，防止外部实例化
     WorkerSingleton() = default;

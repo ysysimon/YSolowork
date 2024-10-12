@@ -4,11 +4,10 @@
 #include <unistd.h>   // for sleep
 #include <fstream>   // for std::ifstream
 #include <sstream>   // for std::istringstream
+#include <cstdint>  // for int64_t and uint64_t
 #elif defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
-
-#include <cstdint>  // for int64_t and uint64_t
 
 namespace YSolowork::untility {
 
@@ -27,9 +26,10 @@ void cross_platform_sleep(int seconds) noexcept
 }
 
 
-// 计算 CPU 使用率
 #if defined(_WIN32) || defined(_WIN64)
-double calculate_cpu_usage(FILETIME idle_time, FILETIME kernel_time, FILETIME user_time) {
+// Windows
+double calculate_cpu_usage(FILETIME idle_time, FILETIME kernel_time, FILETIME user_time) noexcept
+{
     ULARGE_INTEGER idle, kernel, user;
     idle.LowPart = idle_time.dwLowDateTime;
     idle.HighPart = idle_time.dwHighDateTime;
@@ -55,9 +55,27 @@ double calculate_cpu_usage(FILETIME idle_time, FILETIME kernel_time, FILETIME us
     ULONGLONG total_sys = sys_kernel_diff + sys_user_diff;
     ULONGLONG total_idle = sys_idle_diff;
 
+    // 防止除以0的情况
+    if (total_sys == 0) {
+        // 返回-1表示错误
+        return -1.0;
+    }
+
     return (total_sys - total_idle) * 100.0 / total_sys;
 }
+double get_memory_usage() noexcept
+{
+    MEMORYSTATUSEX mem_info;
+    mem_info.dwLength = sizeof(MEMORYSTATUSEX);
+    if (!GlobalMemoryStatusEx(&mem_info))
+    {
+        return -1.0;  // 返回错误值
+    }
+
+    return (mem_info.ullTotalPhys - mem_info.ullAvailPhys) * 100.0 / mem_info.ullTotalPhys;
+}
 #else
+// Linux
 struct _CpuUsage {
     uint64_t user, nice, system, idle;
     bool error = false;
@@ -139,18 +157,28 @@ UsageInfoCPU getUsageInfoCPU() noexcept
 
 #if defined(_WIN32) || defined(_WIN64)
     // 获取 CPU 使用率
+    // 定义 FILETIME 结构体
     FILETIME idle_time, kernel_time, user_time;
-    GetSystemTimes(&idle_time, &kernel_time, &user_time);
-    cross_platform_sleep(1)  // 等待1秒
     FILETIME idle_time_after, kernel_time_after, user_time_after;
-    GetSystemTimes(&idle_time_after, &kernel_time_after, &user_time_after);
-    usageInfoCPU.cpuUsage = calculate_cpu_usage(idle_time_after, kernel_time_after, user_time_after);
+
+    // 获取初始的系统时间
+    if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
+        // GetSystemTimes 调用失败，返回 -1
+        usageInfoCPU.cpuUsage = -1.0;
+    }
+    cross_platform_sleep(1);  // 等待1秒
+    // 获取系统时间在等待后的状态
+    if (!GetSystemTimes(&idle_time_after, &kernel_time_after, &user_time_after)) {
+        // GetSystemTimes 调用失败，返回 -1
+        usageInfoCPU.cpuUsage = -1.0;
+    }
+    else 
+    {
+        usageInfoCPU.cpuUsage = calculate_cpu_usage(idle_time_after, kernel_time_after, user_time_after);
+    }
 
     // 获取内存使用率
-    MEMORYSTATUSEX mem_info;
-    mem_info.dwLength = sizeof(MEMORYSTATUSEX);
-    GlobalMemoryStatusEx(&mem_info);
-    usageInfoCPU.memoryUsage = (mem_info.ullTotalPhys - mem_info.ullAvailPhys) * 100.0 / mem_info.ullTotalPhys;
+    usageInfoCPU.memoryUsage = get_memory_usage();
 #else
     // 获取 CPU 使用率
     _CpuUsage prev_usage = get_cpu_usage();
