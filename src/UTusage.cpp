@@ -28,29 +28,40 @@ void cross_platform_sleep(int seconds) noexcept
 
 #if defined(_WIN32) || defined(_WIN64)
 // Windows
-double calculate_cpu_usage(FILETIME idle_time, FILETIME kernel_time, FILETIME user_time) noexcept
+struct _CpuUsage {
+    FILETIME idle, kernel, user;
+};
+double calculate_cpu_usage(const _CpuUsage& prev_usage,const _CpuUsage& curr_usage) noexcept
 {
     ULARGE_INTEGER idle, kernel, user;
-    idle.LowPart = idle_time.dwLowDateTime;
-    idle.HighPart = idle_time.dwHighDateTime;
-    kernel.LowPart = kernel_time.dwLowDateTime;
-    kernel.HighPart = kernel_time.dwHighDateTime;
-    user.LowPart = user_time.dwLowDateTime;
-    user.HighPart = user_time.dwHighDateTime;
 
-    ULONGLONG sys_idle = idle.QuadPart;
-    ULONGLONG sys_kernel = kernel.QuadPart;
-    ULONGLONG sys_user = user.QuadPart;
+    // 构造当前的系统时间为 quadpart
+    idle.LowPart = curr_usage.idle.dwLowDateTime;
+    idle.HighPart = curr_usage.idle.dwHighDateTime;
+    kernel.LowPart = curr_usage.kernel.dwLowDateTime;
+    kernel.HighPart = curr_usage.kernel.dwHighDateTime;
+    user.LowPart = curr_usage.user.dwLowDateTime;
+    user.HighPart = curr_usage.user.dwHighDateTime;
 
-    static ULONGLONG prev_sys_idle = 0, prev_sys_kernel = 0, prev_sys_user = 0;
+    ULONGLONG curr_sys_idle = idle.QuadPart;
+    ULONGLONG curr_sys_kernel = kernel.QuadPart;
+    ULONGLONG curr_sys_user = user.QuadPart;
 
-    ULONGLONG sys_idle_diff = sys_idle - prev_sys_idle;
-    ULONGLONG sys_kernel_diff = sys_kernel - prev_sys_kernel;
-    ULONGLONG sys_user_diff = sys_user - prev_sys_user;
+    // 构造之前的系统时间为 quadpart
+    idle.LowPart = prev_usage.idle.dwLowDateTime;
+    idle.HighPart = prev_usage.idle.dwHighDateTime;
+    kernel.LowPart = prev_usage.kernel.dwLowDateTime;
+    kernel.HighPart = prev_usage.kernel.dwHighDateTime;
+    user.LowPart = prev_usage.user.dwLowDateTime;
+    user.HighPart = prev_usage.user.dwHighDateTime;
 
-    prev_sys_idle = sys_idle;
-    prev_sys_kernel = sys_kernel;
-    prev_sys_user = sys_user;
+    ULONGLONG prev_sys_idle = idle.QuadPart;
+    ULONGLONG prev_sys_kernel = kernel.QuadPart;
+    ULONGLONG prev_sys_user = user.QuadPart;
+
+    ULONGLONG sys_idle_diff = curr_sys_idle - prev_sys_idle;
+    ULONGLONG sys_kernel_diff = curr_sys_kernel - prev_sys_kernel;
+    ULONGLONG sys_user_diff = curr_sys_user - prev_sys_user;
 
     ULONGLONG total_sys = sys_kernel_diff + sys_user_diff;
     ULONGLONG total_idle = sys_idle_diff;
@@ -158,23 +169,22 @@ UsageInfoCPU getUsageInfoCPU() noexcept
 #if defined(_WIN32) || defined(_WIN64)
     // 获取 CPU 使用率
     // 定义 FILETIME 结构体
-    FILETIME idle_time, kernel_time, user_time;
-    FILETIME idle_time_after, kernel_time_after, user_time_after;
+    _CpuUsage prev_usage, curr_usage;
 
     // 获取初始的系统时间
-    if (!GetSystemTimes(&idle_time, &kernel_time, &user_time)) {
+    if (!GetSystemTimes(&prev_usage.idle, &prev_usage.kernel, &prev_usage.user)) {
         // GetSystemTimes 调用失败，返回 -1
         usageInfoCPU.cpuUsage = -1.0;
     }
     cross_platform_sleep(1);  // 等待1秒
     // 获取系统时间在等待后的状态
-    if (!GetSystemTimes(&idle_time_after, &kernel_time_after, &user_time_after)) {
+    if (!GetSystemTimes(&curr_usage.idle, &curr_usage.kernel, &curr_usage.user)) {
         // GetSystemTimes 调用失败，返回 -1
         usageInfoCPU.cpuUsage = -1.0;
     }
     else 
     {
-        usageInfoCPU.cpuUsage = calculate_cpu_usage(idle_time_after, kernel_time_after, user_time_after);
+        usageInfoCPU.cpuUsage = calculate_cpu_usage(prev_usage, curr_usage);
     }
 
     // 获取内存使用率
