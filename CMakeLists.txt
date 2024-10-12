@@ -79,6 +79,23 @@ cmake_policy(SET CMP0079 NEW) # 3.13 之后的版本需要设置这个来允许�
 option(BUILD_YLINESERVER "Build YLineServer" ON)
 option(BUILD_YLINEWORKER "Build YLineWorker" ON)
 
+# 指定 NVML 路径
+if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)  # 仅限 Win64
+    set(NVML_LIBRARY_INCLUDE ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Windows)  # Win64 下的头文件路径
+    set(NVML_LIBRARY ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Windows/nvml.lib)  # Win64 下的库文件路径
+elseif(UNIX)
+    set(NVML_LIBRARY_INCLUDE ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Linux)  # Linux 下的头文件路径
+    set(NVML_LIBRARY ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Linux/libnvidia-ml.so)  # Linux 下的库文件路径
+else()
+    message(FATAL_ERROR "Unsupported platform for NVML")
+endif()
+message("NVML_LIBRARY_INCLUDE: ${NVML_LIBRARY_INCLUDE}")
+message("NVML_LIBRARY: ${NVML_LIBRARY}")
+# 链接 NVML 库
+target_include_directories(YSolowork PRIVATE ${NVML_LIBRARY_INCLUDE})
+target_link_libraries(YSolowork PRIVATE ${NVML_LIBRARY})
+
+
 # 添加 YLineServer
 if (BUILD_YLINESERVER)
     add_subdirectory(YLineServer)

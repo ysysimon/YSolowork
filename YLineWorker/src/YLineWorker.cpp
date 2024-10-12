@@ -1,4 +1,5 @@
 #include "UTconsoleUTF8.h"
+#include "UTnvml.h"
 #include "utils/logger.h"
 #include "utils/config.h"
 #include "worker.h"
@@ -25,6 +26,9 @@ int main() {
 
     // debug log
     spdlog::debug("YLineWorker Service IP 服务器地址: {}, Port 服务器端口: {}", config.YLineWorker_ip, config.YLineWorker_port);
+
+    // test nvml
+    spdlog::info("Test NVML 测试 NVML, GPU Name 显卡名称: {}", YSolowork::untility::test_nvml());
 
     // start server
     YLineWorker::spawnWorker(config, logger);
