@@ -81,14 +81,15 @@ option(BUILD_YLINEWORKER "Build YLineWorker" ON)
 
 # 指定 NVML 路径
 if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)  # 仅限 Win64
-    set(NVML_LIBRARY_INCLUDE ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Windows)  # Win64 下的头文件路径
     set(NVML_LIBRARY ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Windows/nvml.lib)  # Win64 下的库文件路径
 elseif(UNIX)
-    set(NVML_LIBRARY_INCLUDE ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Linux)  # Linux 下的头文件路径
-    set(NVML_LIBRARY ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Linux/libnvidia-ml.so)  # Linux 下的库文件路径
+    # set(NVML_LIBRARY ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Linux/libnvidia-ml.so)  # Linux 下的库文件路径
+    # 和 windows 不同, Linux 在程序运行前使用 ld 命令加载动态链接库，所以无法捕获异常，改用 dlopen 方式动态加载
+    # different from windows, Linux load dynamic library before program run, so can't catch exception, use dlopen to load dynamic library
 else()
     message(FATAL_ERROR "Unsupported platform for NVML")
 endif()
+set(NVML_LIBRARY_INCLUDE ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/inc)  # nvml 头文件路径
 message("NVML_LIBRARY_INCLUDE: ${NVML_LIBRARY_INCLUDE}")
 message("NVML_LIBRARY: ${NVML_LIBRARY}")
 # 链接 NVML 库
