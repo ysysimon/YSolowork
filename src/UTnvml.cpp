@@ -27,7 +27,7 @@ std::string test_nvml()
     #if defined(_WIN32) || defined(_WIN64)
     // 使用 GetModuleHandleW 检查 nvml.dll 是否已经加载
     HMODULE hNvml = GetModuleHandleW(L"nvml.dll");
-    if (hNvml) {
+    if (!hNvml) {
         // 如果 DLL 不存在，抛出自定义异常
         throw std::runtime_error("nvml.dll is not loaded or does not exist.");
     }
