@@ -1,106 +1,77 @@
 #include "UTnvml.h"
-#include "nvml.h"
-#include <cstdio>
 #include <stdexcept>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #elif defined(__linux__)
 #include <dlfcn.h>
-
-// 定义函数指针类型
-typedef nvmlReturn_t (*NvmlInitFunc)();
-typedef const char* (*NvmlErrorStringFunc)(nvmlReturn_t);
-typedef nvmlReturn_t (*NvmlDeviceGetHandleByIndexFunc)(unsigned int, nvmlDevice_t*);
-typedef nvmlReturn_t (*NvmlDeviceGetNameFunc)(nvmlDevice_t, char*, unsigned int);
-typedef nvmlReturn_t (*NvmlDeviceGetUtilizationRatesFunc)(nvmlDevice_t, nvmlUtilization_t*);
-typedef nvmlReturn_t (*NvmlShutdownFunc)();
-
 #else
 #error "Unsupported platform"
 #endif
 
 namespace YSolowork::util {
 
-std::string test_nvml()
+Nvml::Nvml() : loader(
+#ifdef _WIN32
+    YSolowork::util::DynamicLibrary("nvml.dll")
+#else
+    YSolowork::util::DynamicLibrary("libnvidia-ml.so")
+#endif
+)
 {
-    #if defined(_WIN32) || defined(_WIN64)
-    // 使用 GetModuleHandleW 检查 nvml.dll 是否已经加载
-    HMODULE hNvml = GetModuleHandleW(L"nvml.dll");
-    if (!hNvml) {
-        // 如果 DLL 不存在，抛出自定义异常
-        throw std::runtime_error("nvml.dll is not loaded or does not exist.");
-    }
 
-    #endif
+    loader.load();
 
+    // 获取函数指针并存储在 std::function 中
+    nvmlInit = loader.getFunction<nvmlReturn_t()>("nvmlInit_v2");
+    nvmlShutdown = loader.getFunction<nvmlReturn_t()>("nvmlShutdown");
+    nvmlDeviceGetHandleByIndex = loader.getFunction<nvmlReturn_t(unsigned int, nvmlDevice_t*)>("nvmlDeviceGetHandleByIndex_v2");
+    nvmlDeviceGetName = loader.getFunction<nvmlReturn_t(nvmlDevice_t, char*, unsigned int)>("nvmlDeviceGetName");
+    nvmlDeviceGetUtilizationRates = loader.getFunction<nvmlReturn_t(nvmlDevice_t, nvmlUtilization_t*)>("nvmlDeviceGetUtilizationRates");
+    nvmlErrorString = loader.getFunction<const char*(nvmlReturn_t)>("nvmlErrorString");
 
-    #if defined(__linux__)
-    // 使用 dlopen 加载共享库，设置 RTLD_NOLOAD 只检测是否已加载
-    void* handle = dlopen("libnvidia-ml.so", RTLD_NOLOAD);
-    // 检查是否有错误
-    const char* _dlerror = dlerror();
-    if (_dlerror || !handle) {
-        // 如果共享库不存在，抛出自定义异常
-        throw std::runtime_error("libnvidia-ml.so is not loaded or does not exist.");
-    }
+    // 调用初始化函数
+    nvmlInit();
+}
 
-    // 获取每个函数的符号地址
-    NvmlInitFunc nvmlInit = (NvmlInitFunc)dlsym(handle, "nvmlInit_v2");
-    NvmlErrorStringFunc nvmlErrorString = (NvmlErrorStringFunc)dlsym(handle, "nvmlErrorString");
-    NvmlDeviceGetHandleByIndexFunc nvmlDeviceGetHandleByIndex = (NvmlDeviceGetHandleByIndexFunc)dlsym(handle, "nvmlDeviceGetHandleByIndex_v2");
-    NvmlDeviceGetNameFunc nvmlDeviceGetName = (NvmlDeviceGetNameFunc)dlsym(handle, "nvmlDeviceGetName");
-    NvmlDeviceGetUtilizationRatesFunc nvmlDeviceGetUtilizationRates = (NvmlDeviceGetUtilizationRatesFunc)dlsym(handle, "nvmlDeviceGetUtilizationRates");
-    NvmlShutdownFunc nvmlShutdown = (NvmlShutdownFunc)dlsym(handle, "nvmlShutdown");
+Nvml::~Nvml()
+{
+    // 调用关闭函数
+    nvmlShutdown();
+}
 
-    // 检查每个符号的加载是否成功
-    const char* error = dlerror();
-    if (error != nullptr) {
-        dlclose(handle);
-        throw std::runtime_error("Failed to load symbol: " + std::string(error));
-    }
-
-    #endif
-
-    // 初始化 NVML 库
-    nvmlReturn_t result = nvmlInit();
-    if (result != NVML_SUCCESS) {
-        throw std::runtime_error("Failed to initialize NVML: " + std::string(nvmlErrorString(result)));
-    }
-
-    // 获取第一个 GPU 设备的句柄
+std::string Nvml::getDeviceName(unsigned int index) {
     nvmlDevice_t device;
-    result = nvmlDeviceGetHandleByIndex(0, &device);
+    nvmlReturn_t result = nvmlDeviceGetHandleByIndex(index, &device);
     if (result != NVML_SUCCESS) {
-        throw std::runtime_error("Failed to get device handle: " + std::string(nvmlErrorString(result)));
+        throw std::runtime_error(std::string("Failed to get device handle: ") + nvmlErrorString(result));
     }
 
-    // 获取 GPU 的名称
+    // 使用 NVML_DEVICE_NAME_BUFFER_SIZE 来定义缓冲区大小
     char name[NVML_DEVICE_NAME_BUFFER_SIZE];
     result = nvmlDeviceGetName(device, name, NVML_DEVICE_NAME_BUFFER_SIZE);
     if (result != NVML_SUCCESS) {
-        throw std::runtime_error("Failed to get device name: " + std::string(nvmlErrorString(result)));
+        throw std::runtime_error(std::string("Failed to get device name: ") + nvmlErrorString(result));
     }
 
-    // 输出 GPU 名称
-    // std::cout << "GPU Name: " << name << std::endl;
-
-    // // 获取 GPU 的使用率
-    // nvmlUtilization_t utilization;
-    // result = nvmlDeviceGetUtilizationRates(device, &utilization);
-    // if (result != NVML_SUCCESS) {
-    //     throw std::runtime_error("Failed to get GPU utilization: " + std::string(nvmlErrorString(result)));
-    // }
-
-    // // 输出 GPU 使用率
-    // std::cout << "GPU Utilization: " << utilization.gpu << "%" << std::endl;
-
-    // 关闭 NVML
-    nvmlShutdown();
-
-    return name;
+    return std::string(name);
 }
 
+int Nvml::getDeviceUtilization(unsigned int index) {
+    nvmlDevice_t device;
+    nvmlReturn_t result = nvmlDeviceGetHandleByIndex(index, &device);
+    if (result != NVML_SUCCESS) {
+        throw std::runtime_error(std::string("Failed to get device handle: ") + nvmlErrorString(result));
+    }
+
+    nvmlUtilization_t utilization;
+    result = nvmlDeviceGetUtilizationRates(device, &utilization);
+    if (result != NVML_SUCCESS) {
+        throw std::runtime_error(std::string("Failed to get device utilization: ") + nvmlErrorString(result));
+    }
+
+    return utilization.gpu;  // 返回 GPU 利用率
+}
 
 
 } // namespace YSolowork::util

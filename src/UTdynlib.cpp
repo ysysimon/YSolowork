@@ -16,8 +16,6 @@ void LibraryDeleter::operator()(void* handle) const
 
 void DynamicLibrary::load() 
 {
-    std::lock_guard<std::mutex> guard(loadMutex); // 加锁保证线程安全
-    
     if (libraryHandle) 
     {
         throw DynamicLibraryException("Library already loaded.");

@@ -5,7 +5,6 @@
 #include <string>
 #include <exception>
 #include <functional>
-#include <mutex>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -53,7 +52,6 @@ public:
 private:
     std::string libraryName;  // 存储库名
     std::shared_ptr<void> libraryHandle;  // 使用 shared_ptr 管理库句柄
-    std::mutex loadMutex; // 保护加载操作的互斥量
 };
 
 

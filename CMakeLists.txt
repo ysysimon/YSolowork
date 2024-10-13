@@ -82,7 +82,7 @@ message("NVML_LIBRARY_INCLUDE: ${NVML_LIBRARY_INCLUDE}")
 # 添加 NVML 头文件路径
 # 只需要添加头文件，在运行时检测加载 nvml, 这将兼容非 NVIDIA 硬件的机器
 # only add include directory, load nvml at runtime, this will be compatible with non-NVIDIA hardware
-target_include_directories(YSolowork PRIVATE ${NVML_LIBRARY_INCLUDE})
+target_include_directories(YSolowork PUBLIC ${NVML_LIBRARY_INCLUDE})
 
 # print build config message
 include(cmake/YSolowork_message.cmake)
