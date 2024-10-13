@@ -8,7 +8,7 @@
 int main()
 {
     // set console to UTF-8
-    YSolowork::untility::setConsoleUTF8();
+    YSolowork::util::setConsoleUTF8();
 
     // create logger
     auto logger = YLineServer::createLogger();

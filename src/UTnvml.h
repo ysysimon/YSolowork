@@ -3,11 +3,11 @@
 
 #include <string>
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 std::string test_nvml();
 
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util
 
 #endif // UTnvml_H

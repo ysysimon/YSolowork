@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <utility>  // for std::pair
 
-namespace YSolowork::untility{
+namespace YSolowork::util{
 
 namespace fs = std::filesystem;
 

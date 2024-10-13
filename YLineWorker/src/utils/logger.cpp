@@ -11,7 +11,7 @@ namespace YLineWorker {
 // 创建日志记录器
 std::shared_ptr<spdlog::logger> createLogger() {
     // 获取当前时间戳作为日志文件名的一部分
-    std::string timestamp = YSolowork::untility::getCurrentTimestampStr();
+    std::string timestamp = YSolowork::util::getCurrentTimestampStr();
     std::string logFilename = "logs/YLineWorkerService/" + timestamp + ".log";
 
     // 创建控制台输出 sink（带颜色）

@@ -20,25 +20,25 @@ MachineInfo getMachineInfo()
 {
     MachineInfo machineInfo;
     try {
-        machineInfo.systomInfo = YSolowork::untility::getSystomInfo();
+        machineInfo.systomInfo = YSolowork::util::getSystomInfo();
     } catch (const std::exception& e) {
         spdlog::error("Failed to get system info 获取系统信息失败: {}", e.what());
         spdlog::warn("System information related features may not work properly 系统信息相关功能可能无法正常工作");
     }
 
     try {
-        machineInfo.machineName = YSolowork::untility::getMachineName();
+        machineInfo.machineName = YSolowork::util::getMachineName();
     } catch (const std::exception& e) {
         spdlog::error("Failed to get machine name 获取机器名失败: {}", e.what());
         spdlog::warn("Machine name related features may not work properly 机器名相关功能可能无法正常工作");
     }
 
     try {
-        machineInfo.devices = YSolowork::untility::getAllDevices();
+        machineInfo.devices = YSolowork::util::getAllDevices();
     } catch (const std::exception& e) {
         machineInfo.devices.emplace_back(
-            YSolowork::untility::Device{
-                .type = YSolowork::untility::deviceType::Unknown,
+            YSolowork::util::Device{
+                .type = YSolowork::util::deviceType::Unknown,
                 .platformName = "Unknown",
                 .name = "Unknown",
                 .cores = 0,
@@ -178,7 +178,7 @@ void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebS
 
         // 每秒 发送一次 CPU 和 内存 使用率
         auto _usageInfoCPUtimer = loop->runEvery(1.0, [wsClient]() {
-            UsageInfoCPU usageInfoCPU = YSolowork::untility::getUsageInfoCPU();
+            UsageInfoCPU usageInfoCPU = YSolowork::util::getUsageInfoCPU();
             Json::Value json;
             json["cpuUsage"] = usageInfoCPU.cpuUsage;
             json["memoryUsage"] = usageInfoCPU.memoryUsage;

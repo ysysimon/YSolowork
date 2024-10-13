@@ -12,14 +12,6 @@ project(
 # message("YSolowork_BINARY_DIR: ${YSolowork_BINARY_DIR}")
 # message("YSolowork_SOURCE_DIR: ${YSolowork_SOURCE_DIR}")
 
-if(CMAKE_BUILD_TYPE)
-    message(STATUS "Current Build Type: ${CMAKE_BUILD_TYPE}")
-elseif(CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Available Configurations: ${CMAKE_CONFIGURATION_TYPES}")
-else()
-    message(STATUS "No build type or configuration specified.")
-endif()
-
 # 编译器特定的设置
 if (MSVC)
     # Visual Studio 中使用 /utf-8 编译选项
@@ -29,6 +21,7 @@ if (MSVC)
     # 强制子项目继承 MSVC 运行时库设置
     set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
     # 仅在 Release 模式下设置 MSVC 静态运行时库
+    # Only set MSVC static runtime library in Release mode
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         # 单配置生成器（如 Makefile 或 Ninja）
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
@@ -36,6 +29,9 @@ if (MSVC)
         # 多配置生成器（如 Visual Studio）
         set(CMAKE_MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Release>:MultiThreaded>")
     endif()
+
+    # for debug MSVC runtim static linking of debug build, but it's not working
+    # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
 endif()
 
 # 引入 Boost::process 和 Boost::system
@@ -78,24 +74,18 @@ cmake_policy(SET CMP0079 NEW) # 3.13 之后的版本需要设置这个来允许�
 # 添加选项来控制是否构建 YLineServer 和 YLineWorker
 option(BUILD_YLINESERVER "Build YLineServer" ON)
 option(BUILD_YLINEWORKER "Build YLineWorker" ON)
+option(YSolowork_QUIET "Quiet build" OFF)
 
 # 指定 NVML 路径
-if (WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)  # 仅限 Win64
-    set(NVML_LIBRARY ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Windows/nvml.lib)  # Win64 下的库文件路径
-elseif(UNIX)
-    # set(NVML_LIBRARY ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/Linux/libnvidia-ml.so)  # Linux 下的库文件路径
-    # 和 windows 不同, Linux 在程序运行前使用 ld 命令加载动态链接库，所以无法捕获异常，改用 dlopen 方式动态加载
-    # different from windows, Linux load dynamic library before program run, so can't catch exception, use dlopen to load dynamic library
-else()
-    message(FATAL_ERROR "Unsupported platform for NVML")
-endif()
 set(NVML_LIBRARY_INCLUDE ${YSolowork_SOURCE_DIR}/vendor_prebuild/nvml/inc)  # nvml 头文件路径
 message("NVML_LIBRARY_INCLUDE: ${NVML_LIBRARY_INCLUDE}")
-message("NVML_LIBRARY: ${NVML_LIBRARY}")
-# 链接 NVML 库
+# 添加 NVML 头文件路径
+# 只需要添加头文件，在运行时检测加载 nvml, 这将兼容非 NVIDIA 硬件的机器
+# only add include directory, load nvml at runtime, this will be compatible with non-NVIDIA hardware
 target_include_directories(YSolowork PRIVATE ${NVML_LIBRARY_INCLUDE})
-target_link_libraries(YSolowork PRIVATE ${NVML_LIBRARY})
 
+# print build config message
+include(cmake/YSolowork_message.cmake)
 
 # 添加 YLineServer
 if (BUILD_YLINESERVER)

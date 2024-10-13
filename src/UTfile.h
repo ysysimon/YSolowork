@@ -3,7 +3,7 @@
 
 #include <filesystem>
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 // 函数: 获取可执行文件路径
 std::filesystem::path getExecutablePath();

@@ -21,7 +21,7 @@ struct worker {
     drogon::WebSocketClientPtr client;
 
     // machine info
-    YSolowork::untility::MachineInfo worker_machineInfo;
+    YSolowork::util::MachineInfo worker_machineInfo;
 
 };
 
@@ -56,7 +56,7 @@ private:
 void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> custom_logger);
 
 
-using namespace YSolowork::untility;
+using namespace YSolowork::util;
 
 MachineInfo getMachineInfo();
 

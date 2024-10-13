@@ -9,7 +9,7 @@
 
 #include <boost/process.hpp>
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 #if defined(_WIN32) || defined(_WIN64)
     const std::string DBMATE_BINARY = "dbmate.exe";
@@ -115,4 +115,4 @@ void downloadDbmate(const std::string& DOWNLOAD_URL, const std::string& DOWNLOAD
     }
 }
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util

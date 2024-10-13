@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 
 // 函数: 获取当前时间戳

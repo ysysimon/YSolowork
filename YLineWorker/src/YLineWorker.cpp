@@ -6,7 +6,7 @@
 
 int main() {
   // set console to UTF-8
-  YSolowork::untility::setConsoleUTF8();
+  YSolowork::util::setConsoleUTF8();
   
   // create logger
   auto logger = YLineWorker::createLogger();
@@ -28,7 +28,7 @@ int main() {
     spdlog::debug("YLineWorker Service IP 服务器地址: {}, Port 服务器端口: {}", config.YLineWorker_ip, config.YLineWorker_port);
 
     // test nvml
-    spdlog::info("Test NVML 测试 NVML, GPU Name 显卡名称: {}", YSolowork::untility::test_nvml());
+    spdlog::info("Test NVML 测试 NVML, GPU Name 显卡名称: {}", YSolowork::util::test_nvml());
 
     // start server
     YLineWorker::spawnWorker(config, logger);

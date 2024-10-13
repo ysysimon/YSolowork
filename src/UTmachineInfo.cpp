@@ -13,7 +13,7 @@ typedef LONG(WINAPI* RtlGetVersionFunc)(PRTL_OSVERSIONINFOW);
 #include <thread>
 #include <CL/opencl.hpp>
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 std::string getMachineName()
 {
@@ -221,4 +221,4 @@ std::vector<Device> getAllDevices()
     return devices;
 }
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util

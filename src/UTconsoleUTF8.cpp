@@ -10,7 +10,7 @@
 #endif
 
 
-namespace YSolowork::untility{
+namespace YSolowork::util{
 
 void setConsoleUTF8() {
 #if defined(_WIN32) || defined(_WIN64)
@@ -37,4 +37,4 @@ void setConsoleUTF8() {
 
 
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util

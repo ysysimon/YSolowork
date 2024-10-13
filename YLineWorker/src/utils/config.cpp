@@ -28,7 +28,7 @@ toml::table getTable(const std::string& tablename, const toml::table& table) {
 
 Config parseConfig() {
     // get executable path and YLine config path
-    const std::filesystem::path& exePath = YSolowork::untility::getExecutablePath();
+    const std::filesystem::path& exePath = YSolowork::util::getExecutablePath();
     const std::filesystem::path& YLineWorkerConfigPath = exePath / "YLineWorker_Config.toml";
     spdlog::info("Config file path 配置文件路径: {}", YLineWorkerConfigPath.string());
     

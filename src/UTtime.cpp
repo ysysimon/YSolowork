@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 std::string getCurrentTimestampStr() {
     auto now = std::chrono::system_clock::now();

@@ -20,7 +20,7 @@ typedef nvmlReturn_t (*NvmlShutdownFunc)();
 #error "Unsupported platform"
 #endif
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 std::string test_nvml()
 {
@@ -103,4 +103,4 @@ std::string test_nvml()
 
 
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util

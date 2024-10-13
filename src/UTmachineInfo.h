@@ -7,7 +7,7 @@
 #include <cstdint>  // For uint64_t
 #include <vector>
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 // 枚举: 操作系统
 enum class OS {
@@ -80,5 +80,5 @@ double getTotalMemoryGB();
 // 函数: 获取系统信息
 SystomInfo getSystomInfo();
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util
 #endif // UTmachineInfo_H

@@ -57,9 +57,9 @@ void initDataBasePostgres(const Config& config) {
 
 void downloadDBMATEifNotExist(const Config& config) {
     // download dbmate if not exist
-    if (!YSolowork::untility::isDbmateInstalled(config.dbmate_path)) {
+    if (!YSolowork::util::isDbmateInstalled(config.dbmate_path)) {
         spdlog::info("Downloading dbmate... 下载 dbmate...");
-        YSolowork::untility::downloadDbmate(config.dbmate_download_url, config.dbmate_download_name, config.dbmate_path);
+        YSolowork::util::downloadDbmate(config.dbmate_download_url, config.dbmate_download_name, config.dbmate_path);
     }
 }
 
@@ -84,8 +84,8 @@ drogon::orm::PostgresConfig getDrogonPostgresConfig (const Config& config) {
 void migrateDatabase(const Config& config) {
     spdlog::info("Migrating database... 数据库迁移...");
     try {
-        spdlog::debug("Dbmate Path: {}", (config.dbmate_path / YSolowork::untility::DBMATE_BINARY).string());
-        const auto& [result_log, exit_code] = YSolowork::untility::runDbmate(config.dbmate_path, "up", getPostgresConnectionString(config));
+        spdlog::debug("Dbmate Path: {}", (config.dbmate_path / YSolowork::util::DBMATE_BINARY).string());
+        const auto& [result_log, exit_code] = YSolowork::util::runDbmate(config.dbmate_path, "up", getPostgresConnectionString(config));
         spdlog::info("Migration log 迁移日志: {}", result_log);
         if (exit_code != 0) {
             throw;

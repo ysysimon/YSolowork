@@ -4,7 +4,7 @@
  
 int main() {
   // set console to UTF-8
-  YSolowork::untility::setConsoleUTF8();
+  YSolowork::util::setConsoleUTF8();
 
   // render the UI
   auto layout = YLineWorker::UI::makeLayout();

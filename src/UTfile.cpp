@@ -11,7 +11,7 @@
 #endif
 
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 std::filesystem::path getExecutablePath() {
     // 根据平台获取可执行文件路径

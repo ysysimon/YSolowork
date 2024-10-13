@@ -1,7 +1,7 @@
 #ifndef UTusage_H
 #define UTusage_H
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 // 结构体: CPU 和 内存使用率
 struct UsageInfoCPU {
@@ -15,5 +15,5 @@ void cross_platform_sleep(int seconds) noexcept;
 // 函数: 获取 CPU 和 内存使用率
 UsageInfoCPU getUsageInfoCPU() noexcept;
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util
 #endif // UTusage_H

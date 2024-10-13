@@ -9,7 +9,7 @@
 #include <windows.h>
 #endif
 
-namespace YSolowork::untility {
+namespace YSolowork::util {
 
 // 函数: 跨平台睡眠
 void cross_platform_sleep(int seconds) noexcept
@@ -209,4 +209,4 @@ UsageInfoCPU getUsageInfoCPU() noexcept
     return usageInfoCPU;
 }
 
-} // namespace YSolowork::untility
+} // namespace YSolowork::util
