@@ -27,7 +27,7 @@ void DynamicLibrary::load()
         throw DynamicLibraryException("Failed to load library: " + libraryName);
     }
 #else
-    void* handle = dlopen(libraryName, RTLD_NOW);
+    void* handle = dlopen(libraryName.c_str(), RTLD_NOW);
     if (!handle) {
         throw DynamicLibraryException("Failed to load library: " + libraryName + ", error: " + dlerror());
     }
