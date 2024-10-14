@@ -49,6 +49,7 @@ public:
     // 初始化 nvml
     inline void initNvml() {
         nvml_.emplace();
+        loadnvDevices();
     }
 
     // 获取 worker usage 信息
@@ -57,15 +58,21 @@ public:
     // timer
     trantor::TimerId usageInfoCPUtimer;
 
-    // nvml for Nvidia GPU
-    std::optional<YSolowork::util::Nvml> nvml_;
-    
 private:
     // 私有构造函数，防止外部实例化
     WorkerSingleton() = default;
 
     // 存储 worker 信息
     worker workerData_;
+
+    // nvml for Nvidia GPU
+    std::optional<YSolowork::util::Nvml> nvml_;
+
+    // nv 设备
+    std::optional<std::vector<YSolowork::util::nvDevice>> nvDevices_;
+
+    // 加载 nv 设备
+    void loadnvDevices();
 };
 
 

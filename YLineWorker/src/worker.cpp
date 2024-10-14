@@ -9,6 +9,7 @@
 #include <format>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 #include <string>
 #include <trantor/utils/Logger.h>
 #include <magic_enum.hpp>
@@ -270,6 +271,57 @@ void WorkerSingleton::connectToServer() {
         req,
         WSconnectCallback
     );
+}
+
+void WorkerSingleton::loadnvDevices()
+{
+
+    if (!nvml_.has_value()) 
+    {
+        std::runtime_error("NVML not initialized NVML, can not load Nvidia Device! 未初始化 NVML, 无法加载 Nvidia 设备!");
+    }
+
+    nvDevices_ = std::vector<YSolowork::util::nvDevice>();
+
+    // 获取设备数量
+    nvDeviceCount deviceCount;
+    const NvReturn& result = nvmlDeviceGetCount(&deviceCount);
+    nvml_->nvmlCheckResult(result);
+
+    // 遍历设备
+    for (nvDeviceCount i = 0; i < deviceCount; i++) {
+        nvDevice device;
+        device.index = i;
+        device.name = nvml_->getDeviceName(i);
+        try {
+            device.serial = nvml_->getDeviceSerial(i);
+        } catch (const NVMLException& e) {
+            device.serial = "Unsupport";
+            spdlog::warn("Failed to get device serial 获取设备序列号失败: {}", e.what());
+            spdlog::warn("Device serial may not be available 设备序列号可能不可用");
+        }
+        
+        device.driverVersion = nvml_->getDeviceDriverVersion(i);
+        device.PowerLimit = nvml_->getPowerLimit(i) / 1000.0; // milliwatts to watts
+        device.TemperatureThreshold = nvml_->getTemperatureThreshold(i);
+
+        try {
+            nvml_->getNvLinkState(i, 0);
+            device.nvLinks = std::array<nvLink, NVML_NVLINK_MAX_LINKS>();
+            for (int j = 0; j < NVML_NVLINK_MAX_LINKS; j++) 
+            {
+                device.nvLinks[j].link = j;
+                bool support = nvml_->getNvLinkState(i, j);
+                if(support) {
+                    device.nvLinks[j].isNvLinkSupported = true;
+                    device.nvLinks[j].NvLinkVersion = nvml_->getNvLinkVersion(i, j);
+                    device.nvLinks[j].NvLinkCapability = nvml_->getNvLinkCapability(i, j);
+                }
+            }
+        }
+
+        nvDevices_->push_back(device);
+    }
 }
 
 } // namespace YLineWorker

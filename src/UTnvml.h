@@ -3,6 +3,7 @@
 #include "UTdynlib.h"
 
 #include <array>
+#include <variant>
 #include <functional>
 #include <optional>
 #include <string>
@@ -22,6 +23,20 @@ typedef nvmlReturn_t NvReturn;
 typedef nvmlEnableState_t NvEnableState;
 typedef nvmlNvLinkCapability_t NvLinkCapability;
 
+// 异常类: NVML异常
+class NVMLException : public std::exception {
+public:
+    inline explicit NVMLException(const std::string& message) : msg_(message) {}
+
+    // 覆盖 what() 方法，返回错误信息
+    inline const char* what() const noexcept override
+    {
+        return msg_.c_str();
+    }
+
+private:
+    std::string msg_;
+};
 
 struct nvUsageInfoGPU {
     double gpuUsage; // GPU 利用率
@@ -46,19 +61,31 @@ struct nvDevice {
     std::string driverVersion;
     double PowerLimit = -1.0; // 功耗墙 （W）
     unsigned int TemperatureThreshold = 0.0; // 温度墙
-    std::array<nvLink, NVML_NVLINK_MAX_LINKS> nvLinks;
+    std::variant<std::array<nvLink, NVML_NVLINK_MAX_LINKS>, std::string> nvLinks;
     // nvUsageInfoGPU usageInfoGPU;
 };
 
+// NVlink Variant 回调函数
+auto handleNVLinkVariant = [](auto& value) {
+    using T = std::decay_t<decltype(value)>; // 获取实际类型
+    if constexpr (std::is_same_v<T, std::array<nvLink, NVML_NVLINK_MAX_LINKS>>) 
+    {
+        for (auto& link : value) {
+            if (link.isNvLinkSupported) 
+            {
+                
+            }
+        }
+    } else {
+        spdlog::info("NvLink not supported 不支持 NvLink");
+    }
+};
 
 // 类: Nvml
 class Nvml {
 public:
     explicit Nvml();
     ~Nvml();
-
-    // nv 设备
-    std::vector<nvDevice> nvDevices;
     
     // 检查 NVML 返回值, 如果不是 NVML_SUCCESS, 抛出异常
     void nvmlCheckResult(const NvReturn& result);
@@ -93,9 +120,6 @@ public:
 private:
     YSolowork::util::DynamicLibrary loader;
     std::vector<nvDevice> devices;
-
-    // 加载 nv 设备
-    void loadnvDevices();
 
     // NVML 函数的 std::function 封装
     std::function<nvmlReturn_t()> 

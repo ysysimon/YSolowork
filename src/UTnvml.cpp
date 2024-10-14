@@ -68,9 +68,6 @@ Nvml::Nvml() : loader(
 
     // 调用初始化函数
     nvmlInit();
-
-    // 加载设备
-    loadnvDevices();
 }
 
 Nvml::~Nvml()
@@ -79,43 +76,10 @@ Nvml::~Nvml()
     nvmlShutdown();
 }
 
-void Nvml::loadnvDevices()
-{
-    // 获取设备数量
-    nvDeviceCount deviceCount;
-    const NvReturn& result = nvmlDeviceGetCount(&deviceCount);
-    nvmlCheckResult(result);
-
-    // 遍历设备
-    for (nvDeviceCount i = 0; i < deviceCount; i++) {
-        nvDevice device;
-        device.index = i;
-        device.name = getDeviceName(i);
-        // device.serial = getDeviceSerial(i);
-        device.driverVersion = getDeviceDriverVersion(i);
-        device.PowerLimit = getPowerLimit(i) / 1000.0; // milliwatts to watts
-        device.TemperatureThreshold = getTemperatureThreshold(i);
-
-        // for (int j = 0; j < NVML_NVLINK_MAX_LINKS; j++) 
-        // {
-        //     device.nvLinks[j].link = j;
-        //     bool support = getNvLinkState(i, j);
-        //     if(support) {
-        //         device.nvLinks[j].isNvLinkSupported = true;
-        //         device.nvLinks[j].NvLinkVersion = getNvLinkVersion(i, j);
-        //         device.nvLinks[j].NvLinkCapability = getNvLinkCapability(i, j);
-        //     }
-            
-        // }
-
-        nvDevices.push_back(device);
-    }
-}
-
 void Nvml::nvmlCheckResult(const NvReturn& result)
 {
     if (result != NVML_SUCCESS) {
-        throw std::runtime_error(std::string("Failed to get device handle: ") + nvmlErrorString(result));
+        throw NVMLException(std::string("Failed to get device handle: ") + nvmlErrorString(result));
     }
 }
 
