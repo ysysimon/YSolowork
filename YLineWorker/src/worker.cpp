@@ -1,6 +1,7 @@
 #include "worker.h"
 #include "drogon/IntranetIpFilter.h"
 #include "drogon/LocalHostFilter.h"
+#include "json/value.h"
 #include <drogon/drogon.h>
 #include "utils/logger.h"
 #include "utils/api.h"
@@ -133,7 +134,6 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     }
 
     std::string conn_str = std::format("ws://{}:{}", config.YLineServer_ip, config.YLineServer_port);
-    spdlog::info("Connecting to server 连接到服务器: {}", conn_str);
     auto client = drogon::WebSocketClient::newWebSocketClient(
         conn_str
     );
@@ -144,7 +144,34 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
         .client = client,
         .worker_machineInfo = machineInfo
     });
+
+    // 初始化 nvml
+    try {
+        WorkerSingleton::getInstance().initNvml();
+        spdlog::info("NVML initialized 初始化成功 NVML");
+        for(const auto& device : WorkerSingleton::getInstance().nvml_.value().nvDevices) {
+            spdlog::info("Device 设备: {}", device.name);
+            spdlog::info("Device Serial 序列号: {}", device.serial);
+            spdlog::info("Device Driver Version 驱动版本: {}", device.driverVersion);
+            spdlog::info("Device Power Limit 功耗墙: {} W", device.PowerLimit);
+            spdlog::info("Device Temperature Threshold 温度墙: {} °C", device.TemperatureThreshold);
+            for (const auto& nvLink : device.nvLinks) {
+                spdlog::info("[{}] NvLink Supported 支持 NvLink: {}", nvLink.link, nvLink.isNvLinkSupported);
+                if(nvLink.isNvLinkSupported)
+                {
+                    spdlog::info("\tNvLink Version 版本: {}", nvLink.NvLinkVersion.value());
+                    spdlog::info("\tNvLink Capability 能力: {}", nvLink.NvLinkCapability.value());
+                }
+            }
+        }
+    } catch (const DynamicLibraryException& e) {
+        spdlog::warn("Failed to initialize NVML: {}", e.what());
+        spdlog::warn("NVML related features may not work properly NVML 相关功能无法正常工作");
+        spdlog::warn("This maynot be a problem if you do not have Nvidia GPU 如果您没有 Nvidia GPU, 这可能不是问题");
+    }
+
     // 连接到服务器
+    spdlog::info("Connecting to server 连接到服务器: {}", conn_str);
     WorkerSingleton::getInstance().connectToServer();
     
 
@@ -153,17 +180,25 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
 
 }
 
-// 单例类: Worker 定义
-WorkerSingleton& WorkerSingleton::getInstance() {
-    static WorkerSingleton instance;  // 静态局部变量，确保只初始化一次
-    return instance;
-}
-
-void WorkerSingleton::setWorkerData(const worker& workerData) {
-    workerData_ = workerData;
-}
-
 // WebSocket 回调函数
+
+Json::Value WorkerSingleton::getUsageResp() const
+{
+    UsageInfoCPU usageInfoCPU = YSolowork::util::getUsageInfoCPU();
+    Json::Value json;
+    json["cpuUsage"] = usageInfoCPU.cpuUsage;
+    json["memoryUsage"] = usageInfoCPU.memoryUsage;
+
+    if (WorkerSingleton::getInstance().nvml_.has_value()) 
+    {
+        // UsageInfoGPU usageInfoGPU = WorkerSingleton::getInstance().nvml_.value().getUsageInfoGPU();
+        // json["gpuUsage"] = usageInfoGPU.gpuUsage;
+        // json["gpuMemoryUsage"] = usageInfoGPU.gpuMemoryUsage;
+    
+    }
+
+    return json;
+}
 
 void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebSocketClientPtr& wsClient) {
 
@@ -178,13 +213,11 @@ void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebS
 
         // 每秒 发送一次 CPU 和 内存 使用率
         auto _usageInfoCPUtimer = loop->runEvery(1.0, [wsClient]() {
-            UsageInfoCPU usageInfoCPU = YSolowork::util::getUsageInfoCPU();
-            Json::Value json;
-            json["cpuUsage"] = usageInfoCPU.cpuUsage;
-            json["memoryUsage"] = usageInfoCPU.memoryUsage;
+            // const Json::Value& json = getUsageResp();
+            
             if (wsClient && wsClient->getConnection() && wsClient->getConnection()->connected())
             {
-                wsClient->getConnection()->sendJson(json);
+                // wsClient->getConnection()->sendJson(json);
             }
         });
 

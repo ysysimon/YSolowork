@@ -8,6 +8,7 @@
 #include <trantor/net/EventLoop.h>
 
 #include "UTmachineInfo.h"
+#include "UTnvml.h"
 
 namespace YLineWorker {
 
@@ -28,21 +29,37 @@ struct worker {
 class WorkerSingleton {
 public:
     // 获取单例实例的静态方法
-    static WorkerSingleton& getInstance();
+    inline static WorkerSingleton& getInstance() {
+        static WorkerSingleton instance;  // 静态局部变量，确保只初始化一次
+        return instance;
+    }
 
     // 禁止复制和赋值
     WorkerSingleton(const WorkerSingleton&) = delete;
     WorkerSingleton& operator=(const WorkerSingleton&) = delete;
 
     // 设置 worker 数据
-    void setWorkerData(const worker& workerData);
+    inline void setWorkerData(const worker& workerData) {
+        workerData_ = workerData;
+    }
 
     // 连接到服务器
     void connectToServer();
+
+    // 初始化 nvml
+    inline void initNvml() {
+        nvml_.emplace();
+    }
+
+    // 获取 worker usage 信息
+    Json::Value getUsageResp() const;
     
     // timer
     trantor::TimerId usageInfoCPUtimer;
 
+    // nvml for Nvidia GPU
+    std::optional<YSolowork::util::Nvml> nvml_;
+    
 private:
     // 私有构造函数，防止外部实例化
     WorkerSingleton() = default;

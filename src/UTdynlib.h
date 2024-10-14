@@ -6,12 +6,6 @@
 #include <exception>
 #include <functional>
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <dlfcn.h>
-#endif
-
 namespace YSolowork::util {
 
 // 异常类: 动态库异常
@@ -52,6 +46,8 @@ public:
 private:
     std::string libraryName;  // 存储库名
     std::shared_ptr<void> libraryHandle;  // 使用 shared_ptr 管理库句柄
+
+    void* getFunctionPointer(const std::string& functionName);
 };
 
 
@@ -62,18 +58,9 @@ std::function<FuncType> DynamicLibrary::getFunction(const std::string& functionN
         throw DynamicLibraryException("Library not loaded.");
     }
 
-#ifdef _WIN32
-    void* func = reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(libraryHandle.get()), functionName.c_str()));
-    if (!func) {
-        throw DynamicLibraryException("Failed to load function: " + functionName);
-    }
-#else
-    void* func = dlsym(libraryHandle.get(), functionName.c_str());
-    const char* dlsym_error = dlerror();
-    if (dlsym_error) {
-        throw DynamicLibraryException("Failed to load function: " + functionName + ", error: " + std::string(dlsym_error));
-    }
-#endif
+    // 获取函数指针
+    void* func = getFunctionPointer(functionName);
+
     // 将函数指针与库生命周期绑定
     std::weak_ptr<void> weakHandle = libraryHandle;
     return [func, weakHandle](auto&&... args) -> decltype(auto) // 万能引用

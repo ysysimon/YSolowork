@@ -1,5 +1,11 @@
 #include "UTdynlib.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <dlfcn.h>
+#endif
+
 namespace YSolowork::util {
 
 void LibraryDeleter::operator()(void* handle) const 
@@ -33,6 +39,23 @@ void DynamicLibrary::load()
     }
 #endif
     libraryHandle = std::shared_ptr<void>(handle, LibraryDeleter());
+}
+
+void* DynamicLibrary::getFunctionPointer(const std::string& functionName)
+{
+#ifdef _WIN32
+    void* func = reinterpret_cast<void*>(GetProcAddress(static_cast<HMODULE>(libraryHandle.get()), functionName.c_str()));
+    if (!func) {
+        throw DynamicLibraryException("Failed to load function: " + functionName);
+    }
+#else
+    void* func = dlsym(libraryHandle.get(), functionName.c_str());
+    const char* dlsym_error = dlerror();
+    if (dlsym_error) {
+        throw DynamicLibraryException("Failed to load function: " + functionName + ", error: " + std::string(dlsym_error));
+    }
+#endif
+    return func;
 }
 
 } // namespace YSolowork::util
