@@ -7,6 +7,7 @@
 #include "utils/api.h"
 
 #include <format>
+#include <functional>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
@@ -84,6 +85,41 @@ void logWorkerMachineInfo(const MachineInfo& machineInfo)
     spdlog::info("\n------------------------------------------------------------------------------------------");
 }
 
+void WorkerSingleton::logNvmlInfo()
+{
+    for(const auto& device : nvDevices_.value()) 
+    {
+        spdlog::info("Device 设备: {}", device.name);
+        spdlog::info("Device Serial 序列号: {}", device.serial);
+        spdlog::info("Device Driver Version 驱动版本: {}", device.driverVersion);
+        spdlog::info("Device Power Limit 功耗墙: {} W", device.PowerLimit);
+        spdlog::info("Device Temperature Threshold 温度墙: {} °C", device.TemperatureThreshold);
+        
+        auto logVariant = [](const auto& nvLinks) {
+            using T = std::decay_t<decltype(nvLinks)>;
+            if constexpr (std::is_same_v<T, std::string>) {
+                spdlog::info("[✘] NvLink Not Supported 不支持 NvLink");
+            } 
+            else 
+            {
+                for (const auto& nvLink : nvLinks) 
+                {
+                    spdlog::info("[{}] NvLink Supported 支持 NvLink: {}", nvLink.link, nvLink.isNvLinkSupported);
+                    if(nvLink.isNvLinkSupported)
+                    {
+                        spdlog::info("\tNvLink Version 版本: {}", nvLink.NvLinkVersion.value());
+                        spdlog::info("\tNvLink Capability 能力: {}", nvLink.NvLinkCapability.value());
+                    }
+                }
+            }
+        };
+
+        // log NvLink
+        std::visit(logVariant, device.nvLinks);
+
+    }
+}
+
 void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> custom_logger)
 {
     // 获取机器信息
@@ -106,10 +142,6 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     drogon::app().addListener(config.YLineWorker_ip, config.YLineWorker_port);
 
     // 设置自定义 404 页面
-    // auto resp404 = drogon::HttpResponse::newNotFoundResponse();
-    // resp404->setStatusCode(drogon::k404NotFound);
-    // resp404->setContentTypeCode(drogon::CT_TEXT_HTML);
-    // resp404->setBody("404 Not Found, YLineServer 不存在该端点");
     auto resp404 = YLineWorker::Api::makeHttpResponse(
         "404 Not Found, YLineWorker 不存在该端点", 
         drogon::HttpStatusCode::k404NotFound, 
@@ -150,26 +182,15 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     try {
         WorkerSingleton::getInstance().initNvml();
         spdlog::info("NVML initialized 初始化成功 NVML");
-        for(const auto& device : WorkerSingleton::getInstance().nvml_.value().nvDevices) {
-            spdlog::info("Device 设备: {}", device.name);
-            spdlog::info("Device Serial 序列号: {}", device.serial);
-            spdlog::info("Device Driver Version 驱动版本: {}", device.driverVersion);
-            spdlog::info("Device Power Limit 功耗墙: {} W", device.PowerLimit);
-            spdlog::info("Device Temperature Threshold 温度墙: {} °C", device.TemperatureThreshold);
-            for (const auto& nvLink : device.nvLinks) {
-                spdlog::info("[{}] NvLink Supported 支持 NvLink: {}", nvLink.link, nvLink.isNvLinkSupported);
-                if(nvLink.isNvLinkSupported)
-                {
-                    spdlog::info("\tNvLink Version 版本: {}", nvLink.NvLinkVersion.value());
-                    spdlog::info("\tNvLink Capability 能力: {}", nvLink.NvLinkCapability.value());
-                }
-            }
-        }
+        WorkerSingleton::getInstance().logNvmlInfo();
+        
     } catch (const DynamicLibraryException& e) {
         spdlog::warn("Failed to initialize NVML: {}", e.what());
         spdlog::warn("NVML related features may not work properly NVML 相关功能无法正常工作");
         spdlog::warn("This maynot be a problem if you do not have Nvidia GPU 如果您没有 Nvidia GPU, 这可能不是问题");
     }
+
+    
 
     // 连接到服务器
     spdlog::info("Connecting to server 连接到服务器: {}", conn_str);
@@ -284,41 +305,37 @@ void WorkerSingleton::loadnvDevices()
     nvDevices_ = std::vector<YSolowork::util::nvDevice>();
 
     // 获取设备数量
-    nvDeviceCount deviceCount;
-    const NvReturn& result = nvmlDeviceGetCount(&deviceCount);
-    nvml_->nvmlCheckResult(result);
+    nvDeviceCount deviceCount = nvml_->getDeviceCount();
 
     // 遍历设备
-    for (nvDeviceCount i = 0; i < deviceCount; i++) {
+    for (nvDeviceCount currDevice = 0; currDevice < deviceCount; currDevice++) {
         nvDevice device;
-        device.index = i;
-        device.name = nvml_->getDeviceName(i);
+        device.index = currDevice;
+        device.name = nvml_->getDeviceName(currDevice);
         try {
-            device.serial = nvml_->getDeviceSerial(i);
+            device.serial = nvml_->getDeviceSerial(currDevice);
         } catch (const NVMLException& e) {
             device.serial = "Unsupport";
             spdlog::warn("Failed to get device serial 获取设备序列号失败: {}", e.what());
-            spdlog::warn("Device serial may not be available 设备序列号可能不可用");
+            spdlog::warn("This device may not support serial feature 本设备可能不支持序列号功能");
         }
         
-        device.driverVersion = nvml_->getDeviceDriverVersion(i);
-        device.PowerLimit = nvml_->getPowerLimit(i) / 1000.0; // milliwatts to watts
-        device.TemperatureThreshold = nvml_->getTemperatureThreshold(i);
+        device.driverVersion = nvml_->getDeviceDriverVersion(currDevice);
+        device.PowerLimit = nvml_->getPowerLimit(currDevice) / 1000.0; // milliwatts to watts
+        device.TemperatureThreshold = nvml_->getTemperatureThreshold(currDevice);
 
         try {
-            nvml_->getNvLinkState(i, 0);
+            // if NvLink is supported, set variant to nvLink array
+            // 如果支持 NvLink, 设置 variant 为 nvLink 数组
+            nvml_->getNvLinkState(currDevice, 0);
             device.nvLinks = std::array<nvLink, NVML_NVLINK_MAX_LINKS>();
-            for (int j = 0; j < NVML_NVLINK_MAX_LINKS; j++) 
-            {
-                device.nvLinks[j].link = j;
-                bool support = nvml_->getNvLinkState(i, j);
-                if(support) {
-                    device.nvLinks[j].isNvLinkSupported = true;
-                    device.nvLinks[j].NvLinkVersion = nvml_->getNvLinkVersion(i, j);
-                    device.nvLinks[j].NvLinkCapability = nvml_->getNvLinkCapability(i, j);
-                }
-            }
+        } catch (const NVMLException& e) {
+            spdlog::warn("Failed to get NvLink state 获取 NvLink 状态失败: {}", e.what());
+            spdlog::warn("This device may not support NvLink feature 本设备可能不支持 NvLink 功能");
         }
+
+        // set NvLink variant
+        nvml_->handleNVLinkVariant(device.nvLinks, currDevice);
 
         nvDevices_->push_back(device);
     }

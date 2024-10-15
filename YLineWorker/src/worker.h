@@ -58,6 +58,9 @@ public:
     // timer
     trantor::TimerId usageInfoCPUtimer;
 
+    // logNvmlInfo
+    void logNvmlInfo();
+
 private:
     // 私有构造函数，防止外部实例化
     WorkerSingleton() = default;

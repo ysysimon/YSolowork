@@ -1,6 +1,6 @@
 #include "UTnvml.h"
 #include "nvml.h"
-#include <stdexcept>
+#include <string>
 
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
@@ -74,6 +74,41 @@ Nvml::~Nvml()
 {
     // 调用关闭函数
     nvmlShutdown();
+}
+
+void Nvml::handleNVLinkVariant(NVLinkVariant& links, nvDeviceCount deviceIndex)
+{
+    std::visit([&](auto& links) {
+        using T = std::decay_t<decltype(links)>; // 获取实际类型
+        if constexpr (std::is_same_v<T, std::array<nvLink, NVML_NVLINK_MAX_LINKS>>) 
+        {
+            std::size_t thelink = 0;
+            for (auto& link : links) 
+            {
+                bool supported = getNvLinkState(deviceIndex, thelink);
+                link.isNvLinkSupported = supported;
+                if (link.isNvLinkSupported) 
+                {
+                    link.link = thelink;
+                    link.NvLinkVersion = getNvLinkVersion(deviceIndex, thelink);
+                    link.NvLinkCapability = getNvLinkCapability(deviceIndex, thelink);
+                }
+            }
+        } 
+        else 
+        {
+            links = std::string("Unsupport");
+        }
+    }, links);
+}
+
+nvDeviceCount Nvml::getDeviceCount()
+{
+    nvDeviceCount count;
+    const NvReturn& result = nvmlDeviceGetCount(&count);
+    nvmlCheckResult(result);
+
+    return count;
 }
 
 void Nvml::nvmlCheckResult(const NvReturn& result)

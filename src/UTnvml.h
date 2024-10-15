@@ -13,15 +13,15 @@
 
 namespace YSolowork::util {
 
-typedef nvmlDevice_t NvDeviceHandel;
-typedef unsigned int NvDeviceIndex;
-typedef unsigned int nvDeviceCount;
-typedef unsigned int NVLink;
-typedef unsigned int NVLinkVersion;
-typedef unsigned int NvLinkCapabilityResult;
-typedef nvmlReturn_t NvReturn;
-typedef nvmlEnableState_t NvEnableState;
-typedef nvmlNvLinkCapability_t NvLinkCapability;
+using NvDeviceHandel = nvmlDevice_t;
+using NvDeviceIndex = unsigned int;
+using nvDeviceCount = unsigned int;
+using NVLink = unsigned int;
+using NVLinkVersion = unsigned int;
+using NvLinkCapabilityResult = unsigned int;
+using NvReturn = nvmlReturn_t;
+using NvEnableState = nvmlEnableState_t;
+using NvLinkCapability = nvmlNvLinkCapability_t;
 
 // 异常类: NVML异常
 class NVMLException : public std::exception {
@@ -54,6 +54,8 @@ struct nvLink {
     std::optional<std::string> NvLinkCapability; // NvLink 能力
 };
 
+using NVLinkVariant = std::variant<std::string, std::array<nvLink, NVML_NVLINK_MAX_LINKS>>;
+
 struct nvDevice {
     unsigned int index;
     std::string name;
@@ -61,32 +63,25 @@ struct nvDevice {
     std::string driverVersion;
     double PowerLimit = -1.0; // 功耗墙 （W）
     unsigned int TemperatureThreshold = 0.0; // 温度墙
-    std::variant<std::array<nvLink, NVML_NVLINK_MAX_LINKS>, std::string> nvLinks;
+    NVLinkVariant nvLinks;
     // nvUsageInfoGPU usageInfoGPU;
 };
 
-// NVlink Variant 回调函数
-auto handleNVLinkVariant = [](auto& value) {
-    using T = std::decay_t<decltype(value)>; // 获取实际类型
-    if constexpr (std::is_same_v<T, std::array<nvLink, NVML_NVLINK_MAX_LINKS>>) 
-    {
-        for (auto& link : value) {
-            if (link.isNvLinkSupported) 
-            {
-                
-            }
-        }
-    } else {
-        spdlog::info("NvLink not supported 不支持 NvLink");
-    }
-};
 
 // 类: Nvml
 class Nvml {
 public:
     explicit Nvml();
     ~Nvml();
+
+    // NVlink Variant 回调函数
+    // 使用 auto 跨库推导似乎有问题，所以使用明确类型
+    // 最好避免在函数参数和函数返回值类型使用 auto
+    void handleNVLinkVariant(NVLinkVariant& links, nvDeviceCount deviceIndex);
     
+    // 查找设备数量
+    nvDeviceCount getDeviceCount();
+
     // 检查 NVML 返回值, 如果不是 NVML_SUCCESS, 抛出异常
     void nvmlCheckResult(const NvReturn& result);
 
@@ -116,6 +111,7 @@ public:
 
     // 获取某条 NvLink 能力
     std::string getNvLinkCapability(NvDeviceIndex index, NVLink link);
+
 
 private:
     YSolowork::util::DynamicLibrary loader;
