@@ -163,12 +163,12 @@ std::string Nvml::getDeviceDriverVersion(NvDeviceIndex index)
     return std::string(driverVersion);
 }
 
-unsigned int Nvml::getPowerLimit(NvDeviceIndex index)
+NvPower Nvml::getPowerLimit(NvDeviceIndex index)
 {
     // 获取设备句柄
     const NvDeviceHandel& device = getDeviceHandle(index);
 
-    unsigned int powerLimit;
+    NvPower powerLimit;
     const NvReturn& result = nvmlDeviceGetEnforcedPowerLimit(device, &powerLimit);
     nvmlCheckResult(result);
 
@@ -176,12 +176,12 @@ unsigned int Nvml::getPowerLimit(NvDeviceIndex index)
 
 }
 
-unsigned int Nvml::getTemperatureThreshold(NvDeviceIndex index)
+NvDeviceTemperature Nvml::getTemperatureThreshold(NvDeviceIndex index)
 {
     // 获取设备句柄
     const NvDeviceHandel& device = getDeviceHandle(index);
 
-    unsigned int temperatureThreshold;
+    NvDeviceTemperature temperatureThreshold;
     // 默认获取会导致降频率的温度作为温度墙
     const NvReturn& result = nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperatureThreshold);
     nvmlCheckResult(result);
@@ -297,6 +297,79 @@ std::string Nvml::getNvLinkCapability(NvDeviceIndex index, NVLink link)
     }
 
     return capability;
+}
+
+NvUtilization Nvml::getDeviceGetUtilizationRates(NvDeviceIndex index)
+{
+    // 获取设备句柄
+    const NvDeviceHandel& device = getDeviceHandle(index);
+
+    NvUtilization utilization;
+    const NvReturn& result = nvmlDeviceGetUtilizationRates(device, &utilization);
+    nvmlCheckResult(result);
+
+    return utilization;
+}
+
+NvDeviceTemperature Nvml::getDeviceTemperature(NvDeviceIndex index)
+{
+    // 获取设备句柄
+    const NvDeviceHandel& device = getDeviceHandle(index);
+
+    NvDeviceTemperature temperature;
+    // 当前似乎只有一种温度传感器类型 NVML_TEMPERATURE_GPU
+    const NvReturn& result = nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &temperature);
+    nvmlCheckResult(result);
+
+    return temperature;
+}
+
+NvDeviceFanSpeed Nvml::getDeviceFanSpeed(NvDeviceIndex index, NvFanIndex fanIndex)
+{
+    // 获取设备句柄
+    const NvDeviceHandel& device = getDeviceHandle(index);
+
+    NvDeviceFanSpeed fanSpeed;
+    const NvReturn& result = nvmlDeviceGetFanSpeed_v2(device, fanIndex, &fanSpeed);
+    nvmlCheckResult(result);
+
+    return fanSpeed;
+}
+
+NvFanNum Nvml::getDeviceFanNum(NvDeviceIndex index)
+{
+    // 获取设备句柄
+    const NvDeviceHandel& device = getDeviceHandle(index);
+
+    NvFanNum fanNum;
+    const NvReturn& result = nvmlDeviceGetFanSpeed_v2(device, 0, &fanNum);
+    nvmlCheckResult(result);
+
+    return fanNum;
+}
+
+NvClock Nvml::getDeviceClockInfo(NvDeviceIndex index, NvClockType type)
+{
+    // 获取设备句柄
+    const NvDeviceHandel& device = getDeviceHandle(index);
+
+    NvClock clock;
+    const NvReturn& result = nvmlDeviceGetClockInfo(device, type, &clock);
+    nvmlCheckResult(result);
+
+    return clock;
+}
+
+NvPower Nvml::getDevicePowerUsage(NvDeviceIndex index)
+{
+    // 获取设备句柄
+    const NvDeviceHandel& device = getDeviceHandle(index);
+
+    NvPower powerUsage;
+    const NvReturn& result = nvmlDeviceGetPowerUsage(device, &powerUsage);
+    nvmlCheckResult(result);
+
+    return powerUsage;
 }
 
 } // namespace YSolowork::util

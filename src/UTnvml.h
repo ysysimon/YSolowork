@@ -19,9 +19,17 @@ using nvDeviceCount = unsigned int;
 using NVLink = unsigned int;
 using NVLinkVersion = unsigned int;
 using NvLinkCapabilityResult = unsigned int;
+using NvDeviceTemperature = unsigned int;
+using NvDeviceFanSpeed = unsigned int;
+using NvFanIndex = unsigned int;
+using NvFanNum = unsigned int;
+using NvClock = unsigned int;
+using NvPower = unsigned int;
 using NvReturn = nvmlReturn_t;
 using NvEnableState = nvmlEnableState_t;
 using NvLinkCapability = nvmlNvLinkCapability_t;
+using NvUtilization = nvmlUtilization_t;
+using NvClockType = nvmlClockType_t;
 
 // 异常类: NVML异常
 class NVMLException : public std::exception {
@@ -38,13 +46,17 @@ private:
     std::string msg_;
 };
 
+struct nvFan {
+    NvFanIndex index;
+    double fanSpeed = 0.0; // 风扇转速
+};
+
 struct nvUsageInfoGPU {
-    double gpuUsage; // GPU 利用率
-    double gpuMemoryUsage; // GPU 内存利用率
-    double gpuTemperature; // GPU 温度
-    double gpuFanSpeed; // GPU 风扇转速
-    double gpuClockInfo; // GPU 时钟信息
-    double gpuPowerUsage; // GPU 功耗
+    double gpuUsage = 0.0; // GPU 利用率
+    double gpuMemoryUsage = 0.0; // GPU 内存利用率
+    double gpuTemperature = 0.0; // GPU 温度
+    double gpuClockInfo = 0.0; // GPU 时钟信息
+    double gpuPowerUsage = 0.0; // GPU 功耗
 };
 
 struct nvLink {
@@ -61,10 +73,11 @@ struct nvDevice {
     std::string name;
     std::string serial;
     std::string driverVersion;
-    double PowerLimit = -1.0; // 功耗墙 （W）
-    unsigned int TemperatureThreshold = 0.0; // 温度墙
+    NvPower PowerLimit; // 功耗墙 （W）
+    NvDeviceTemperature TemperatureThreshold; // 温度墙
     NVLinkVariant nvLinks;
-    // nvUsageInfoGPU usageInfoGPU;
+    std::optional<std::vector<nvFan>> fans;
+    nvUsageInfoGPU usageInfoGPU;
 };
 
 
@@ -98,10 +111,10 @@ public:
     std::string getDeviceDriverVersion(NvDeviceIndex index);
 
     // 获取设备功耗墙 (milliwatts）
-    unsigned int getPowerLimit(NvDeviceIndex index);
+    NvPower getPowerLimit(NvDeviceIndex index);
 
     // 获取设备温度墙 (degrees）
-    unsigned int getTemperatureThreshold(NvDeviceIndex index);
+    NvDeviceTemperature getTemperatureThreshold(NvDeviceIndex index);
 
     // 获取某条 NvLink 状态
     bool getNvLinkState(NvDeviceIndex index, NVLink link);
@@ -112,6 +125,23 @@ public:
     // 获取某条 NvLink 能力
     std::string getNvLinkCapability(NvDeviceIndex index, NVLink link);
 
+    // 获取设备利用率
+    NvUtilization getDeviceGetUtilizationRates(NvDeviceIndex index);
+
+    // 获取设备当前温度
+    NvDeviceTemperature getDeviceTemperature(NvDeviceIndex index);
+
+    // 获取风扇转速
+    NvDeviceFanSpeed getDeviceFanSpeed(NvDeviceIndex index, NvFanIndex fanIndex);
+
+    // 获取风扇数量
+    NvFanNum getDeviceFanNum(NvDeviceIndex index);
+
+    // 获取设备当前时钟信息 (MHz)
+    NvClock getDeviceClockInfo(NvDeviceIndex index, NvClockType type);
+
+    // 获取设备当前功耗 (mW)
+    NvPower getDevicePowerUsage(NvDeviceIndex index);
 
 private:
     YSolowork::util::DynamicLibrary loader;
@@ -146,6 +176,17 @@ private:
     nvmlDeviceGetNvLinkVersion; // 获取设备 NvLink 版本
     std::function<nvmlReturn_t(nvmlDevice_t, unsigned int, nvmlNvLinkCapability_t, unsigned int *)>
     nvmlDeviceGetNvLinkCapability; // 获取设备 NvLink 能力
+    std::function<nvmlReturn_t(nvmlDevice_t, nvmlTemperatureSensors_t, unsigned int *)>
+    nvmlDeviceGetTemperature; // 获取设备当前温度
+    std::function<nvmlReturn_t(nvmlDevice_t, unsigned int, unsigned int *)>
+    nvmlDeviceGetFanSpeed_v2; // 获取设备当前风扇的应该转速 (无法从此值发现风扇是否物理阻挡)
+    std::function<nvmlReturn_t(nvmlDevice_t, unsigned int *)>
+    nvmlDeviceGetNumFans; // 获取设备风扇数量
+    std::function<nvmlReturn_t(nvmlDevice_t, nvmlClockType_t, unsigned int *)>
+    nvmlDeviceGetClockInfo; // 获取设备当前时钟信息
+    std::function<nvmlReturn_t(nvmlDevice_t, unsigned int *)>
+    nvmlDeviceGetPowerUsage; // 获取设备当前功耗
+
 };
 
 

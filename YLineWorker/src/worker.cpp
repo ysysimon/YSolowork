@@ -19,38 +19,79 @@
 
 namespace YLineWorker {
 
+// 通用模板函数，用于执行操作并处理异常
+template<typename Func, typename Fallback>
+auto executeGetMachineInfo(Func func, Fallback fallback, const std::string& errorMsg, const std::string& warningMsg) -> decltype(func()) 
+{
+    try {
+        return func();
+    } catch (const std::exception& e) {
+        spdlog::error("{}: {}", errorMsg, e.what());
+        spdlog::warn("{}", warningMsg);
+        return fallback;
+    }
+}
+
 MachineInfo getMachineInfo()
 {
     MachineInfo machineInfo;
-    try {
-        machineInfo.systomInfo = YSolowork::util::getSystomInfo();
-    } catch (const std::exception& e) {
-        spdlog::error("Failed to get system info 获取系统信息失败: {}", e.what());
-        spdlog::warn("System information related features may not work properly 系统信息相关功能可能无法正常工作");
-    }
 
-    try {
-        machineInfo.machineName = YSolowork::util::getMachineName();
-    } catch (const std::exception& e) {
-        spdlog::error("Failed to get machine name 获取机器名失败: {}", e.what());
-        spdlog::warn("Machine name related features may not work properly 机器名相关功能可能无法正常工作");
-    }
+    // try {
+    //     machineInfo.systomInfo = YSolowork::util::getSystomInfo();
+    // } catch (const std::exception& e) {
+    //     spdlog::error("Failed to get system info 获取系统信息失败: {}", e.what());
+    //     spdlog::warn("System information related features may not work properly 系统信息相关功能可能无法正常工作");
+    // }
 
-    try {
-        machineInfo.devices = YSolowork::util::getAllDevices();
-    } catch (const std::exception& e) {
-        machineInfo.devices.emplace_back(
-            YSolowork::util::Device{
-                .type = YSolowork::util::deviceType::Unknown,
-                .platformName = "Unknown",
-                .name = "Unknown",
-                .cores = 0,
-                .memoryGB = 0.0
-            }
-        );
-        spdlog::error("Failed to get devices 获取设备信息失败: {}", e.what());
-        spdlog::warn("Device related features may not work properly 设备相关功能可能无法正常工作");
-    }
+    // try {
+    //     machineInfo.machineName = YSolowork::util::getMachineName();
+    // } catch (const std::exception& e) {
+    //     spdlog::error("Failed to get machine name 获取机器名失败: {}", e.what());
+    //     spdlog::warn("Machine name related features may not work properly 机器名相关功能可能无法正常工作");
+    // }
+
+    // try {
+    //     machineInfo.devices = YSolowork::util::getAllDevices();
+    // } catch (const std::exception& e) {
+    //     machineInfo.devices.emplace_back(
+    //         YSolowork::util::Device{
+    //             .type = YSolowork::util::deviceType::Unknown,
+    //             .platformName = "Unknown",
+    //             .name = "Unknown",
+    //             .cores = 0,
+    //             .memoryGB = 0.0
+    //         }
+    //     );
+    //     spdlog::error("Failed to get devices 获取设备信息失败: {}", e.what());
+    //     spdlog::warn("Device related features may not work properly 设备相关功能可能无法正常工作");
+    // }
+
+    machineInfo.systomInfo = executeGetMachineInfo(
+        []() { return YSolowork::util::getSystomInfo(); },
+        SystomInfo{}, // 默认的 fallback 值
+        "Failed to get system info 获取系统信息失败", 
+        "System information related features may not work properly 系统信息相关功能可能无法正常工作"
+    );
+
+    machineInfo.machineName = executeGetMachineInfo(
+        []() { return YSolowork::util::getMachineName(); },
+        "Unknown", // 默认的 fallback 值
+        "Failed to get machine name 获取机器名失败", 
+        "Machine name related features may not work properly 机器名相关功能可能无法正常工作"
+    );
+
+    machineInfo.devices = executeGetMachineInfo(
+        []() { return YSolowork::util::getAllDevices(); },
+        std::vector<YSolowork::util::Device>{{
+            .type = YSolowork::util::deviceType::Unknown,
+            .platformName = "Unknown",
+            .name = "Unknown",
+            .cores = 0,
+            .memoryGB = 0.0
+        }},
+        "Failed to get devices 获取设备信息失败", 
+        "Device related features may not work properly 设备相关功能可能无法正常工作"
+    );
 
     return machineInfo;
 }
@@ -294,6 +335,17 @@ void WorkerSingleton::connectToServer() {
     );
 }
 
+template<typename Func, typename Fallback>
+auto executeGetDevice(Func func, Fallback fallback, const std::string& errorMsg, const std::string& warningMsg) -> decltype(func()) {
+    try {
+        return func();
+    } catch (const NVMLException& e) { // 如果只处理 NVMLException，可以特化处理
+        spdlog::warn("{}: {}", errorMsg, e.what());
+        spdlog::warn("{}", warningMsg);
+        return fallback;
+    }
+}
+
 void WorkerSingleton::loadnvDevices()
 {
 
@@ -311,28 +363,96 @@ void WorkerSingleton::loadnvDevices()
     for (nvDeviceCount currDevice = 0; currDevice < deviceCount; currDevice++) {
         nvDevice device;
         device.index = currDevice;
-        device.name = nvml_->getDeviceName(currDevice);
-        try {
-            device.serial = nvml_->getDeviceSerial(currDevice);
-        } catch (const NVMLException& e) {
-            device.serial = "Unsupport";
-            spdlog::warn("Failed to get device serial 获取设备序列号失败: {}", e.what());
-            spdlog::warn("This device may not support serial feature 本设备可能不支持序列号功能");
-        }
-        
-        device.driverVersion = nvml_->getDeviceDriverVersion(currDevice);
-        device.PowerLimit = nvml_->getPowerLimit(currDevice) / 1000.0; // milliwatts to watts
-        device.TemperatureThreshold = nvml_->getTemperatureThreshold(currDevice);
+        // device.name = nvml_->getDeviceName(currDevice);
 
-        try {
-            // if NvLink is supported, set variant to nvLink array
-            // 如果支持 NvLink, 设置 variant 为 nvLink 数组
-            nvml_->getNvLinkState(currDevice, 0);
+        // try {
+        //     device.serial = nvml_->getDeviceSerial(currDevice);
+        // } catch (const NVMLException& e) {
+        //     device.serial = "Unsupport";
+        //     spdlog::warn("Failed to get device serial 获取设备序列号失败: {}", e.what());
+        //     spdlog::warn("This device may not support serial feature 本设备可能不支持序列号功能");
+        // }
+
+        // try {
+        //     device.driverVersion = nvml_->getDeviceDriverVersion(currDevice);
+        // } catch (const NVMLException& e) {
+        //     device.driverVersion = "Unsupport";
+        //     spdlog::warn("Failed to get device driver version 获取设备驱动版本失败: {}", e.what());
+        //     spdlog::warn("This device may not support driver version feature 本设备可能不支持驱动版本功能");
+        // }
+        
+        // try {
+        //     device.PowerLimit = nvml_->getPowerLimit(currDevice) / 1000; // milliwatts to watts
+        // } catch (const NVMLException& e) {
+        //     device.PowerLimit = 0;
+        //     spdlog::warn("Failed to get power limit 获取功耗墙失败: {}", e.what());
+        //     spdlog::warn("This device may not support power limit feature 本设备可能不支持功耗墙功能");
+        // }
+
+        // try {
+        //     device.TemperatureThreshold = nvml_->getTemperatureThreshold(currDevice);
+        // } catch (const NVMLException& e) {
+        //     device.TemperatureThreshold = 0;
+        //     spdlog::warn("Failed to get temperature threshold 获取温度墙失败: {}", e.what());
+        //     spdlog::warn("This device may not support temperature threshold feature 本设备可能不支持温度墙功能");
+        // }
+
+        // try {
+        //     // if NvLink is supported, set variant to nvLink array
+        //     // 如果支持 NvLink, 设置 variant 为 nvLink 数组
+        //     nvml_->getNvLinkState(currDevice, 0);
+        //     device.nvLinks = std::array<nvLink, NVML_NVLINK_MAX_LINKS>();
+        // } catch (const NVMLException& e) {
+        //     spdlog::warn("Failed to get NvLink state 获取 NvLink 状态失败: {}", e.what());
+        //     spdlog::warn("This device may not support NvLink feature 本设备可能不支持 NvLink 功能");
+        // }
+
+        device.name = executeGetDevice(
+            [this, currDevice]() { return nvml_->getDeviceName(currDevice); },
+            std::string("Unknown"),
+            "Failed to get device name 获取设备名称失败",
+            "This device may not support name feature 本设备可能不支持名称功能"
+        );
+
+        device.serial = executeGetDevice(
+            [this, currDevice]() { return nvml_->getDeviceSerial(currDevice); },
+            std::string("Unsupport"),
+            "Failed to get device serial 获取设备序列号失败",
+            "This device may not support serial feature 本设备可能不支持序列号功能"
+        );
+
+        device.driverVersion = executeGetDevice(
+            [this, currDevice]() { return nvml_->getDeviceDriverVersion(currDevice); },
+            std::string("Unsupport"),
+            "Failed to get device driver version 获取设备驱动版本失败",
+            "This device may not support driver version feature 本设备可能不支持驱动版本功能"
+        );
+
+        device.PowerLimit = executeGetDevice(
+            [this, currDevice]() { return nvml_->getPowerLimit(currDevice) / 1000; }, // milliwatts to watts
+            0.0,
+            "Failed to get power limit 获取功耗墙失败",
+            "This device may not support power limit feature 本设备可能不支持功耗墙功能"
+        );
+
+        device.TemperatureThreshold = executeGetDevice(
+            [this, currDevice]() { return nvml_->getTemperatureThreshold(currDevice); },
+            0,
+            "Failed to get temperature threshold 获取温度墙失败",
+            "This device may not support temperature threshold feature 本设备可能不支持温度墙功能"
+        );
+
+        // 如果支持 NvLink, 设置 variant 为 nvLink 数组
+        bool get_nvLinkState_result = executeGetDevice(
+            [this, currDevice]() { nvml_->getNvLinkState(currDevice, 0); return true; },
+            false,
+            "Failed to get NvLink state 获取 NvLink 状态失败",
+            "This device may not support NvLink feature 本设备可能不支持 NvLink 功能"
+        );
+
+        if (get_nvLinkState_result) {
             device.nvLinks = std::array<nvLink, NVML_NVLINK_MAX_LINKS>();
-        } catch (const NVMLException& e) {
-            spdlog::warn("Failed to get NvLink state 获取 NvLink 状态失败: {}", e.what());
-            spdlog::warn("This device may not support NvLink feature 本设备可能不支持 NvLink 功能");
-        }
+        } 
 
         // set NvLink variant
         nvml_->handleNVLinkVariant(device.nvLinks, currDevice);
