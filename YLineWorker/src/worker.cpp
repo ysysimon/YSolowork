@@ -36,36 +36,6 @@ MachineInfo getMachineInfo()
 {
     MachineInfo machineInfo;
 
-    // try {
-    //     machineInfo.systomInfo = YSolowork::util::getSystomInfo();
-    // } catch (const std::exception& e) {
-    //     spdlog::error("Failed to get system info 获取系统信息失败: {}", e.what());
-    //     spdlog::warn("System information related features may not work properly 系统信息相关功能可能无法正常工作");
-    // }
-
-    // try {
-    //     machineInfo.machineName = YSolowork::util::getMachineName();
-    // } catch (const std::exception& e) {
-    //     spdlog::error("Failed to get machine name 获取机器名失败: {}", e.what());
-    //     spdlog::warn("Machine name related features may not work properly 机器名相关功能可能无法正常工作");
-    // }
-
-    // try {
-    //     machineInfo.devices = YSolowork::util::getAllDevices();
-    // } catch (const std::exception& e) {
-    //     machineInfo.devices.emplace_back(
-    //         YSolowork::util::Device{
-    //             .type = YSolowork::util::deviceType::Unknown,
-    //             .platformName = "Unknown",
-    //             .name = "Unknown",
-    //             .cores = 0,
-    //             .memoryGB = 0.0
-    //         }
-    //     );
-    //     spdlog::error("Failed to get devices 获取设备信息失败: {}", e.what());
-    //     spdlog::warn("Device related features may not work properly 设备相关功能可能无法正常工作");
-    // }
-
     machineInfo.systomInfo = executeGetMachineInfo(
         []() { return YSolowork::util::getSystomInfo(); },
         SystomInfo{}, // 默认的 fallback 值
@@ -161,12 +131,15 @@ void WorkerSingleton::logNvmlInfo()
             {
                 for (const auto& nvLink : nvLinks) 
                 {
-                    spdlog::info("[{}] NvLink Supported 支持 NvLink: {}", nvLink.link, nvLink.isNvLinkSupported);
-                    if(nvLink.isNvLinkSupported)
-                    {
-                        spdlog::info("\tNvLink Version 版本: {}", nvLink.NvLinkVersion.value());
-                        spdlog::info("\tNvLink Capability 能力: {}", nvLink.NvLinkCapability.value());
-                    }
+                    spdlog::info(
+                        "\n[{}] NvLink Supported 支持 NvLink: {}\n"
+                        "NvLink Version 版本: {}\n"
+                        "NvLink Capability 能力\n{}",
+                        nvLink.link, 
+                        nvLink.isNvLinkActive,
+                        nvLink.NvLinkVersion.value(),
+                        nvLink.NvLinkCapability.value()
+                    );
                 }
             }
         };
@@ -563,7 +536,7 @@ void WorkerSingleton::loadnvDevices()
         );
 
         if (get_nvLinkState_result) {
-            device.nvLinks = std::array<nvLink, NVML_NVLINK_MAX_LINKS>();
+            device.nvLinks = std::vector<nvLink>();
         } 
 
         // set NvLink variant

@@ -94,12 +94,12 @@ struct nvUsageInfoGPU {
 
 struct nvLink {
     NVLink link;
-    bool isNvLinkSupported = false; // 是否支持 NvLink
+    bool isNvLinkActive = false; // 是否支持 NvLink
     std::optional<NVLinkVersion> NvLinkVersion; // NvLink 版本
     std::optional<std::string> NvLinkCapability; // NvLink 能力
 };
-
-using NVLinkVariant = std::variant<std::string, std::array<nvLink, NVML_NVLINK_MAX_LINKS>>;
+// NVML_NVLINK_MAX_LINKS
+using NVLinkVariant = std::variant<std::string, std::vector<nvLink>>;
 
 struct nvDevice {
     unsigned int index;

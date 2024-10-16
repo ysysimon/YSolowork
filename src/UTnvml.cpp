@@ -1,5 +1,6 @@
 #include "UTnvml.h"
 #include "nvml.h"
+#include <cstddef>
 #include <string>
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -108,18 +109,20 @@ void Nvml::handleNVLinkVariant(NVLinkVariant& links, nvDeviceCount deviceIndex) 
 {
     std::visit([&](auto& links) {
         using T = std::decay_t<decltype(links)>; // 获取实际类型
-        if constexpr (std::is_same_v<T, std::array<nvLink, NVML_NVLINK_MAX_LINKS>>) 
+        if constexpr (std::is_same_v<T, std::vector<nvLink>>) 
         {
-            std::size_t thelink = 0;
-            for (auto& link : links) 
+            for (NVLink thelink = 0; thelink < NVML_NVLINK_MAX_LINKS; thelink++) 
             {
-                bool supported = getNvLinkState(deviceIndex, thelink);
-                link.isNvLinkSupported = supported;
-                if (link.isNvLinkSupported) 
-                {
-                    link.link = thelink;
-                    link.NvLinkVersion = getNvLinkVersion(deviceIndex, thelink);
-                    link.NvLinkCapability = getNvLinkCapability(deviceIndex, thelink);
+                try {
+                    bool active = getNvLinkState(deviceIndex, thelink);
+                    nvLink newlink;
+                    newlink.link = thelink;
+                    newlink.isNvLinkActive = active;
+                    newlink.NvLinkVersion = getNvLinkVersion(deviceIndex, thelink);
+                    newlink.NvLinkCapability = getNvLinkCapability(deviceIndex, thelink);
+                    links.push_back(newlink);
+                } catch (const NVMLException& e) {
+                    break;
                 }
             }
         } 
