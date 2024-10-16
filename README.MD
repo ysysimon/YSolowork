@@ -5,6 +5,9 @@ YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，
 3. **CGSolowork** (计划中): 以 **OpenUSD** 为核心的协同工作系统 
 
 ### 开发依赖 dev depend
+gcc-13 (经过测试)
+MSVC 19.4 (经过测试)
+如果使用 clangd 作为语法提示，请使用最新版以避免 C++20 错误提示
 
 #### YSolowork
 - Boost.process (plz using the official repo to install 建议使用官方repo安装)
