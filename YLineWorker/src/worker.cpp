@@ -19,7 +19,7 @@
 
 namespace YLineWorker {
 
-// 通用模板函数，用于执行操作并处理异常
+// 通用模板函数，用于执行查询机器信息操作并处理异常
 template<typename Func, typename Fallback>
 auto executeGetMachineInfo(Func func, Fallback fallback, const std::string& errorMsg, const std::string& warningMsg) -> decltype(func()) 
 {
@@ -123,18 +123,34 @@ void logWorkerMachineInfo(const MachineInfo& machineInfo)
         "\tx86 CPU: 安装 Intel OpenCL 运行时驱动程序 (包括 AMD CPU)\n"
         "\tARM CPU: 安装 ARM OpenCL 运行时驱动程序\n"
     );
-    spdlog::info("\n------------------------------------------------------------------------------------------");
+    spdlog::info("\n----------------------------------- Worker Machine Info End 工作机器信息结束 -------------------------------------");
 }
 
 void WorkerSingleton::logNvmlInfo()
 {
+    spdlog::info("\n---------------------------- Worker NVML Info 工作机器 NVML 信息 ----------------------------\n\n");
     for(const auto& device : nvDevices_.value()) 
     {
-        spdlog::info("Device 设备: {}", device.name);
-        spdlog::info("Device Serial 序列号: {}", device.serial);
-        spdlog::info("Device Driver Version 驱动版本: {}", device.driverVersion);
-        spdlog::info("Device Power Limit 功耗墙: {} W", device.PowerLimit);
-        spdlog::info("Device Temperature Threshold 温度墙: {} °C", device.TemperatureThreshold);
+        spdlog::info("\n******************************************************************\n");
+
+        spdlog::info(
+        "\nDevice [{}] Information:\n"
+            "  Name 设备: {}\n"
+            "  Serial 序列号: {}\n"
+            "  Driver Version 驱动版本: {}\n"
+            "  CUDA Version CUDA 版本: {}\n"
+            "  Total VMemory 总显存: {:.2f} GB\n"
+            "  Power Limit 功耗墙: {} W\n"
+            "  Temperature Threshold 温度墙: {} °C",
+            device.index, 
+            device.name, 
+            device.serial, 
+            device.driverVersion, 
+            device.cudaVersion, 
+            device.totalMemery, 
+            device.PowerLimit, 
+            device.TemperatureThreshold
+        );
         
         auto logVariant = [](const auto& nvLinks) {
             using T = std::decay_t<decltype(nvLinks)>;
@@ -157,8 +173,10 @@ void WorkerSingleton::logNvmlInfo()
 
         // log NvLink
         std::visit(logVariant, device.nvLinks);
+        spdlog::info("\n******************************************************************\n");
 
     }
+    spdlog::info("\n--------------------------------- Worker NVML Info End 工作机器 NVML 信息结束 ----------------------------------------");
 }
 
 void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> custom_logger)
@@ -245,19 +263,134 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
 
 // WebSocket 回调函数
 
-Json::Value WorkerSingleton::getUsageResp() const
+Json::Value WorkerSingleton::getUsageResp()
 {
     UsageInfoCPU usageInfoCPU = YSolowork::util::getUsageInfoCPU();
     Json::Value json;
     json["cpuUsage"] = usageInfoCPU.cpuUsage;
-    json["memoryUsage"] = usageInfoCPU.memoryUsage;
+    json["cpuMemoryUsage"] = usageInfoCPU.memoryUsage;
 
-    if (WorkerSingleton::getInstance().nvml_.has_value()) 
+    if (nvml_.has_value()) 
+    {   
+        json["gpuUsage"] = getUsageGPUResp();
+    }
+
+    return json;
+}
+
+// 通用模板函数，用于查询 GPU 使用信息并处理异常
+template<typename Func, typename FailedCall>
+void executeGetUsageInfoGPU(Func func, FailedCall failedcall)
+{
+    try {
+        func();
+    } catch (const NVMLException& e) {
+        failedcall();
+    }
+}
+
+void WorkerSingleton::updateUsageInfoGPU()
+{
+    if (!nvDevices_.has_value()) 
     {
-        // UsageInfoGPU usageInfoGPU = WorkerSingleton::getInstance().nvml_.value().getUsageInfoGPU();
-        // json["gpuUsage"] = usageInfoGPU.gpuUsage;
-        // json["gpuMemoryUsage"] = usageInfoGPU.gpuMemoryUsage;
+        throw std::runtime_error("Nvidia Devices not loaded, can not update Nvidia GPU usage! 未加载 Nvidia 设备, 无法更新 Nvidia GPU 使用情况!");
+    }
+
+    for (auto& device : nvDevices_.value()) 
+    {
+        // GPU 利用率
+        executeGetUsageInfoGPU(
+            [this, &device]() { 
+                NvUtilization nvUtilization =  nvml_->getDeviceGetUtilizationRates(device.index);
+                device.usageInfoGPU.gpuUsage = static_cast<double>(nvUtilization.gpu);
+            },
+            [this, &device]() {
+                device.usageInfoGPU.gpuUsage = -1.0;
+            }
+        );
+
+        // GPU 内存使用量
+        executeGetUsageInfoGPU(
+            [this, &device]() { 
+                NvMemInfo nvMemInfo = nvml_->getDeviceMemoryInfo(device.index);
+                device.usageInfoGPU.gpuMemoryUsed = 
+                    static_cast<double>(nvMemInfo.used) 
+                    / (1024.0 * 1024.0 * 1024.0); // bytes to GB
+            },
+            [this, &device]() {
+                device.usageInfoGPU.gpuMemoryUsed = -1.0;
+            }
+        );
+
+        // GPU 温度
+        executeGetUsageInfoGPU(
+            [this, &device]() { 
+                device.usageInfoGPU.gpuTemperature = static_cast<double>(nvml_->getDeviceTemperature(device.index));
+            },
+            [this, &device]() {
+                device.usageInfoGPU.gpuTemperature = -1.0;
+            }
+        );
+
+        // GPU 时钟信息
+        executeGetUsageInfoGPU(
+            [this, &device]() { 
+                nvClockInfo nvClockInfo = nvml_->getDeviceAllClockInfo(device.index);
+                device.usageInfoGPU.gpuClockInfo = {
+                    .graphicsClock = static_cast<double>(nvClockInfo.graphicsClock),
+                    .smClock = static_cast<double>(nvClockInfo.smClock),
+                    .memClock = static_cast<double>(nvClockInfo.memClock),
+                    .videoClock = static_cast<double>(nvClockInfo.videoClock)
+                };
+            },
+            [this, &device]() {
+                device.usageInfoGPU.gpuClockInfo = {
+                    .graphicsClock = -1.0,
+                    .smClock = -1.0,
+                    .memClock = -1.0,
+                    .videoClock = -1.0
+                };
+            }
+        );
+
+        // GPU 功耗
+        executeGetUsageInfoGPU(
+            [this, &device]() { 
+                device.usageInfoGPU.gpuPowerUsage = 
+                    static_cast<double>(nvml_->getDevicePowerUsage(device.index)) / 1000.0 ; // milliwatts to watts
+            },
+            [this, &device]() {
+                device.usageInfoGPU.gpuPowerUsage = -1.0;
+            }
+        );
+
+    }
+}
+
+Json::Value WorkerSingleton::getUsageGPUResp()
+{
     
+    if (!nvml_.has_value()) 
+    {
+        throw std::runtime_error("NVML not initialized NVML, can not get Nvidia GPU usage! 未初始化 NVML, 无法获取 Nvidia GPU 情况!");
+    }
+
+    updateUsageInfoGPU();
+    Json::Value json;
+    for (const auto& device : nvDevices_.value()) 
+    {
+        Json::Value deviceJson;
+        deviceJson["index"] = device.index;
+        // deviceJson["name"] = device.name;
+        deviceJson["gpuUsage"] = device.usageInfoGPU.gpuUsage;
+        deviceJson["gpuMemoryUsed"] = device.usageInfoGPU.gpuMemoryUsed;
+        deviceJson["gpuTemperature"] = device.usageInfoGPU.gpuTemperature;
+        deviceJson["gpuClockInfo"]["graphicsClock"] = device.usageInfoGPU.gpuClockInfo.graphicsClock;
+        deviceJson["gpuClockInfo"]["smClock"] = device.usageInfoGPU.gpuClockInfo.smClock;
+        deviceJson["gpuClockInfo"]["memClock"] = device.usageInfoGPU.gpuClockInfo.memClock;
+        deviceJson["gpuClockInfo"]["videoClock"] = device.usageInfoGPU.gpuClockInfo.videoClock;
+        deviceJson["gpuPowerUsage"] = device.usageInfoGPU.gpuPowerUsage;
+        json["NVIDIA"].append(deviceJson);
     }
 
     return json;
@@ -274,17 +407,17 @@ void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebS
             return;
         }
 
-        // 每秒 发送一次 CPU 和 内存 使用率
-        auto _usageInfoCPUtimer = loop->runEvery(1.0, [wsClient]() {
-            // const Json::Value& json = getUsageResp();
+        // 每秒 发送一次 使用率
+        auto _usageInfotimer = loop->runEvery(1.0, [wsClient]() {
+            const Json::Value& json = WorkerSingleton::getInstance().getUsageResp();
             
             if (wsClient && wsClient->getConnection() && wsClient->getConnection()->connected())
             {
-                // wsClient->getConnection()->sendJson(json);
+                wsClient->getConnection()->sendJson(json);
             }
         });
 
-        WorkerSingleton::getInstance().usageInfoCPUtimer = _usageInfoCPUtimer;
+        WorkerSingleton::getInstance().usageInfotimer = _usageInfotimer;
 
     } else {
         spdlog::error("Failed to connect to server 连接服务器失败: {}", to_string(result));
@@ -318,7 +451,7 @@ void WSconnectClosedCallback(const WebSocketClientPtr& wsClient) {
         spdlog::error("Failed to get current event loop 获取当前事件循环失败");
         return;
     }
-    loop->invalidateTimer(WorkerSingleton::getInstance().usageInfoCPUtimer);
+    loop->invalidateTimer(WorkerSingleton::getInstance().usageInfotimer);
 }
 
 void WorkerSingleton::connectToServer() {
@@ -356,6 +489,8 @@ void WorkerSingleton::loadnvDevices()
 
     nvDevices_ = std::vector<YSolowork::util::nvDevice>();
 
+    spdlog::info("\n\n---------------------- Loading Nvidia Device 加载 Nvidia 设备 ----------------------\n\n");
+
     // 获取设备数量
     nvDeviceCount deviceCount = nvml_->getDeviceCount();
 
@@ -363,49 +498,8 @@ void WorkerSingleton::loadnvDevices()
     for (nvDeviceCount currDevice = 0; currDevice < deviceCount; currDevice++) {
         nvDevice device;
         device.index = currDevice;
-        // device.name = nvml_->getDeviceName(currDevice);
 
-        // try {
-        //     device.serial = nvml_->getDeviceSerial(currDevice);
-        // } catch (const NVMLException& e) {
-        //     device.serial = "Unsupport";
-        //     spdlog::warn("Failed to get device serial 获取设备序列号失败: {}", e.what());
-        //     spdlog::warn("This device may not support serial feature 本设备可能不支持序列号功能");
-        // }
-
-        // try {
-        //     device.driverVersion = nvml_->getDeviceDriverVersion(currDevice);
-        // } catch (const NVMLException& e) {
-        //     device.driverVersion = "Unsupport";
-        //     spdlog::warn("Failed to get device driver version 获取设备驱动版本失败: {}", e.what());
-        //     spdlog::warn("This device may not support driver version feature 本设备可能不支持驱动版本功能");
-        // }
-        
-        // try {
-        //     device.PowerLimit = nvml_->getPowerLimit(currDevice) / 1000; // milliwatts to watts
-        // } catch (const NVMLException& e) {
-        //     device.PowerLimit = 0;
-        //     spdlog::warn("Failed to get power limit 获取功耗墙失败: {}", e.what());
-        //     spdlog::warn("This device may not support power limit feature 本设备可能不支持功耗墙功能");
-        // }
-
-        // try {
-        //     device.TemperatureThreshold = nvml_->getTemperatureThreshold(currDevice);
-        // } catch (const NVMLException& e) {
-        //     device.TemperatureThreshold = 0;
-        //     spdlog::warn("Failed to get temperature threshold 获取温度墙失败: {}", e.what());
-        //     spdlog::warn("This device may not support temperature threshold feature 本设备可能不支持温度墙功能");
-        // }
-
-        // try {
-        //     // if NvLink is supported, set variant to nvLink array
-        //     // 如果支持 NvLink, 设置 variant 为 nvLink 数组
-        //     nvml_->getNvLinkState(currDevice, 0);
-        //     device.nvLinks = std::array<nvLink, NVML_NVLINK_MAX_LINKS>();
-        // } catch (const NVMLException& e) {
-        //     spdlog::warn("Failed to get NvLink state 获取 NvLink 状态失败: {}", e.what());
-        //     spdlog::warn("This device may not support NvLink feature 本设备可能不支持 NvLink 功能");
-        // }
+        spdlog::info("*********** Loading device - [{}] 加载设备 [{}] 开始 ***********", currDevice, currDevice);
 
         device.name = executeGetDevice(
             [this, currDevice]() { return nvml_->getDeviceName(currDevice); },
@@ -419,6 +513,24 @@ void WorkerSingleton::loadnvDevices()
             std::string("Unsupport"),
             "Failed to get device serial 获取设备序列号失败",
             "This device may not support serial feature 本设备可能不支持序列号功能"
+        );
+
+        device.cudaVersion = executeGetDevice(
+            [this, currDevice]() { return nvml_->getSystemCudaDriverVersion(); },
+            -1.0,
+            "Failed to get system CUDA driver version 获取系统 CUDA 驱动版本失败",
+            "This device may not support CUDA feature 本设备可能不支持 CUDA 功能"
+        );
+
+        device.totalMemery = executeGetDevice(
+            [this, currDevice]() { 
+                return static_cast<double>(
+                    nvml_->getDeviceMemoryInfo(currDevice).total
+                    ) / (1024 * 1024 * 1024); // bytes to GB
+            }, 
+            -1.0,
+            "Failed to get device Vmemory info 获取设备显存信息失败",
+            "This device may not support Vmemory info feature 本设备可能不支持显存信息功能"
         );
 
         device.driverVersion = executeGetDevice(
@@ -458,7 +570,11 @@ void WorkerSingleton::loadnvDevices()
         nvml_->handleNVLinkVariant(device.nvLinks, currDevice);
 
         nvDevices_->push_back(device);
+
+        spdlog::info("*********** Loading device End - [{}] 加载 [{}] 结束 ***********", currDevice, currDevice);
     }
+
+    spdlog::info("\n\n------------------------------- Loading Nvidia Device End 加载 Nvidia 设备结束 ------------------------------------\n\n");
 }
 
 } // namespace YLineWorker

@@ -10,6 +10,8 @@
 #include "UTmachineInfo.h"
 #include "UTnvml.h"
 
+using namespace drogon;
+
 namespace YLineWorker {
 
 // 结构体: worker
@@ -52,11 +54,20 @@ public:
         loadnvDevices();
     }
 
+    // 获取 nvml
+    inline const std::optional<YSolowork::util::Nvml>& getNvml() const
+    {
+        return nvml_;
+    }
+
     // 获取 worker usage 信息
-    Json::Value getUsageResp() const;
+    Json::Value getUsageResp();
+
+    // 获取 worker usageGPU 信息
+    Json::Value getUsageGPUResp();
     
     // timer
-    trantor::TimerId usageInfoCPUtimer;
+    trantor::TimerId usageInfotimer;
 
     // logNvmlInfo
     void logNvmlInfo();
@@ -73,6 +84,9 @@ private:
 
     // nv 设备
     std::optional<std::vector<YSolowork::util::nvDevice>> nvDevices_;
+
+    // 更新 GPU 设备使用信息
+    void updateUsageInfoGPU();
 
     // 加载 nv 设备
     void loadnvDevices();
