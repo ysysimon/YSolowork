@@ -465,7 +465,12 @@ void WorkerSingleton::loadnvDevices()
     spdlog::info("\n\n---------------------- Loading Nvidia Device 加载 Nvidia 设备 ----------------------\n\n");
 
     // 获取设备数量
-    nvDeviceCount deviceCount = nvml_->getDeviceCount();
+    nvDeviceCount deviceCount = executeGetDevice(
+        [this]() { return nvml_->getDeviceCount(); },
+        0,
+        "Failed to get device count 获取设备数量失败",
+        "This machine may not have Nvidia GPU 本机可能没有 Nvidia GPU"
+    );
 
     // 遍历设备
     for (nvDeviceCount currDevice = 0; currDevice < deviceCount; currDevice++) {
