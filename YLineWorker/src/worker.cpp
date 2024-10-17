@@ -16,6 +16,7 @@
 #include <magic_enum.hpp>
 
 #include "UTusage.h"
+#include "vendor_include/toml.hpp"
 
 namespace YLineWorker {
 
@@ -204,8 +205,8 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     );
     // 设置 worker 数据
     WorkerSingleton::getInstance().setWorkerData({
-        .worker_id = "worker_id",
-        .worker_name = "worker_name",
+        .worker_id = "wait_for_register",
+        .worker_name = "wait_for_register",
         .client = client,
         .worker_machineInfo = machineInfo
     });
@@ -236,7 +237,7 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
 
 // WebSocket 回调函数
 
-Json::Value WorkerSingleton::getUsageResp()
+Json::Value WorkerSingleton::getUsageJson()
 {
     UsageInfoCPU usageInfoCPU = YSolowork::util::getUsageInfoCPU();
     Json::Value json;
@@ -245,7 +246,7 @@ Json::Value WorkerSingleton::getUsageResp()
 
     if (nvml_.has_value()) 
     {   
-        json["gpuUsage"] = getUsageGPUResp();
+        json["gpuUsage"] = getUsageGPUJson();
     }
 
     return json;
@@ -340,7 +341,7 @@ void WorkerSingleton::updateUsageInfoGPU()
     }
 }
 
-Json::Value WorkerSingleton::getUsageGPUResp()
+Json::Value WorkerSingleton::getUsageGPUJson()
 {
     
     if (!nvml_.has_value()) 
@@ -369,6 +370,31 @@ Json::Value WorkerSingleton::getUsageGPUResp()
     return json;
 }
 
+Json::Value WorkerSingleton::getSystomInfoJson() const
+{
+    Json::Value json;
+    json["OS"] = std::string(
+        magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.os)
+    );
+    json["osName"] = workerData_.worker_machineInfo.systomInfo.osName;
+    json["osRelease"] = workerData_.worker_machineInfo.systomInfo.osRelease;
+    json["osVersion"] = workerData_.worker_machineInfo.systomInfo.osVersion;
+    json["osArchitecture"] = std::string(
+        magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.osArchitecture)
+    );
+
+    return json;
+}
+
+Json::Value WorkerSingleton::getRegisterJson() const
+{
+    Json::Value json;
+    json["worker_id"] = workerData_.worker_id;
+    json["worker_name"] = workerData_.worker_name;
+    json["worker_machineInfo"] = getSystomInfoJson();
+    return json;
+}
+
 void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebSocketClientPtr& wsClient) {
 
     if (result == ReqResult::Ok) {
@@ -382,7 +408,7 @@ void WSconnectCallback(ReqResult result, const HttpResponsePtr& resp, const WebS
 
         // 每秒 发送一次 使用率
         auto _usageInfotimer = loop->runEvery(1.0, [wsClient]() {
-            const Json::Value& json = WorkerSingleton::getInstance().getUsageResp();
+            const Json::Value& json = WorkerSingleton::getInstance().getUsageJson();
             
             if (wsClient && wsClient->getConnection() && wsClient->getConnection()->connected())
             {
@@ -431,8 +457,10 @@ void WorkerSingleton::connectToServer() {
     // 获取 client
     const auto& client = WorkerSingleton::getInstance().workerData_.client;
     // 连接到服务器
-    auto req = drogon::HttpRequest::newHttpRequest();
+    Json::Value json = WorkerSingleton::getInstance().getRegisterJson();
+    auto req = drogon::HttpRequest::newHttpJsonRequest(json);
     req->setPath("/ws/worker");
+    
     client->setAsyncMessageHandler(msgAsyncCallback);
     client->setConnectionClosedHandler(WSconnectClosedCallback);
     client->connectToServer(

@@ -41,6 +41,17 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::info("{} want to connect to WorkerCtrl WebSocket", reqPeerAddr.toIpPort());
     spdlog::info("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
+    auto reqJson = req->getJsonObject();
+    if (reqJson) 
+    {
+        spdlog::info("Request JSON: {}", reqJson->toStyledString());
+    }
+
+    if (!req->getJsonError().empty()) 
+    {
+        spdlog::error("Request JSON error: {}", req->getJsonError());
+    }
+
 }
 
 void WorkerCtrl::handleConnectionClosed(const WebSocketConnectionPtr& wsConnPtr)

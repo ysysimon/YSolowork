@@ -2,6 +2,10 @@
 ip = "0.0.0.0"
 port = 33383
 
+[worker]
+# worker 的注册密钥，目前是对称加密，需要和 YLineWorker 保持一致
+register_secret = "your_register_secret"
+
 [middleware]
 # 只放行内网ip发来的http请求 only allow intranet ip
 IntranetIpFilter = false

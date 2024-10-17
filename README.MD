@@ -10,8 +10,10 @@ MSVC 19.4 (经过测试)
 如果使用 clangd 作为语法提示，请使用最新版以避免 C++20 错误提示
 
 #### YSolowork
-- Boost.process (plz using the official repo to install 建议使用官方repo安装)
-    - Boost.system
+- Boost (plz using the official repo to install 建议使用官方repo安装)
+    - process
+    - system
+    - uuid
 - OpenCL (for device info)
 
 #### YLineServer
@@ -19,7 +21,7 @@ MSVC 19.4 (经过测试)
 - botan (plz using the official repo to install 建议使用官方repo安装)
 - Drogon (build with project)
     - jsoncpp
-    - uuid
+    - uuid (no need for windows)
     - zlib
     - libpq (PostgreSQL)
 - toml++ (header only) (build with project)
@@ -30,7 +32,7 @@ MSVC 19.4 (经过测试)
 - magic_enum (header only) (build with project)
 - Drogon (build with project)
     - jsoncpp
-    - uuid
+    - uuid (no need for windows)
     - zlib
 - toml++ (header only) (build with project)
 

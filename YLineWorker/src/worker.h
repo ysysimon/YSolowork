@@ -60,11 +60,17 @@ public:
         return nvml_;
     }
 
-    // 获取 worker usage 信息
-    Json::Value getUsageResp();
+    // 获取 worker usage Json
+    Json::Value getUsageJson();
 
-    // 获取 worker usageGPU 信息
-    Json::Value getUsageGPUResp();
+    // 获取 worker usageGPU Json
+    Json::Value getUsageGPUJson();
+
+    // 获取 worker register Json
+    Json::Value getRegisterJson() const;
+
+    // 获取 worker info Json
+    Json::Value getSystomInfoJson() const;
     
     // timer
     trantor::TimerId usageInfotimer;

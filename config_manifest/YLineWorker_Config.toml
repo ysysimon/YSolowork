@@ -4,6 +4,10 @@
 ip = "0.0.0.0"
 port = 33393
 
+[worker]
+# worker 的注册密钥，目前是对称加密，需要和 YLineServer 保持一致
+register_secret = "your_register_secret"
+
 [YLineServer]
 # YLineServer 的ip和端口
 # YLineServer's ip and port
