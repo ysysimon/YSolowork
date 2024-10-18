@@ -65,6 +65,8 @@ target_link_libraries(YLineWorkerUI PRIVATE drogon) # 注意大小写!!! 作为 
 set(YLineWorker_SOURCES
     src/YLineWorker.cpp
     src/worker.cpp
+    src/worker_info.cpp
+    src/worker_json.cpp
     # UT
     src/utils/logger.cpp
     src/utils/config.cpp
