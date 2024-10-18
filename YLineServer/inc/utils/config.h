@@ -15,6 +15,9 @@ struct Config {
     std::string server_ip;
     int server_port;
 
+    // worker
+    std::string register_secret;
+
     // middleware
     bool intranet_ip_filter;
     bool local_host_filter;

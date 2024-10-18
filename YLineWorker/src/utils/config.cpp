@@ -41,6 +41,15 @@ Config parseConfig() {
     const std::string& YLineWorkerIp = YLineWorker["ip"].value_or("0.0.0.0"); // 默认值 ip
     int YLineWorkerPort = YLineWorker["port"].value_or(33393);         // 默认端口
 
+    // 读取 worker 部分
+    const auto& worker = getTable("worker", YLineWorkerConfig);
+    const std::string& registerSecret = worker["register_secret"].value_or("");
+    if (registerSecret.empty()) 
+    {
+        spdlog::error("Worker Register secret is empty 工作机注册密钥为空");
+        throw std::runtime_error("Register secret is empty");
+    }
+
     // 读取 YLineServer 部分
     const auto& YLineServer = getTable("YLineServer", YLineWorkerConfig);
     const std::string& YLineServerIp = YLineServer["ip"].value_or("0.0.0.0");
@@ -67,6 +76,7 @@ Config parseConfig() {
     return Config{
         YLineWorkerIp,
         YLineWorkerPort,
+        registerSecret,
         YLineServerIp,
         YLineServerPort,
         intranetIpFilter,

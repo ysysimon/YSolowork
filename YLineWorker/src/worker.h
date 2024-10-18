@@ -20,6 +20,9 @@ struct worker {
     std::string worker_id;
     std::string worker_name;
 
+    // register secret
+    std::string register_secret;
+
     // worker connection
     drogon::WebSocketClientPtr client;
 
@@ -51,7 +54,7 @@ public:
     // 初始化 nvml
     inline void initNvml() {
         nvml_.emplace();
-        loadnvDevices();
+        loadNvDevices();
     }
 
     // 获取 nvml
@@ -71,6 +74,12 @@ public:
 
     // 获取 worker info Json
     Json::Value getSystomInfoJson() const;
+
+    // 获取 Device Json
+    Json::Value getDeviceJson() const;
+
+    // 获取 nvDeviceRegister Json
+    Json::Value getNvDeviceRegisterJson() const;
     
     // timer
     trantor::TimerId usageInfotimer;
@@ -95,7 +104,7 @@ private:
     void updateUsageInfoGPU();
 
     // 加载 nv 设备
-    void loadnvDevices();
+    void loadNvDevices();
 };
 
 

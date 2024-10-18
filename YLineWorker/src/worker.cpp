@@ -72,6 +72,7 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     WorkerSingleton::getInstance().setWorkerData({
         .worker_id = "wait_for_register",
         .worker_name = "wait_for_register",
+        .register_secret = config.register_secret,
         .client = client,
         .worker_machineInfo = machineInfo
     });

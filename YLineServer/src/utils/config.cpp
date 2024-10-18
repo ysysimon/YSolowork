@@ -44,6 +44,15 @@ Config parseConfig() {
     const std::string& serverIp = server["ip"].value_or("0.0.0.0"); // 默认值 ip
     int serverPort = server["port"].value_or(33383);         // 默认端口
 
+    // 读取 worker 部分
+    const auto& worker = getTable("worker", YLineServerConfig);
+    const std::string& registerSecret = worker["register_secret"].value_or("");
+    if (registerSecret.empty()) 
+    {
+        spdlog::error("Worker Register secret is empty 工作机注册密钥为空");
+        throw std::runtime_error("Register secret is empty");
+    }
+
     // 读取 middleware 部分
     const auto& middleware = getTable("middleware", YLineServerConfig);
     bool intranetIpFilter = middleware["IntranetIpFilter"].value_or(false);
@@ -120,6 +129,7 @@ Config parseConfig() {
     return Config{
         serverIp, 
         serverPort,
+        registerSecret,
         intranetIpFilter,
         localHostFilter,
         cors,

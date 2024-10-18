@@ -1,5 +1,6 @@
 #include "utils/logger.h"
 #include "UTtime.h"
+#include "UTmachineInfo.h"
 
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -12,7 +13,8 @@ namespace YLineWorker {
 std::shared_ptr<spdlog::logger> createLogger() {
     // 获取当前时间戳作为日志文件名的一部分
     std::string timestamp = YSolowork::util::getCurrentTimestampStr();
-    std::string logFilename = "logs/YLineWorkerService/" + timestamp + ".log";
+    std::string machineName = YSolowork::util::getMachineName();
+    std::string logFilename = "logs/" + machineName + "/" + timestamp + ".log";
 
     // 创建控制台输出 sink（带颜色）
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();

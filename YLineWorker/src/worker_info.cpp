@@ -234,7 +234,7 @@ void WorkerSingleton::updateUsageInfoGPU()
 
 
 template<typename Func, typename Fallback>
-auto executeGetDevice(Func func, Fallback fallback, const std::string& errorMsg, const std::string& warningMsg) -> decltype(func()) {
+auto executeGetNVDevice(Func func, Fallback fallback, const std::string& errorMsg, const std::string& warningMsg) -> decltype(func()) {
     try {
         return func();
     } catch (const NVMLException& e) { // 如果只处理 NVMLException，可以特化处理
@@ -244,7 +244,7 @@ auto executeGetDevice(Func func, Fallback fallback, const std::string& errorMsg,
     }
 }
 
-void WorkerSingleton::loadnvDevices()
+void WorkerSingleton::loadNvDevices()
 {
 
     if (!nvml_.has_value()) 
@@ -257,7 +257,7 @@ void WorkerSingleton::loadnvDevices()
     spdlog::info("\n\n---------------------- Loading Nvidia Device 加载 Nvidia 设备 ----------------------\n\n");
 
     // 获取设备数量
-    nvDeviceCount deviceCount = executeGetDevice(
+    nvDeviceCount deviceCount = executeGetNVDevice(
         [this]() { return nvml_->getDeviceCount(); },
         0,
         "Failed to get device count 获取设备数量失败",
@@ -271,28 +271,28 @@ void WorkerSingleton::loadnvDevices()
 
         spdlog::info("*********** Loading device - [{}] 加载设备 [{}] 开始 ***********", currDevice, currDevice);
 
-        device.name = executeGetDevice(
+        device.name = executeGetNVDevice(
             [this, currDevice]() { return nvml_->getDeviceName(currDevice); },
             std::string("Unknown"),
             "Failed to get device name 获取设备名称失败",
             "This device may not support name feature 本设备可能不支持名称功能"
         );
 
-        device.serial = executeGetDevice(
+        device.serial = executeGetNVDevice(
             [this, currDevice]() { return nvml_->getDeviceSerial(currDevice); },
             std::string("Unsupport"),
             "Failed to get device serial 获取设备序列号失败",
             "This device may not support serial feature 本设备可能不支持序列号功能"
         );
 
-        device.cudaVersion = executeGetDevice(
+        device.cudaVersion = executeGetNVDevice(
             [this, currDevice]() { return nvml_->getSystemCudaDriverVersion(); },
             -1.0,
             "Failed to get system CUDA driver version 获取系统 CUDA 驱动版本失败",
             "This device may not support CUDA feature 本设备可能不支持 CUDA 功能"
         );
 
-        device.totalMemery = executeGetDevice(
+        device.totalMemery = executeGetNVDevice(
             [this, currDevice]() { 
                 return static_cast<double>(
                     nvml_->getDeviceMemoryInfo(currDevice).total
@@ -303,21 +303,21 @@ void WorkerSingleton::loadnvDevices()
             "This device may not support Vmemory info feature 本设备可能不支持显存信息功能"
         );
 
-        device.driverVersion = executeGetDevice(
+        device.driverVersion = executeGetNVDevice(
             [this, currDevice]() { return nvml_->getDeviceDriverVersion(currDevice); },
             std::string("Unsupport"),
             "Failed to get device driver version 获取设备驱动版本失败",
             "This device may not support driver version feature 本设备可能不支持驱动版本功能"
         );
 
-        device.PowerLimit = executeGetDevice(
+        device.PowerLimit = executeGetNVDevice(
             [this, currDevice]() { return nvml_->getPowerLimit(currDevice) / 1000; }, // milliwatts to watts
             0.0,
             "Failed to get power limit 获取功耗墙失败",
             "This device may not support power limit feature 本设备可能不支持功耗墙功能"
         );
 
-        device.TemperatureThreshold = executeGetDevice(
+        device.TemperatureThreshold = executeGetNVDevice(
             [this, currDevice]() { return nvml_->getTemperatureThreshold(currDevice); },
             0,
             "Failed to get temperature threshold 获取温度墙失败",
@@ -325,7 +325,7 @@ void WorkerSingleton::loadnvDevices()
         );
 
         // 如果支持 NvLink, 设置 variant 为 nvLink 数组
-        bool get_nvLinkState_result = executeGetDevice(
+        bool get_nvLinkState_result = executeGetNVDevice(
             [this, currDevice]() { nvml_->getNvLinkState(currDevice, 0); return true; },
             false,
             "Failed to get NvLink state 获取 NvLink 状态失败",

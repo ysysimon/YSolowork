@@ -1,5 +1,7 @@
 #include "worker.h"
+#include "json/value.h"
 #include <magic_enum.hpp>
+#include <variant>
 #include "UTusage.h"
 
 namespace YLineWorker {
@@ -49,18 +51,89 @@ Json::Value WorkerSingleton::getUsageGPUJson()
     return json;
 }
 
+Json::Value WorkerSingleton::getDeviceJson() const
+{
+    Json::Value json;
+    for (const auto& device : workerData_.worker_machineInfo.devices) 
+    {
+        Json::Value deviceJson;
+        deviceJson["type"] = std::string(
+            magic_enum::enum_name(device.type)
+        );
+        deviceJson["platformName"] = device.platformName;
+        deviceJson["name"] = device.name;
+        deviceJson["cores"] = device.cores;
+        deviceJson["memoryGB"] = device.memoryGB;
+        json.append(deviceJson);
+    }
+
+    return json;
+}
+
 Json::Value WorkerSingleton::getSystomInfoJson() const
 {
     Json::Value json;
     json["OS"] = std::string(
         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.os)
     );
-        json["osName"] = workerData_.worker_machineInfo.systomInfo.osName;
-        json["osRelease"] = workerData_.worker_machineInfo.systomInfo.osRelease;
-        json["osVersion"] = workerData_.worker_machineInfo.systomInfo.osVersion;
-        json["osArchitecture"] = std::string(
+    json["osName"] = workerData_.worker_machineInfo.systomInfo.osName;
+    json["osRelease"] = workerData_.worker_machineInfo.systomInfo.osRelease;
+    json["osVersion"] = workerData_.worker_machineInfo.systomInfo.osVersion;
+    json["osArchitecture"] = std::string(
         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.osArchitecture)
     );
+    json["devices"] = getDeviceJson();
+
+    return json;
+}
+
+Json::Value WorkerSingleton::getNvDeviceRegisterJson() const
+{
+    auto nvLinkJsonVariant = [](const auto& nvLink) -> Json::Value 
+    {
+        using T = std::decay_t<decltype(nvLink)>;
+        if constexpr (std::is_same_v<T, std::string>) 
+        {
+            return Json::Value(nvLink);
+        } 
+        else if constexpr (std::is_same_v<T, std::vector<YSolowork::util::nvLink>>) 
+        {
+            Json::Value json;
+            for (const auto& link : nvLink) 
+            {
+                Json::Value linkJson;
+                linkJson["link"] = link.link;
+                linkJson["isNvLinkActive"] = link.isNvLinkActive;
+                if (link.NvLinkVersion.has_value()) 
+                {
+                    linkJson["NvLinkVersion"] = link.NvLinkVersion.value();
+                }
+                if (link.NvLinkCapability.has_value()) 
+                {
+                    linkJson["NvLinkCapability"] = link.NvLinkCapability.value();
+                }
+                json.append(linkJson);
+            }
+            return json;
+        }
+    };
+
+    Json::Value json;
+    for (const auto& device : nvDevices_.value()) 
+    {
+        Json::Value deviceJson;
+        deviceJson["index"] = device.index;
+        deviceJson["name"] = device.name;
+        deviceJson["serial"] = device.serial;
+        deviceJson["driverVersion"] = device.driverVersion;
+        deviceJson["cudaVersion"] = device.cudaVersion;
+        deviceJson["totalMemery"] = device.totalMemery;
+        deviceJson["PowerLimit"] = device.PowerLimit;
+        deviceJson["TemperatureThreshold"] = device.TemperatureThreshold;
+        deviceJson["nvLinks"] = 
+            std::visit(nvLinkJsonVariant, device.nvLinks);
+        json.append(deviceJson);
+    }
 
     return json;
 }
@@ -70,7 +143,14 @@ Json::Value WorkerSingleton::getRegisterJson() const
     Json::Value json;
     json["worker_id"] = workerData_.worker_id;
     json["worker_name"] = workerData_.worker_name;
+    json["register_secret"] = workerData_.register_secret;
     json["worker_machineInfo"] = getSystomInfoJson();
+
+    if (nvml_.has_value() && nvDevices_.has_value() && !nvDevices_.value().empty()) 
+    {
+        json["NVIDIA"] = getNvDeviceRegisterJson();
+    }
+
     return json;
 }
 

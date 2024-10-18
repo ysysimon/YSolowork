@@ -11,6 +11,9 @@ struct Config {
     std::string YLineWorker_ip;
     int YLineWorker_port;
 
+    // worker
+    std::string register_secret;
+
     // YLineServer
     std::string YLineServer_ip;
     int YLineServer_port;
