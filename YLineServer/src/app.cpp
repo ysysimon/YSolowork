@@ -48,6 +48,18 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     // 添加 postgresql 数据库客户端
     drogon::app().addDbClient(YLineServer::DB::getDrogonPostgresConfig(config));
 
+    // 添加 redis 数据库客户端
+    drogon::app().createRedisClient(
+        config.redis_host, 
+        config.redis_port, 
+        "YLineRedis", 
+        config.redis_password, 
+        config.redis_connection_number, 
+        true, 
+        config.redis_timeout, 
+        config.redis_index
+    );
+
     // 内置 中间件 middleware
     // 仅允许内网 IP 访问
     if (config.intranet_ip_filter)

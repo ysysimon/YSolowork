@@ -3,7 +3,7 @@
 #include "spdlog/spdlog.h"
 #include <json/reader.h>
 #include <string>
-#include "utils/Config.h"
+#include "utils/config.h"
 
 using namespace YLineServer;
 
@@ -11,6 +11,7 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
 {
     if (type == WebSocketMessageType::Text)
     {
+        auto redis = drogon::app().getFastRedisClient("YLineRedis");
         try {
             Json::Value root;
             Json::CharReaderBuilder reader;
@@ -57,12 +58,13 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
         std::string register_secret = ConfigSingleton::getInstance().getConfigData().register_secret;
         if (verifyRegisterSecret(*reqJson, register_secret)) 
         {
+            auto redis = drogon::app().getFastRedisClient("YLineRedis");
             spdlog::info("{} registered as Worker 成功注册工作机", wsPeerAddr.toIpPort());
+            spdlog::info("Worker Register JSON: {}", reqJson->toStyledString());
         } 
         else 
         {
-            // wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Invalid Worker Register Secret");
-            wsConnPtr->forceClose();
+            wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Invalid Worker Register Secret");
             spdlog::error("{} failed to register as Worker, invalid register secret 注册工作机失败, 无效的注册密钥", wsPeerAddr.toIpPort());
         }
     }

@@ -64,7 +64,7 @@ set_target_properties(YSolowork PROPERTIES
 # find_package(Drogon REQUIRED) 在 Windows 上编译导致错误，改用下面的方式
 # 添加 Drogon 子模块
 # 不知为何 drogon 的 check_include_file_cxx(coroutine HAS_COROUTINE) 无法检测到 coroutine 头文件，所以这里强制开启 coroutine
-# set(HAS_COROUTINE ON CACHE BOOL "Force enable coroutine support for all subprojects" FORCE)
+set(HAS_COROUTINE ON CACHE BOOL "Force enable coroutine support for all subprojects" FORCE)
 add_subdirectory(
     ${YSolowork_SOURCE_DIR}/vendor/drogon
     ${YSolowork_BINARY_DIR}/vendor/drogon

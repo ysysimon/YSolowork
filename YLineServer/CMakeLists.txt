@@ -74,8 +74,13 @@ find_package(botan REQUIRED)
 target_link_libraries(YLineServer PRIVATE Botan::Botan)
 
 # 添加 Boost::uuid 库
-find_package(Boost REQUIRED COMPONENTS uuid)
-target_link_libraries(YLineServer PRIVATE Boost::uuid)
+if (MSVC)
+    find_package(Boost REQUIRED COMPONENTS uuid)
+    target_link_libraries(YLineServer PRIVATE Boost::uuid)
+else()
+    find_package(Boost REQUIRED)  # 仅查找 Boost，跳过 uuid 组件检查
+    target_include_directories(YLineServer PRIVATE ${Boost_INCLUDE_DIRS})
+endif()
 
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)

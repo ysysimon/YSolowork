@@ -24,6 +24,7 @@ MSVC 19.4 (经过测试)
     - uuid (no need for windows)
     - zlib
     - libpq (PostgreSQL)
+    - hiredis (redis)
 - toml++ (header only) (build with project)
 - jwt++ (build with project)
 

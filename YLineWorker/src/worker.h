@@ -18,7 +18,8 @@ namespace YLineWorker {
 struct worker {
     // worker info
     std::string worker_id;
-    std::string worker_name;
+    std::string worker_uuid;
+    std::string server_instance_uuid;
 
     // register secret
     std::string register_secret;

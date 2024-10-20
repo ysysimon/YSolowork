@@ -100,6 +100,15 @@ Config parseConfig() {
     size_t dbConnectionNumber = database["connection_number"].value_or(10);
     float dbTimeout = database["timeout"].value_or(5.0);
 
+    // 读取 redis 部分
+    const auto& redis = getTable("redis", YLineServerConfig);
+    const std::string& redisHost = redis["host"].value_or("localhost");
+    int redisPort = redis["port"].value_or(6379); // redis 默认端口
+    const std::string& redisPassword = redis["password"].value_or("");
+    int redisIndex = redis["index"].value_or(0);
+    size_t redisConnectionNumber = redis["connection_number"].value_or(10);
+    float redisTimeout = redis["timeout"].value_or(5.0);
+
     // 读取 logger 部分
     const auto& loggerTbl = getTable("logger", YLineServerConfig);
     const std::string& logLevelStr = loggerTbl["level"].value_or("debug");
@@ -144,6 +153,12 @@ Config parseConfig() {
         dbName,
         dbConnectionNumber,
         dbTimeout,
+        redisHost,
+        redisPort,
+        redisPassword,
+        redisIndex,
+        redisConnectionNumber,
+        redisTimeout,
         logLevel,
         migration,
         dbmate_download_url,

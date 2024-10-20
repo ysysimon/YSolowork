@@ -142,7 +142,8 @@ Json::Value WorkerSingleton::getRegisterJson() const
 {
     Json::Value json;
     json["worker_id"] = workerData_.worker_id;
-    json["worker_name"] = workerData_.worker_name;
+    json["worker_uuid"] = workerData_.worker_uuid;
+    json["server_instance_uuid"] = workerData_.server_instance_uuid;
     json["register_secret"] = workerData_.register_secret;
     json["worker_machineInfo"] = getSystomInfoJson();
 

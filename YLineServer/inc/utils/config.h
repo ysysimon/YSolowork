@@ -38,6 +38,14 @@ struct Config {
     size_t db_connection_number;
     float db_timeout;
 
+    // redis
+    std::string redis_host;
+    int redis_port;
+    std::string redis_password;
+    int redis_index;
+    size_t redis_connection_number;
+    float redis_timeout;
+
     // log
     spdlog::level::level_enum log_level;
 
