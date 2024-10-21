@@ -102,7 +102,7 @@ Config parseConfig() {
 
     // 读取 redis 部分
     const auto& redis = getTable("redis", YLineServerConfig);
-    const std::string& redisHost = redis["host"].value_or("localhost");
+    const std::string& redisHost = redis["host"].value_or("127.0.0.1");
     int redisPort = redis["port"].value_or(6379); // redis 默认端口
     const std::string& redisPassword = redis["password"].value_or("");
     int redisIndex = redis["index"].value_or(0);

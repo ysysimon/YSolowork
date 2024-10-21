@@ -39,7 +39,7 @@ timeout = 5.0
 [redis]
 # 注意保证这里的参数和 docker-compose 中的参数一致 (如果使用docker)
 # need to make sure the parameters here are consistent with the parameters in docker-compose (if using docker)
-host = "localhost"
+host = "127.0.0.1"
 port = 6379
 password = ""
 index = 0
