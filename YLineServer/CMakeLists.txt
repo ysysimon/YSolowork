@@ -82,6 +82,16 @@ else()
     target_include_directories(YLineServer PRIVATE ${Boost_INCLUDE_DIRS})
 endif()
 
+# 添加 entt 库
+add_subdirectory(
+    ${YSolowork_SOURCE_DIR}/vendor/entt
+    ${YSolowork_BINARY_DIR}/vendor/entt
+)
+target_link_libraries(YLineServer PRIVATE EnTT::EnTT)
+target_compile_definitions(YLineServer PRIVATE ENTT_USE_ATOMIC)
+target_compile_definitions(YLineServer PRIVATE ENTT_ID_TYPE=std::uint32_t)
+
+
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)
 

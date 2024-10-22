@@ -10,3 +10,6 @@
 [submodule "vendor/magic_enum"]
 	path = vendor/magic_enum
 	url = git@github.com:Neargye/magic_enum.git
+[submodule "vendor/entt"]
+	path = vendor/entt
+	url = git@github.com:skypjack/entt.git

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <drogon/WebSocketController.h>
+#include <entt/entt.hpp>
 
 using namespace drogon;
 
@@ -20,5 +21,8 @@ class WorkerCtrl : public drogon::WebSocketController<WorkerCtrl>
     // WS_PATH_ADD("/path", "filter1", "filter2", ...);
     WS_PATH_ADD("/ws/worker");
     WS_PATH_LIST_END
+  
+  private:
+    entt::registry workerRegistry;
 };
 }
