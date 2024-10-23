@@ -9,6 +9,9 @@
 
 #include "UTmachineInfo.h"
 #include "UTnvml.h"
+#include "UTappdata.h"
+
+#include <boost/uuid/uuid.hpp>
 
 using namespace drogon;
 
@@ -90,7 +93,7 @@ public:
 
 private:
     // 私有构造函数，防止外部实例化
-    WorkerSingleton() = default;
+    WorkerSingleton();
 
     // 存储 worker 信息
     worker workerData_;
@@ -106,6 +109,15 @@ private:
 
     // 加载 nv 设备
     void loadNvDevices();
+
+    // 保存 worker uuid
+    static void saveUUIDtoAppData(const boost::uuids::uuid& uuid, const std::filesystem::path& path);
+
+    // 从 app data 读取 uuid
+    static boost::uuids::uuid readUUIDfromAppData(const std::filesystem::path& path);
+
+    // worker uuid
+    boost::uuids::uuid worker_uuid;
 };
 
 

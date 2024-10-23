@@ -10,11 +10,13 @@
 #include <functional>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
 #include <string>
 #include <trantor/utils/Logger.h>
 #include <magic_enum.hpp>
 
-
+#include <boost/uuid/uuid_generators.hpp>
+#include <iostream>
 
 namespace YLineWorker {
 
@@ -100,6 +102,64 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     spdlog::info("YLineWorker Service started 服务已启动");
     drogon::app().run();
 
+}
+
+void WorkerSingleton::saveUUIDtoAppData(const boost::uuids::uuid& uuid, const std::filesystem::path& path)
+{
+    std::filesystem::create_directories(path.parent_path());
+    std::ofstream UUIDfile(path, std::ios::binary);
+    if (UUIDfile.is_open()) {
+        UUIDfile.write(reinterpret_cast<const char*>(uuid.data), uuid.size());
+        UUIDfile.close();
+        spdlog::info("UUID saved to file 存储 UUID 到: {} 成功", path.string());
+    } 
+    else 
+    {
+        spdlog::error("Failed to save UUID to file 存储 UUID 到: {} 失败", path.string());
+        throw std::runtime_error("Failed to save UUID to file 存储 UUID 失败: " + path.string());
+    }
+}
+
+boost::uuids::uuid WorkerSingleton::readUUIDfromAppData(const std::filesystem::path& path)
+{
+    boost::uuids::uuid uuid;
+    if (std::filesystem::exists(path)) 
+    {
+        std::ifstream UUIDfile(path, std::ios::binary);
+        if (UUIDfile.is_open()) {
+            UUIDfile.read(reinterpret_cast<char*>(uuid.data), uuid.size());
+            UUIDfile.close();
+            spdlog::info("UUID loaded from file 从文件加载 UUID 成功");
+        } 
+        else
+        {
+            spdlog::error("Failed to load UUID from file 从文件加载 UUID 失败");
+            throw std::runtime_error("Failed to load UUID from file 从文件加载 UUID 失败");
+        }
+
+    } 
+    else 
+    {
+        spdlog::warn("UUID file does not exist UUID 文件不存在");
+        spdlog::warn("Generating new UUID 生成新的 UUID");
+        uuid = boost::uuids::random_generator()();
+        saveUUIDtoAppData(uuid, path);
+    }
+    
+    
+    return uuid;
+}
+
+WorkerSingleton::WorkerSingleton()
+{
+    std::filesystem::path workerUUID_path = YSolowork::util::getAppDataDir();
+    if (workerUUID_path.empty()) {
+        spdlog::error("Failed to get APPDATA directory 获取 APPDATA 目录失败");
+        throw std::runtime_error("Failed to get APPDATA directory 获取 APPDATA 目录失败");
+    }
+
+    workerUUID_path = workerUUID_path / "YLineWorker" / "Yworker.uuid";
+    worker_uuid = readUUIDfromAppData(workerUUID_path);
 }
 
 // WebSocket 回调函数

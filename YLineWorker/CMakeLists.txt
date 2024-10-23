@@ -117,6 +117,20 @@ add_subdirectory(
 )
 target_link_libraries(YLineWorker PRIVATE magic_enum::magic_enum)
 
+# 添加 Boost::uuid 库
+if (MSVC)
+    find_package(Boost REQUIRED COMPONENTS uuid)
+    target_link_libraries(
+        YLineWorker 
+        PRIVATE 
+        Boost::uuid
+        bcrypt.lib # boost::uuid 需要 bcrypt.lib 在 win 上作为随机数生成器
+    )
+else()
+    find_package(Boost REQUIRED)  # 仅查找 Boost，跳过 uuid 组件检查
+    target_include_directories(YLineWorker PRIVATE ${Boost_INCLUDE_DIRS})
+endif()
+
 # 自定义命令：复制配置文件
 add_custom_command(
     TARGET YLineWorker POST_BUILD  # 在 YLineWorker 构建完成后执行
