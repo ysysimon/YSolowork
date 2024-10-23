@@ -1,7 +1,12 @@
 #pragma once
 
+#include "json/value.h"
 #include <drogon/WebSocketController.h>
 #include <entt/entt.hpp>
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 using namespace drogon;
 
@@ -23,6 +28,20 @@ class WorkerCtrl : public drogon::WebSocketController<WorkerCtrl>
     WS_PATH_LIST_END
   
   private:
-    entt::registry workerRegistry;
+    void registerNewWorker(Json::Value workerInfo) const;
 };
+
+
+// EnTT
+
+struct WorkerInfo {
+    boost::uuids::uuid worker_uuid;
+    boost::uuids::uuid server_instance_uuid;
+    Json::Value worker_info;
+};
+
+struct WebSocketConnection {
+    WebSocketConnectionPtr wsConnPtr;
+};
+
 }

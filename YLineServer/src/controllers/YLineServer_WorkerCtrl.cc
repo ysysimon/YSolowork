@@ -1,11 +1,18 @@
 #include "YLineServer_WorkerCtrl.h"
 #include "drogon/WebSocketConnection.h"
+
+#include "drogon/orm/Mapper.h"
+#include "models/Workers.h"
+
 #include "spdlog/spdlog.h"
 #include <json/reader.h>
 #include <string>
-#include "utils/config.h"
+
+#include "utils/server.h"
+
 
 using namespace YLineServer;
+using namespace drogon_model::yline;
 
 void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::string &&message, const WebSocketMessageType &type)
 {
@@ -46,6 +53,24 @@ bool verifyRegisterSecret(const Json::Value &reqJson, const std::string &registe
     return false;
 }
 
+
+
+void WorkerCtrl::registerNewWorker(Json::Value workerInfo) const
+{
+    // auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    // database
+    auto dbClient = drogon::app().getFastDbClient("YLinedb");
+    drogon::orm::Mapper<Workers> mapper(dbClient);
+
+    //uuid
+    boost::uuids::random_generator uuidgen;
+    boost::uuids::uuid worker_uuid = uuidgen();
+    boost::uuids::uuid server_instance_uuid = ServerSingleton::getInstance().getServerInstanceUUID();
+
+
+}
+
+
 void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& reqPeerAddr = req->getPeerAddr();
@@ -55,12 +80,14 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
     if (reqJson) 
     {
         spdlog::debug("Worker Request JSON: {}", reqJson->toStyledString());
-        std::string register_secret = ConfigSingleton::getInstance().getConfigData().register_secret;
+        std::string register_secret = ServerSingleton::getInstance().getConfigData().register_secret;
         if (verifyRegisterSecret(*reqJson, register_secret)) 
         {
-            auto redis = drogon::app().getFastRedisClient("YLineRedis");
+            
+
+
+            spdlog::debug("Worker Register JSON: {}", reqJson->toStyledString());
             spdlog::info("{} registered as Worker 成功注册工作机", wsPeerAddr.toIpPort());
-            spdlog::info("Worker Register JSON: {}", reqJson->toStyledString());
         } 
         else 
         {

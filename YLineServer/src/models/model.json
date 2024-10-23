@@ -6,6 +6,7 @@
     "user": "postgres",
     "passwd": "postgresPassword",
     "tables": [
-        "users"
+        "users",
+        "workers"
     ]
 }

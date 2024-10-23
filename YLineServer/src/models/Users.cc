@@ -5,7 +5,7 @@
  *
  */
 
-#include "models/Users.h"
+#include "Users.h"
 #include <drogon/utils/Utilities.h>
 #include <string>
 

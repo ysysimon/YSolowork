@@ -15,6 +15,7 @@ set(YLineServer_SOURCES
     src/database.cpp
     # ORM
     src/models/Users.cc
+    src/models/Workers.cc
     # Controller
     src/controllers/YLineServer_HealthCheckCtrl.cc
     src/controllers/YLineServer_UserCtrl.cc
@@ -24,6 +25,7 @@ set(YLineServer_SOURCES
     # UT
     src/utils/logger.cpp
     src/utils/config.cpp
+    src/utils/server.cpp
     src/utils/api.cpp
     src/utils/passwd.cpp
     src/utils/jwt.cpp
@@ -76,7 +78,12 @@ target_link_libraries(YLineServer PRIVATE Botan::Botan)
 # 添加 Boost::uuid 库
 if (MSVC)
     find_package(Boost REQUIRED COMPONENTS uuid)
-    target_link_libraries(YLineServer PRIVATE Boost::uuid)
+    target_link_libraries(
+        YLineServer 
+        PRIVATE 
+        Boost::uuid
+        bcrypt.lib # boost::uuid 需要 bcrypt.lib 在 win 上作为随机数生成器
+    )
 else()
     find_package(Boost REQUIRED)  # 仅查找 Boost，跳过 uuid 组件检查
     target_include_directories(YLineServer PRIVATE ${Boost_INCLUDE_DIRS})

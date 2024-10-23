@@ -1,5 +1,5 @@
 #include "utils/jwt.h"
-#include "utils/config.h"
+#include "utils/server.h"
 
 #include <json/value.h>
 #include "jwt-cpp/traits/open-source-parsers-jsoncpp/traits.h"
@@ -13,7 +13,7 @@ using claim = jwt::basic_claim<traits>;
 
 std::string generateAuthJwt(const Users::PrimaryKeyType& userId, const std::string& username, const bool isAdmin)
 {
-    const ConfigSingleton& config = ConfigSingleton::getInstance();
+    const ServerSingleton& config = ServerSingleton::getInstance();
     const std::string& jwtSecret = config.getConfigData().jwt_secret;
     auto token = jwt::create<traits>()
         .set_issuer("YLineServer")

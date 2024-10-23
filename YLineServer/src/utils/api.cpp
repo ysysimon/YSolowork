@@ -1,11 +1,11 @@
 #include "utils/api.h"
-#include "utils/config.h"
+#include "utils/server.h"
 
 namespace YLineServer::Api {
 
 void addCORSHeader(const HttpResponsePtr& resp, const HttpRequestPtr& req)
 {
-    auto& config = ConfigSingleton::getInstance().getConfigData();
+    auto& config = ServerSingleton::getInstance().getConfigData();
     if (config.cors)
     {
         if (config.allowed_origins.find("*") != config.allowed_origins.end() || req == nullptr)

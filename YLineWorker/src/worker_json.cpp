@@ -74,13 +74,13 @@ Json::Value WorkerSingleton::getSystomInfoJson() const
 {
     Json::Value json;
     json["OS"] = std::string(
-        magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.os)
+         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.os)
     );
     json["osName"] = workerData_.worker_machineInfo.systomInfo.osName;
     json["osRelease"] = workerData_.worker_machineInfo.systomInfo.osRelease;
     json["osVersion"] = workerData_.worker_machineInfo.systomInfo.osVersion;
     json["osArchitecture"] = std::string(
-        magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.osArchitecture)
+         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.osArchitecture)
     );
     json["devices"] = getDeviceJson();
 
@@ -141,15 +141,15 @@ Json::Value WorkerSingleton::getNvDeviceRegisterJson() const
 Json::Value WorkerSingleton::getRegisterJson() const
 {
     Json::Value json;
-    json["worker_id"] = workerData_.worker_id;
     json["worker_uuid"] = workerData_.worker_uuid;
     json["server_instance_uuid"] = workerData_.server_instance_uuid;
+    json["worker_entt_id"] = workerData_.worker_entt_id;
     json["register_secret"] = workerData_.register_secret;
-    json["worker_machineInfo"] = getSystomInfoJson();
+    json["worker_info"]["worker_machineInfo"] = getSystomInfoJson();
 
     if (nvml_.has_value() && nvDevices_.has_value() && !nvDevices_.value().empty()) 
     {
-        json["NVIDIA"] = getNvDeviceRegisterJson();
+        json["worker_info"]["NVIDIA"] = getNvDeviceRegisterJson();
     }
 
     return json;
