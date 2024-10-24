@@ -9,7 +9,6 @@
 
 #include "UTmachineInfo.h"
 #include "UTnvml.h"
-#include "UTappdata.h"
 
 #include <boost/uuid/uuid.hpp>
 

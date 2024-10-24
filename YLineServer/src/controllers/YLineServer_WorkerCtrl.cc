@@ -1,9 +1,6 @@
 #include "YLineServer_WorkerCtrl.h"
 #include "drogon/WebSocketConnection.h"
 
-#include "drogon/orm/Mapper.h"
-#include "models/Workers.h"
-
 #include "spdlog/spdlog.h"
 #include <json/reader.h>
 #include <string>
@@ -12,7 +9,6 @@
 
 
 using namespace YLineServer;
-using namespace drogon_model::yline;
 
 void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::string &&message, const WebSocketMessageType &type)
 {
@@ -53,66 +49,6 @@ bool verifyRegisterSecret(const Json::Value& reqJson, const std::string& registe
     return false;
 }
 
-
-
-void WorkerCtrl::RegisterWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const
-{   
-    auto redis = drogon::app().getFastRedisClient("YLineRedis");
-    // database
-    auto dbClient = drogon::app().getFastDbClient("YLinedb");
-    drogon::orm::Mapper<Workers> mapper(dbClient);
-
-    mapper.findOne(
-        drogon::orm::Criteria(Workers::Cols::_worker_uuid, drogon::orm::CompareOperator::EQ, workerUUID),
-        [&workerUUID](const Workers &worker)
-        {
-            spdlog::info("Worker found in database 数据库中找到工作机: {}", workerUUID);
-        },
-        [&](const drogon::orm::DrogonDbException &e)
-        {
-            spdlog::info("Failed to find Worker in database 数据库中未找到工作机: {}", workerUUID);
-            registerNewWorker(workerUUID, workerInfo, wsConnPtr);
-        }
-    );
-    
-}
-
-void WorkerCtrl::registerNewWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const
-{
-    auto redis = drogon::app().getFastRedisClient("YLineRedis");
-    // database
-    auto dbClient = drogon::app().getFastDbClient("YLinedb");
-    drogon::orm::Mapper<Workers> mapper(dbClient);
-
-    //uuid
-    const std::string& server_instance_uuid = boost::uuids::to_string(ServerSingleton::getInstance().getServerInstanceUUID());
-
-    // 构造 worker 对象
-    Workers worker;
-    worker.setWorkerUuid(workerUUID);
-    worker.setServerInstanceUuid(server_instance_uuid);
-    worker.setWorkerEnttId(33);
-     // 将 Json::Value 的 workerInfo 转换为字符串
-    Json::StreamWriterBuilder writer;
-    const std::string workerInfoStr = Json::writeString(writer, workerInfo);
-    worker.setWorkerInfo(workerInfoStr);
-
-    // 插入数据库 这里需要使用同步
-    mapper.insert(
-        worker,
-        [](const Workers worker)
-        {
-            spdlog::info("New Worker registered into database 新工作机注册到数据库成功: {}", *worker.getWorkerUuid());
-        },
-        [wsConnPtr](const drogon::orm::DrogonDbException &e)
-        {
-            wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to register new Worker into database 注册新工作机到数据库失败");
-            spdlog::error("Failed to register new Worker into database 注册新工作机到数据库失败: {}", e.base().what());
-        }
-    );
-}
-
-
 void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& reqPeerAddr = req->getPeerAddr();
@@ -124,16 +60,12 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
         spdlog::info("New Worker Register Request from 新的工作机注册申请来自: {}", wsPeerAddr.toIpPort());
         spdlog::debug("Worker Request JSON: {}", reqJson->toStyledString());
         std::string register_secret = ServerSingleton::getInstance().getConfigData().register_secret;
-        if (verifyRegisterSecret(*reqJson, register_secret)) 
-        {
-            spdlog::debug("Worker Register JSON: {}", reqJson->toStyledString());
-        } 
-        else 
+        if (!verifyRegisterSecret(*reqJson, register_secret)) 
         {
             wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Invalid Worker Register Secret");
             spdlog::error("{} failed to register as Worker, invalid register secret 注册工作机失败, 无效的注册密钥", wsPeerAddr.toIpPort());
             return;
-        }
+        } 
 
         if (!(*reqJson).isMember("worker_uuid") && !(*reqJson)["worker_uuid"].isString()) 
         {
@@ -151,7 +83,7 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
 
         // 回调地狱，但是没辙 wsCtrl 不支持协程写法
         // callback hell but no choice, wsCtrl does not support coroutine
-        RegisterWorker((*reqJson)["worker_uuid"].asString(), (*reqJson)["worker_info"], wsConnPtr);
+        registerWorker((*reqJson)["worker_uuid"].asString(), (*reqJson)["worker_info"], wsConnPtr);
     }
 
     if (!req->getJsonError().empty()) 

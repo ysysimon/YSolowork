@@ -17,6 +17,7 @@
 
 #include <boost/uuid/uuid_generators.hpp>
 #include <iostream>
+#include "UTappdata.h"
 
 namespace YLineWorker {
 
@@ -106,7 +107,7 @@ void WorkerSingleton::saveUUIDtoAppData(const boost::uuids::uuid& uuid, const st
     std::filesystem::create_directories(path.parent_path());
     std::ofstream UUIDfile(path, std::ios::binary);
     if (UUIDfile.is_open()) {
-        UUIDfile.write(reinterpret_cast<const char*>(uuid.data), uuid.size());
+        UUIDfile.write(reinterpret_cast<const char*>(uuid.data()), uuid.size());
         UUIDfile.close();
         spdlog::info("UUID saved to file 存储 UUID 到: {} 成功", path.string());
     } 
@@ -124,7 +125,7 @@ boost::uuids::uuid WorkerSingleton::readUUIDfromAppData(const std::filesystem::p
     {
         std::ifstream UUIDfile(path, std::ios::binary);
         if (UUIDfile.is_open()) {
-            UUIDfile.read(reinterpret_cast<char*>(uuid.data), uuid.size());
+            UUIDfile.read(reinterpret_cast<char*>(uuid.data()), uuid.size());
             UUIDfile.close();
             spdlog::info("UUID loaded from file 从文件加载 UUID 成功");
         } 

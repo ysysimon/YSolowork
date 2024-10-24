@@ -20,6 +20,7 @@ set(YLineServer_SOURCES
     src/controllers/YLineServer_HealthCheckCtrl.cc
     src/controllers/YLineServer_UserCtrl.cc
     src/controllers/YLineServer_WorkerCtrl.cc
+    src/controllers/WorkerRegister.cpp
     # Middleware
     src/middlewares/YLineServer_CORSMid.cc
     # UT

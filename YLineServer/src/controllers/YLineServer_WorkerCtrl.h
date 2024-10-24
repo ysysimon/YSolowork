@@ -28,14 +28,14 @@ class WorkerCtrl : public drogon::WebSocketController<WorkerCtrl>
     WS_PATH_LIST_END
   
   private:
-    void RegisterWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
+    void registerWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
     void registerNewWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
+    void registerWorkerEnTT(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
 };
 
 
-// EnTT
-
-struct WorkerInfo {
+// EnTT Components
+struct WorkerMeta {
     boost::uuids::uuid worker_uuid;
     boost::uuids::uuid server_instance_uuid;
     Json::Value worker_info;
