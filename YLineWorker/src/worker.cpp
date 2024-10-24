@@ -72,9 +72,6 @@ void spawnWorker(const Config& config, const std::shared_ptr<spdlog::logger> cus
     );
     // 设置 worker 数据
     WorkerSingleton::getInstance().setWorkerData({
-        .worker_uuid = "wait_for_register",
-        .server_instance_uuid = "wait_for_register",
-        .worker_entt_id = "wait_for_register",
         .register_secret = config.register_secret,
         .client = client,
         .worker_machineInfo = machineInfo

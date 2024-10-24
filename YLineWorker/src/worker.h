@@ -19,11 +19,6 @@ namespace YLineWorker {
 
 // 结构体: worker
 struct worker {
-    // worker info
-    std::string worker_uuid;
-    std::string server_instance_uuid;
-    std::string worker_entt_id;
-
     // register secret
     std::string register_secret;
 

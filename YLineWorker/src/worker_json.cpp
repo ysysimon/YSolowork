@@ -4,6 +4,8 @@
 #include <variant>
 #include "UTusage.h"
 
+#include <boost/uuid/uuid_io.hpp> // for boost::uuids::to_string
+
 namespace YLineWorker {
 
 
@@ -141,9 +143,7 @@ Json::Value WorkerSingleton::getNvDeviceRegisterJson() const
 Json::Value WorkerSingleton::getRegisterJson() const
 {
     Json::Value json;
-    json["worker_uuid"] = workerData_.worker_uuid;
-    json["server_instance_uuid"] = workerData_.server_instance_uuid;
-    json["worker_entt_id"] = workerData_.worker_entt_id;
+    json["worker_uuid"] = boost::uuids::to_string(worker_uuid);
     json["register_secret"] = workerData_.register_secret;
     json["worker_info"]["worker_machineInfo"] = getSystomInfoJson();
 
