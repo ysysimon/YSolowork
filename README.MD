@@ -14,6 +14,7 @@ MSVC 19.4 (经过测试)
     - process
     - system
     - uuid
+    - interprocess
 - OpenCL (for device info)
 
 #### YLineServer

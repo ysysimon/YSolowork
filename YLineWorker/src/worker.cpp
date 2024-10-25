@@ -107,7 +107,11 @@ void WorkerSingleton::saveUUIDtoAppData(const boost::uuids::uuid& uuid, const st
     std::filesystem::create_directories(path.parent_path());
     std::ofstream UUIDfile(path, std::ios::binary);
     if (UUIDfile.is_open()) {
+#ifdef _WIN32
+        UUIDfile.write(reinterpret_cast<const char*>(uuid.data), uuid.size());
+#else
         UUIDfile.write(reinterpret_cast<const char*>(uuid.data()), uuid.size());
+#endif
         UUIDfile.close();
         spdlog::info("UUID saved to file 存储 UUID 到: {} 成功", path.string());
     } 
@@ -125,7 +129,11 @@ boost::uuids::uuid WorkerSingleton::readUUIDfromAppData(const std::filesystem::p
     {
         std::ifstream UUIDfile(path, std::ios::binary);
         if (UUIDfile.is_open()) {
+#ifdef _WIN32
+            UUIDfile.read(reinterpret_cast<char*>(uuid.data), uuid.size());
+#else
             UUIDfile.read(reinterpret_cast<char*>(uuid.data()), uuid.size());
+#endif
             UUIDfile.close();
             spdlog::info("UUID loaded from file 从文件加载 UUID 成功");
         } 

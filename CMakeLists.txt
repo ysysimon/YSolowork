@@ -34,15 +34,15 @@ if (MSVC)
     # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
 endif()
 
-# 引入 Boost::process 和 Boost::system
-find_package(Boost REQUIRED COMPONENTS process system)
+# 引入 Boost::process, Boost::system, Boost::interprocess 
+find_package(Boost REQUIRED COMPONENTS process system interprocess)
 
 # 使用 GLOB 来找到所有的 .cpp 文件
 file(GLOB YSolowork_SOURCES "${YSolowork_SOURCE_DIR}/src/*.cpp")
 # 添加 YSolowork 库
 add_library(YSolowork STATIC ${YSolowork_SOURCES})
 # 链接 Boost::process 和 Boost::system
-target_link_libraries(YSolowork PRIVATE Boost::process Boost::system)
+target_link_libraries(YSolowork PRIVATE Boost::process Boost::system Boost::interprocess)
 # _WIN32_WINNT 符号的定义
 if (MSVC)
     # Windows 平台需要定义 _WIN32_WINNT=0x0A00 表示 Windows 10, 支持的最低 Windows 版本
