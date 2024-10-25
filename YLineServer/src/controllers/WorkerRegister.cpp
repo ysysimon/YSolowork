@@ -5,7 +5,7 @@
 #include "spdlog/spdlog.h"
 #include "utils/server.h"
 
-#include "drogon/utils/coroutine.h"
+#include <future>
 
 using EnTTidType = entt::registry::entity_type;
 
@@ -44,7 +44,7 @@ void WorkerCtrl::registerWorkerEnTT(const std::string& workerUUID, const Json::V
     );
 }
 
-drogon::Task<EnTTidType> findRegisteredWorkerEnTTbyUUID(const boost::uuids::uuid& worker_uuid)
+EnTTidType findRegisteredWorkerEnTTbyUUIDSync(const boost::uuids::uuid& worker_uuid) noexcept
 {
     auto &registry = ServerSingleton::getInstance().Registry;
     auto view = registry.view<WorkerMeta>();
@@ -53,30 +53,74 @@ drogon::Task<EnTTidType> findRegisteredWorkerEnTTbyUUID(const boost::uuids::uuid
         auto& workerMeta = view.get<WorkerMeta>(entity);
         if (workerMeta.worker_uuid == worker_uuid)
         {
-            co_return entity;
+            return entity;
         }
     }
 
-    co_return entt::null;
+    return entt::null;
+}
+
+std::shared_future<EnTTidType> findRegisteredWorkerEnTTbyUUIDAsync(const boost::uuids::uuid& worker_uuid)
+{
+    auto promise = std::make_shared<std::promise<EnTTidType>>();
+    auto future = promise->get_future().share(); // 获取共享 future
+    // 将任务放入事件循环
+    app().getLoop()->queueInLoop([promise, worker_uuid]() {
+        auto result = findRegisteredWorkerEnTTbyUUIDSync(worker_uuid);
+        promise->set_value(result);
+    });
+
+    return future;
 }
 
 void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const
 {   
+    // 发起异步查询 EnTT 注册表， 不阻塞
+    auto workerEnTTfuture = findRegisteredWorkerEnTTbyUUIDAsync(boost::uuids::string_generator()(workerUUID));
+
     auto redis = drogon::app().getFastRedisClient("YLineRedis");
     // database
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
     drogon::orm::Mapper<Workers> mapper(dbClient);
 
+
     mapper.findOne(
         drogon::orm::Criteria(Workers::Cols::_worker_uuid, drogon::orm::CompareOperator::EQ, workerUUID),
-        [workerUUID](const Workers &worker)
+        [workerUUID, workerEnTTfuture](const Workers &worker) mutable
         {
             spdlog::info("Worker found in database 数据库中找到工作机: {}", workerUUID);
+
+            // 获取  查询结果
+            const auto& workerEnTTid = workerEnTTfuture.get();
+            if (workerEnTTid != entt::null)
+            {
+                spdlog::info("Worker found in EnTT registry EnTT 注册表中找到工作机: {}", static_cast<std::underlying_type_t<EnTTidType>>(workerEnTTid));
+                return;
+            }
+            else 
+            {
+                spdlog::info("Worker not found in EnTT registry EnTT 注册表中未找到工作机: {}", workerUUID);
+                // registerNewWorker(workerUUID, workerInfo, wsConnPtr);
+            }
         },
-        [this, workerUUID, workerInfo, wsConnPtr](const drogon::orm::DrogonDbException &e)
+        [this, workerUUID, workerInfo, wsConnPtr, workerEnTTfuture](const drogon::orm::DrogonDbException &e) mutable
         {
             spdlog::info("Failed to find Worker in database 数据库中未找到工作机: {}", workerUUID);
-            registerNewWorker(workerUUID, workerInfo, wsConnPtr);
+            spdlog::info("Exception: {}", e.base().what());
+
+            // 获取 EnTT 查询结果
+            const auto& workerEnTTid = workerEnTTfuture.get();
+            if (workerEnTTid != entt::null)
+            {
+                spdlog::info("Worker found in EnTT registry EnTT 注册表中找到工作机: {}", static_cast<std::underlying_type_t<EnTTidType>>(workerEnTTid));
+                return;
+            }
+            else 
+            {
+                spdlog::info("Worker not found in EnTT registry EnTT 注册表中未找到工作机: {}", workerUUID);
+                // registerNewWorker(workerUUID, workerInfo, wsConnPtr);
+            }
+            // registerNewWorker(workerUUID, workerInfo, wsConnPtr);
         }
     );
     
