@@ -52,4 +52,17 @@ HttpResponsePtr makeHttpResponse(const std::string& body, const HttpStatusCode& 
     return resp;
 }
 
+Json::Value parseJson(const std::string& jsonStr, std::string& errs)
+{
+    Json::Value root;
+    Json::CharReaderBuilder reader;
+    // std::string errs = "";
+    std::istringstream s(jsonStr);
+    if (!Json::parseFromStream(reader, s, &root, &errs))
+    {
+        throw std::runtime_error("Failed to parse JSON message: " + errs);
+    }
+    return root;
 }
+
+} // namespace YLineServer::Api

@@ -9,6 +9,7 @@
 #include <boost/uuid/uuid_io.hpp>
 
 using namespace drogon;
+using EnTTidType = entt::registry::entity_type;
 
 namespace YLineServer
 {
@@ -29,8 +30,8 @@ class WorkerCtrl : public drogon::WebSocketController<WorkerCtrl>
   
   private:
     void registerWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
-    void registerNewWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
-    void registerWorkerEnTT(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
+    // void registerNewWorkerDatabase(const std::string& workerUUID, const Json::Value& workerInfo, EnTTidType workerEnTTid, const WebSocketConnectionPtr& wsConnPtr) const;
+    // void registerWorkerEnTT(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
 };
 
 
@@ -41,7 +42,7 @@ struct WorkerMeta {
     Json::Value worker_info;
 };
 
-struct WebSocketConnection {
+struct WSConnection {
     WebSocketConnectionPtr wsConnPtr;
 };
 

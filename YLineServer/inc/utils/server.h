@@ -5,8 +5,10 @@
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 #include <entt/entt.hpp>
+#include <spdlog/spdlog.h>
 
 namespace YLineServer {
 
@@ -46,7 +48,9 @@ public:
 private:
     inline ServerSingleton()  // 私有构造函数，防止外部实例化
         : server_instance_uuid(boost::uuids::random_generator()())
-    {}
+    {
+        spdlog::info("Server Instance UUID: {}", boost::uuids::to_string(server_instance_uuid));
+    }
 
     Config configData_; // 成员变量，存储配置信息
 

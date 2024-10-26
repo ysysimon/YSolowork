@@ -20,5 +20,8 @@ HttpResponsePtr makeJsonResponse(const Json::Value& json, const HttpStatusCode& 
 // 函数: 生成 HTML 响应
 HttpResponsePtr makeHttpResponse(const std::string& body, const HttpStatusCode& status, const HttpRequestPtr& req, const ContentType& contentType);
 
+// 函数: 解析 JSON
+Json::Value parseJson(const std::string& jsonStr, std::string& errs);
+
 } // namespace YLineServer::Api
 #endif // YLINESERVER_API_H
