@@ -32,5 +32,27 @@ std::string generateAuthJwt(const Users::PrimaryKeyType& userId, const std::stri
     return token.sign(jwt::algorithm::hs256{ jwtSecret });
 }
 
+bool decodeAuthJwt(const std::string& token, Json::Value& payload, std::string& err)
+{
+    const ServerSingleton& config = ServerSingleton::getInstance();
+    const std::string& jwtSecret = config.getConfigData().jwt_secret;
+    try {
+        auto decoded = jwt::decode<traits>(token);
+        // 创建验证器
+        auto verifier = jwt::verify<traits>()
+            .allow_algorithm(jwt::algorithm::hs256{ jwtSecret })
+            .with_issuer("YLineServer");
+        // 验证JWT的有效性
+        verifier.verify(decoded);
+        
+        // 从JWT中提取载荷
+        payload = decoded.get_payload_json();
+
+        return true;
+    } catch (const std::exception& e) {
+        err = e.what();
+        return false;
+    }
+}
 
 } // namespace YLineServer::Jwt

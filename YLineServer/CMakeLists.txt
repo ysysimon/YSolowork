@@ -21,8 +21,11 @@ set(YLineServer_SOURCES
     src/controllers/YLineServer_UserCtrl.cc
     src/controllers/YLineServer_WorkerCtrl.cc
     src/controllers/WorkerRegister.cpp
+    src/controllers/YLineServer_WorkerStatusCtrl.cc
     # Middleware
     src/middlewares/YLineServer_CORSMid.cc
+    # Filter
+    src/filters/YLineServer_LoginFilter.cc
     # UT
     src/utils/logger.cpp
     src/utils/config.cpp

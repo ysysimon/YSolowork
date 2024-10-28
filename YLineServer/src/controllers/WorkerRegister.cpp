@@ -55,7 +55,6 @@ void registerNewWorkerDatabase(
     const WebSocketConnectionPtr& wsConnPtr
 )
 {
-    auto redis = drogon::app().getFastRedisClient("YLineRedis");
     // database
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
     drogon::orm::Mapper<Workers> mapper(dbClient);
@@ -185,7 +184,6 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
     // 发起异步查询 EnTT 注册表， 不阻塞
     auto workerEnTTfuture = findRegisteredWorkerEnTTbyUUIDAsync(boost::uuids::string_generator()(workerUUID));
 
-    auto redis = drogon::app().getFastRedisClient("YLineRedis");
     // database
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
     auto mapper = std::make_shared<drogon::orm::Mapper<Workers>>(dbClient);

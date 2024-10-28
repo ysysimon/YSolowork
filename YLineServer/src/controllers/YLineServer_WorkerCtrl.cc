@@ -51,7 +51,7 @@ bool verifyRegisterSecret(const Json::Value& reqJson, const std::string& registe
 
 void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketConnectionPtr& wsConnPtr)
 {
-    const auto& reqPeerAddr = req->getPeerAddr();
+    // const auto& reqPeerAddr = req->getPeerAddr();
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::debug("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
     auto reqJson = req->getJsonObject();
@@ -97,5 +97,5 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
 void WorkerCtrl::handleConnectionClosed(const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
-    spdlog::info("{} disconnected from WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
+    spdlog::debug("{} disconnected from WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
 }
