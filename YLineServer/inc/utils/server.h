@@ -9,6 +9,9 @@
 
 #include <entt/entt.hpp>
 #include <spdlog/spdlog.h>
+#include <unordered_map>
+
+using EnTTidType = entt::registry::entity_type;
 
 namespace YLineServer {
 
@@ -44,6 +47,8 @@ public:
     }
 
     entt::registry Registry; // EnTT registry 全局注册表
+
+    std::unordered_map<boost::uuids::uuid, EnTTidType> WorkerUUIDtoEnTTid; // 工作机 UUID 到 EnTTid 映射
 
 private:
     inline ServerSingleton()  // 私有构造函数，防止外部实例化

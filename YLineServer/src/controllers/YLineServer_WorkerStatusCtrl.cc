@@ -1,9 +1,7 @@
 #include "YLineServer_WorkerStatusCtrl.h"
 #include "spdlog/spdlog.h"
-#include "models/Workers.h"
 
 using namespace YLineServer;
-using namespace drogon_model::yline;
 
 void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::string &&message, const WebSocketMessageType &type)
 {

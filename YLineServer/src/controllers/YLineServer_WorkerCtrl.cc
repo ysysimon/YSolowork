@@ -21,7 +21,7 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
             std::string errs;
             std::istringstream s(message);
             if (Json::parseFromStream(reader, s, &root, &errs)) {
-                // spdlog::info("Message from Worker - {} : {}", wsConnPtr->peerAddr().toIpPort(), root.toStyledString());
+                spdlog::info("Message from Worker - {} : {}", wsConnPtr->peerAddr().toIpPort(), root.toStyledString());
                 // // 根据 "action" 字段处理不同的指令
                 // if (root.isMember("action")) {
                 //     std::string action = root["action"].asString();

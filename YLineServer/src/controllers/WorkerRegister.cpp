@@ -110,6 +110,15 @@ std::shared_future<EnTTidType> findRegisteredWorkerEnTTbyUUIDAsync(const boost::
     auto future = promise->get_future().share(); // 获取共享 future
     // 将任务放入事件循环
     app().getLoop()->queueInLoop([promise, worker_uuid]() {
+        auto it = ServerSingleton::getInstance().WorkerUUIDtoEnTTid.find(worker_uuid);
+        // 首先在 hash 表中查找
+        if (it != ServerSingleton::getInstance().WorkerUUIDtoEnTTid.end())
+        {
+            promise->set_value(it->second);
+            return;
+        }
+
+        // 旧代码 也许冗余 但是保留
         auto result = findRegisteredWorkerEnTTbyUUIDSync(worker_uuid);
         promise->set_value(result);
     });
@@ -188,10 +197,10 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
     auto mapper = std::make_shared<drogon::orm::Mapper<Workers>>(dbClient);
 
-
+    // 在数据库中查询工作机，如果则更新，否则注册新工作机
     mapper->findOne(
         drogon::orm::Criteria(Workers::Cols::_worker_uuid, drogon::orm::CompareOperator::EQ, workerUUID),
-        [mapper, workerUUID, workerInfo, workerEnTTfuture, wsConnPtr](const Workers& worker) mutable
+        [mapper, workerUUID, workerInfo, workerEnTTfuture, wsConnPtr](const Workers& databaseWorker) mutable
         {
             spdlog::info("Worker found in database 数据库中找到工作机: {}", workerUUID);
 
@@ -199,9 +208,10 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
             const auto& workerEnTTid = workerEnTTfuture.get();
             if (workerEnTTid != entt::null)
             {
+                // 数据库和 EnTT 注册表中都找到了工作机, 则说明工作机之前就注册在本实例，所以更新数据库中的 worker 数据为本实例
                 spdlog::info("Worker found in EnTT registry EnTT 注册表中找到工作机: {}", static_cast<std::underlying_type_t<EnTTidType>>(workerEnTTid));
                 Workers updateWorker = getUpdateWorker(
-                    worker, 
+                    databaseWorker, 
                     workerInfo, 
                     ServerSingleton::getInstance().getServerInstanceUUID(),
                     workerEnTTid
@@ -210,16 +220,23 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
             }
             else 
             {
+                // 数据库中找到了工作机，但是 EnTT 注册表中未找到，说明工作机之前未注册在本实例，所以注册新工作机到 EnTT 注册表，并更新数据库中的 worker 数据为本实例
                 spdlog::info("Worker not found in EnTT registry EnTT 注册表中未找到工作机: {}", workerUUID);
 
                 // 注册新工作机到 EnTT 注册表
                 boost::uuids::string_generator gen;
+                boost::uuids::uuid databaseWorkerUUID = gen(*databaseWorker.getWorkerUuid());
+                boost::uuids::uuid databaseWorker_server_instance_uuid = gen(*databaseWorker.getServerInstanceUuid());
+
                 const auto newWorkerEntity = registerNewWorkerEnTT(
-                    gen(*worker.getWorkerUuid()), 
-                    gen(*worker.getServerInstanceUuid()), 
+                    databaseWorkerUUID, 
+                    databaseWorker_server_instance_uuid, 
                     workerInfo, 
                     wsConnPtr
                 );
+
+                // 同时添加到 hash 表
+                ServerSingleton::getInstance().WorkerUUIDtoEnTTid[databaseWorkerUUID] = newWorkerEntity;
 
                 spdlog::info(
                     "New Worker registered into EnTT registry 新工作机注册到 EnTT 注册表成功: {}", 
@@ -228,7 +245,7 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
 
                 // 更新数据库中的 worker 数据
                 Workers updateWorker = getUpdateWorker(
-                    worker, 
+                    databaseWorker, 
                     workerInfo, 
                     ServerSingleton::getInstance().getServerInstanceUUID(),
                     newWorkerEntity
@@ -247,22 +264,31 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
             auto workerEnTTid = workerEnTTfuture.get();
             if (workerEnTTid != entt::null)
             {
+                // 数据库中未找到工作机，但是 EnTT 注册表中找到了，说明工作机之前就注册在本实例，所以注册新工作机到数据库
                 spdlog::info("Worker found in EnTT registry EnTT 注册表中找到工作机: {}", static_cast<std::underlying_type_t<EnTTidType>>(workerEnTTid));
             }
             else 
             {
+                // 数据库和 EnTT 注册表中都未找到工作机, 则说明工作机之前未注册在本实例，所以注册新工作机到 EnTT 注册表，并注册到数据库
                 spdlog::info("Worker not found in EnTT registry EnTT 注册表中未找到工作机: {}", workerUUID);
+                boost::uuids::string_generator gen;
+                boost::uuids::uuid newWorkerUUID = gen(workerUUID);
                 workerEnTTid = registerNewWorkerEnTT(
-                    boost::uuids::string_generator()(workerUUID), 
+                    newWorkerUUID,
                     ServerSingleton::getInstance().getServerInstanceUUID(), 
                     workerInfo, 
                     wsConnPtr
                 );
+
+                // 同时添加到 hash 表
+                ServerSingleton::getInstance().WorkerUUIDtoEnTTid[newWorkerUUID] = workerEnTTid;
+
                 spdlog::info(
                     "New Worker registered into EnTT registry 新工作机注册到 EnTT 注册表成功: {}", 
                     static_cast<std::underlying_type_t<EnTTidType>>(workerEnTTid)
                 );
             }
+            // 注册新工作机到数据库 该函使用本实例 UUID
             registerNewWorkerDatabase(workerUUID, workerInfo, workerEnTTid, wsConnPtr);
         }
     );
