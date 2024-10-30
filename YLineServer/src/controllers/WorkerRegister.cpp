@@ -9,6 +9,7 @@
 #include <boost/uuid/string_generator.hpp>
 #include <future>
 #include <json/value.h>
+#include <mutex>
 
 using EnTTidType = entt::registry::entity_type;
 
@@ -110,6 +111,7 @@ std::shared_future<EnTTidType> findRegisteredWorkerEnTTbyUUIDAsync(const boost::
     auto future = promise->get_future().share(); // 获取共享 future
     // 将任务放入事件循环
     app().getLoop()->queueInLoop([promise, worker_uuid]() {
+        std::shared_lock<std::shared_mutex> lock(ServerSingleton::getInstance().workerUUIDMapMutex);
         auto it = ServerSingleton::getInstance().WorkerUUIDtoEnTTid.find(worker_uuid);
         // 首先在 hash 表中查找
         if (it != ServerSingleton::getInstance().WorkerUUIDtoEnTTid.end())
@@ -236,7 +238,11 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
                 );
 
                 // 同时添加到 hash 表
+                std::unique_lock<std::shared_mutex> lock(ServerSingleton::getInstance().workerUUIDMapMutex);
                 ServerSingleton::getInstance().WorkerUUIDtoEnTTid[databaseWorkerUUID] = newWorkerEntity;
+                std::unique_lock<std::shared_mutex> lock2(ServerSingleton::getInstance().wsConnMapMutex);
+                ServerSingleton::getInstance().wsConnToWorkerUUID[wsConnPtr] = databaseWorkerUUID;
+                
 
                 spdlog::info(
                     "New Worker registered into EnTT registry 新工作机注册到 EnTT 注册表成功: {}", 
@@ -281,7 +287,10 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
                 );
 
                 // 同时添加到 hash 表
+                std::unique_lock<std::shared_mutex> lock(ServerSingleton::getInstance().workerUUIDMapMutex);
                 ServerSingleton::getInstance().WorkerUUIDtoEnTTid[newWorkerUUID] = workerEnTTid;
+                std::unique_lock<std::shared_mutex> lock2(ServerSingleton::getInstance().wsConnMapMutex);
+                ServerSingleton::getInstance().wsConnToWorkerUUID[wsConnPtr] = newWorkerUUID;
 
                 spdlog::info(
                     "New Worker registered into EnTT registry 新工作机注册到 EnTT 注册表成功: {}", 

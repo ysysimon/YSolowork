@@ -1,5 +1,6 @@
 #pragma once
 
+#include "drogon/WebSocketConnection.h"
 #include "json/value.h"
 #include <drogon/WebSocketController.h>
 #include <entt/entt.hpp>

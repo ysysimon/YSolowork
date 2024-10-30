@@ -97,5 +97,22 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
 void WorkerCtrl::handleConnectionClosed(const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
+    
+    {
+
+    // 从 hash 表 和 EnTT 注册表中删除工作机
+    std::unique_lock<std::shared_mutex> lock(ServerSingleton::getInstance().workerUUIDMapMutex);
+    std::unique_lock<std::shared_mutex> lock2(ServerSingleton::getInstance().wsConnMapMutex);
+    auto it = ServerSingleton::getInstance().wsConnToWorkerUUID.find(wsConnPtr);
+    if (it != ServerSingleton::getInstance().wsConnToWorkerUUID.end())
+    {
+        EnTTidType workerEnTTid = ServerSingleton::getInstance().WorkerUUIDtoEnTTid[it->second];
+        ServerSingleton::getInstance().Registry.destroy(workerEnTTid);
+        ServerSingleton::getInstance().WorkerUUIDtoEnTTid.erase(it->second);
+        ServerSingleton::getInstance().wsConnToWorkerUUID.erase(it);
+    }
+
+    } // end of lock scope
+
     spdlog::debug("{} disconnected from WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
 }

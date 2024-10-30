@@ -10,6 +10,8 @@
 #include <entt/entt.hpp>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
+#include <shared_mutex>
+#include "drogon/WebSocketConnection.h"
 
 using EnTTidType = entt::registry::entity_type;
 
@@ -48,7 +50,15 @@ public:
 
     entt::registry Registry; // EnTT registry 全局注册表
 
-    std::unordered_map<boost::uuids::uuid, EnTTidType> WorkerUUIDtoEnTTid; // 工作机 UUID 到 EnTTid 映射
+    // 工作机 UUID 到 EnTTid 映射
+    std::unordered_map<boost::uuids::uuid, EnTTidType> WorkerUUIDtoEnTTid; 
+
+    // hash 表，存储 WebSocket 连接到工作机 UUID 的映射 
+    std::unordered_map<drogon::WebSocketConnectionPtr, boost::uuids::uuid> wsConnToWorkerUUID;
+
+    // 共享锁
+    std::shared_mutex workerUUIDMapMutex;
+    std::shared_mutex wsConnMapMutex;
 
 private:
     inline ServerSingleton()  // 私有构造函数，防止外部实例化
