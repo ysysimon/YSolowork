@@ -13,7 +13,7 @@ Json::Value WorkerSingleton::getUsageJson()
 {
     UsageInfoCPU usageInfoCPU = YSolowork::util::getUsageInfoCPU();
     Json::Value json;
-    json["type"] = "usage";
+    json["command"] = "usage";
     json["cpuUsage"] = usageInfoCPU.cpuUsage;
     json["cpuMemoryUsage"] = usageInfoCPU.memoryUsage;
 

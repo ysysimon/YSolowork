@@ -8,6 +8,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <unordered_map>
 
 using namespace drogon;
 using EnTTidType = entt::registry::entity_type;
@@ -47,4 +48,16 @@ struct WSConnection {
     WebSocketConnectionPtr wsConnPtr;
 };
 
-}
+// Commands
+enum class CommandType {
+    usage,
+    UNKNOWN  // 用于处理未识别的指令
+};
+
+// Command Map
+inline std::unordered_map<std::string, CommandType> commandMap = {
+    {"usage", CommandType::usage}
+};
+
+
+} // YLineServer

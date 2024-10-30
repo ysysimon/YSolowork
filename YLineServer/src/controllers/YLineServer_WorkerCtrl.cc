@@ -21,15 +21,25 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
             std::string errs;
             std::istringstream s(message);
             if (Json::parseFromStream(reader, s, &root, &errs)) {
-                spdlog::info("Message from Worker - {} : {}", wsConnPtr->peerAddr().toIpPort(), root.toStyledString());
-                // // 根据 "action" 字段处理不同的指令
-                // if (root.isMember("action")) {
-                //     std::string action = root["action"].asString();
-                //     if (action == "sendMessage") {
-                //         std::string content = root["content"].asString();
-                        
-                //     }
-                // }
+                // spdlog::info("Message from Worker - {} : {}", wsConnPtr->peerAddr().toIpPort(), root.toStyledString());
+                // 根据 "command" 字段处理不同的指令
+                if (root.isMember("command")) {
+                    CommandType command = commandMap[root["command"].asString()];
+                    switch (command) 
+                    {
+                        case CommandType::usage:
+                            spdlog::info("Message from Worker - {} : Command: usage", wsConnPtr->peerAddr().toIpPort());
+                            break;
+                        case CommandType::UNKNOWN:
+                            spdlog::warn("Message from Worker - {} : Unknown Command: {}", wsConnPtr->peerAddr().toIpPort(), root["command"].asString());
+                            break;
+                    }
+                    
+                }
+                else 
+                {
+                    spdlog::error("Message from Worker - {} : Invalid JSON message, no command field", wsConnPtr->peerAddr().toIpPort());
+                }
             } else {
                 spdlog::error("Message from Worker - {} : Failed to parse JSON message, {}", wsConnPtr->peerAddr().toIpPort(), errs);
             }
@@ -97,7 +107,7 @@ void WorkerCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketC
 void WorkerCtrl::handleConnectionClosed(const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
-    
+
     {
 
     // 从 hash 表 和 EnTT 注册表中删除工作机
