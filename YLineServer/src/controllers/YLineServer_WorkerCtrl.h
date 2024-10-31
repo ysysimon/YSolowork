@@ -34,6 +34,9 @@ class WorkerCtrl : public drogon::WebSocketController<WorkerCtrl>
     void registerWorker(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
     // void registerNewWorkerDatabase(const std::string& workerUUID, const Json::Value& workerInfo, EnTTidType workerEnTTid, const WebSocketConnectionPtr& wsConnPtr) const;
     // void registerWorkerEnTT(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
+
+    // command functions
+    void writeUsage2redis(const Json::Value& usageJson, const WebSocketConnectionPtr& wsConnPtr) const;
 };
 
 

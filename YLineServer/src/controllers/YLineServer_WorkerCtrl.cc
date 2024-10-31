@@ -1,20 +1,123 @@
 #include "YLineServer_WorkerCtrl.h"
 #include "drogon/WebSocketConnection.h"
 
+#include "drogon/nosql/RedisClient.h"
 #include "spdlog/spdlog.h"
+#include <format>
 #include <json/reader.h>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "utils/server.h"
 
 
 using namespace YLineServer;
 
+void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketConnectionPtr& wsConnPtr) const
+{
+    auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    const auto& workerUUID = ServerSingleton::getInstance().wsConnToWorkerUUID[wsConnPtr];
+    std::string workerUUIDStr = boost::uuids::to_string(workerUUID);
+    std::vector<std::string> redisHashfileds;
+
+    if (usageJson.isMember("cpuUsage")) 
+    {
+        redisHashfileds.emplace_back("cpuUsage");
+        redisHashfileds.emplace_back(usageJson["cpuUsage"].asString());
+    }
+    else 
+    {
+        redisHashfileds.emplace_back("cpuUsage");
+        redisHashfileds.emplace_back("-1");
+    }
+
+    if (usageJson.isMember("cpuMemoryUsage")) 
+    {
+        redisHashfileds.emplace_back("cpuMemoryUsage");
+        redisHashfileds.emplace_back(usageJson["cpuMemoryUsage"].asString());
+    }
+    else 
+    {
+        redisHashfileds.emplace_back("cpuMemoryUsage");
+        redisHashfileds.emplace_back("-1");
+    }
+
+    // 设置 WorkerUsage hash
+            redis->execCommandAsync
+            (
+                [](const drogon::nosql::RedisResult &r) 
+                {
+                    spdlog::debug("HMSET WorkerUsage result: {}", r.asString());
+                },
+                [](const std::exception &err)
+                {
+                    spdlog::error("HMSET WorkerUsage error: {}", err.what());
+                },
+                "SET %s %s",
+                //std::format("WorkerUsage:{}", workerUUIDStr).c_str(),
+                "test",
+                "haha"
+                // redisArgs.begin(), redisArgs.end()
+            );
+
+    // redis->newTransactionAsync
+    // (
+    //     [redisArgs = std::move(redisHashfileds), workerUUIDStr](const drogon::nosql::RedisTransactionPtr& transPtr) 
+    //     {
+    //         // 设置 WorkerUsage hash
+    //         transPtr->execCommandAsync
+    //         (
+    //             [](const drogon::nosql::RedisResult &r) 
+    //             {
+    //                 spdlog::debug("HMSET WorkerUsage result: {}", r.asString());
+    //             },
+    //             [](const std::exception &err)
+    //             {
+    //                 spdlog::error("HMSET WorkerUsage error: {}", err.what());
+    //             },
+    //             "SET %s %s",
+    //             //std::format("WorkerUsage:{}", workerUUIDStr).c_str(),
+    //             "test",
+    //             "haha"
+    //             // redisArgs.begin(), redisArgs.end()
+    //         );
+    //         // 设置 WorkerUsage hash 的过期时间
+    //         // transPtr->execCommandAsync
+    //         // (
+    //         //     [](const drogon::nosql::RedisResult &r) 
+    //         //     {
+    //         //         spdlog::debug("EXPIRE WorkerUsage result: {}", r.asString());
+    //         //     },
+    //         //     [](const std::exception &err)
+    //         //     {
+    //         //         spdlog::error("EXPIRE WorkerUsage error: {}", err.what());
+    //         //     },
+    //         //     "EXPIRE %s %d",
+    //         //     std::format("WorkerUsage:{}", workerUUIDStr).c_str(),
+    //         //     3
+    //         // );
+    //         // 执行事务
+    //         transPtr->execute
+    //         (
+    //             [](const drogon::nosql::RedisResult &r) 
+    //             {
+    //                 spdlog::debug("Transaction WorkerUsage result: {}", r.asString());
+    //             },
+    //             [](const drogon::nosql::RedisException &err)
+    //             {
+    //                 spdlog::error("Transaction WorkerUsage error: {}", err.what());
+    //             }
+    //         );
+    //     }
+    // );
+
+}
+
 void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::string &&message, const WebSocketMessageType &type)
 {
     if (type == WebSocketMessageType::Text)
     {
-        auto redis = drogon::app().getFastRedisClient("YLineRedis");
         try {
             Json::Value root;
             Json::CharReaderBuilder reader;
@@ -28,7 +131,8 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
                     switch (command) 
                     {
                         case CommandType::usage:
-                            spdlog::info("Message from Worker - {} : Command: usage", wsConnPtr->peerAddr().toIpPort());
+                            spdlog::debug("Message from Worker - {} : Command: usage", wsConnPtr->peerAddr().toIpPort());
+                            writeUsage2redis(root, wsConnPtr);
                             break;
                         case CommandType::UNKNOWN:
                             spdlog::warn("Message from Worker - {} : Unknown Command: {}", wsConnPtr->peerAddr().toIpPort(), root["command"].asString());
