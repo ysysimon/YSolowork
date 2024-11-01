@@ -3,6 +3,7 @@
 
 #include "drogon/nosql/RedisClient.h"
 #include "spdlog/spdlog.h"
+#include "json/writer.h"
 #include <format>
 #include <json/reader.h>
 #include <string>
@@ -19,52 +20,99 @@ void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketC
     auto redis = drogon::app().getFastRedisClient("YLineRedis");
     const auto& workerUUID = ServerSingleton::getInstance().wsConnToWorkerUUID[wsConnPtr];
     std::string workerUUIDStr = boost::uuids::to_string(workerUUID);
-    std::vector<std::string> redisHashfileds;
+    // std::vector<std::string> redisHashfileds;
+    std::vector<std::pair<std::string, std::string>> redisHashfileds;
 
+    // redis hash 设置指令, 用于设置工作机的使用情况
     if (usageJson.isMember("cpuUsage")) 
     {
-        redisHashfileds.emplace_back("cpuUsage");
-        redisHashfileds.emplace_back(usageJson["cpuUsage"].asString());
+        redisHashfileds.emplace_back("cpuUsage", usageJson["cpuUsage"].asString());
     }
     else 
     {
-        redisHashfileds.emplace_back("cpuUsage");
-        redisHashfileds.emplace_back("-1");
+        redisHashfileds.emplace_back("cpuUsage", "-1");
     }
 
     if (usageJson.isMember("cpuMemoryUsage")) 
     {
-        redisHashfileds.emplace_back("cpuMemoryUsage");
-        redisHashfileds.emplace_back(usageJson["cpuMemoryUsage"].asString());
+        redisHashfileds.emplace_back("cpuMemoryUsage", usageJson["cpuMemoryUsage"].asString());
     }
     else 
     {
-        redisHashfileds.emplace_back("cpuMemoryUsage");
-        redisHashfileds.emplace_back("-1");
+        redisHashfileds.emplace_back("cpuMemoryUsage", "-1");
     }
-
+    std::string redisCommand = std::format(
+        "HMSET WorkerUsage:{}", 
+        workerUUIDStr
+    );
+    for(const auto& [field, value] : redisHashfileds) 
+    {
+        redisCommand += std::format(" {} {}", field, value);
+    }
     // 设置 WorkerUsage hash
+    redis->execCommandAsync
+    (
+        [](const drogon::nosql::RedisResult &r) 
+        {
+            spdlog::debug("HMSET WorkerUsage result: {}", r.asString());
+        },
+        [](const std::exception &err)
+        {
+            spdlog::error("HMSET WorkerUsage error: {}", err.what());
+        },
+        redisCommand.c_str()
+    );
+    // 设置 WorkerUsage hash 的过期时间
+    redis->execCommandAsync
+    (
+        [](const drogon::nosql::RedisResult &r) 
+        {
+            spdlog::debug("EXPIRE WorkerUsage result: {}", r.asString());
+        },
+        [](const std::exception &err)
+        {
+            spdlog::error("EXPIRE WorkerUsage error: {}", err.what());
+        },
+        std::format("EXPIRE WorkerUsage:{} 3", workerUUIDStr).c_str()
+    );
+
+    // 如果有 gpuUsage 字段, 则设置 gpuUsage 表
+    if (usageJson.isMember("gpuUsage")) 
+    {
+        // Nvidia
+        if (usageJson["gpuUsage"].isMember("NVIDIA")) 
+        {
+
+            const auto& nvidiaUsages = usageJson["gpuUsage"]["NVIDIA"];
+            Json::FastWriter fastWriter;
+            std::string dumpedNvidiaUsages = fastWriter.write(nvidiaUsages);
+            // spdlog::debug("NVIDIA GPU Usage: {}", dumpedNvidiaUsages);
+            // 设置 WorkerUsage:NVIDIA hash 同时设置过期时间
             redis->execCommandAsync
             (
                 [](const drogon::nosql::RedisResult &r) 
                 {
-                    spdlog::debug("HMSET WorkerUsage result: {}", r.asString());
+                    spdlog::debug("SETEX WorkerUsage:NVIDIA result: {}", r.asString());
                 },
                 [](const std::exception &err)
                 {
-                    spdlog::error("HMSET WorkerUsage error: {}", err.what());
+                    spdlog::error("SETEX WorkerUsage:NVIDIA error: {}", err.what());
                 },
-                "SET %s %s",
-                //std::format("WorkerUsage:{}", workerUUIDStr).c_str(),
-                "test",
-                "haha"
-                // redisArgs.begin(), redisArgs.end()
+                std::format("SETEX WorkerUsage:NVIDIA:{} 3 {}", workerUUIDStr, dumpedNvidiaUsages).c_str()
             );
+        }
+    }
 
+    // don't know why redis->newTransactionAsync does not work
     // redis->newTransactionAsync
     // (
-    //     [redisArgs = std::move(redisHashfileds), workerUUIDStr](const drogon::nosql::RedisTransactionPtr& transPtr) 
+    //     [redisCommand, workerUUIDStr](const drogon::nosql::RedisTransactionPtr& transPtr) 
     //     {
+    //         if (transPtr == nullptr) 
+    //         {
+    //             spdlog::error("Failed to create usage Redis transaction");
+    //             return;
+    //         }
     //         // 设置 WorkerUsage hash
     //         transPtr->execCommandAsync
     //         (
@@ -76,27 +124,21 @@ void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketC
     //             {
     //                 spdlog::error("HMSET WorkerUsage error: {}", err.what());
     //             },
-    //             "SET %s %s",
-    //             //std::format("WorkerUsage:{}", workerUUIDStr).c_str(),
-    //             "test",
-    //             "haha"
-    //             // redisArgs.begin(), redisArgs.end()
+    //             redisCommand.c_str()
     //         );
     //         // 设置 WorkerUsage hash 的过期时间
-    //         // transPtr->execCommandAsync
-    //         // (
-    //         //     [](const drogon::nosql::RedisResult &r) 
-    //         //     {
-    //         //         spdlog::debug("EXPIRE WorkerUsage result: {}", r.asString());
-    //         //     },
-    //         //     [](const std::exception &err)
-    //         //     {
-    //         //         spdlog::error("EXPIRE WorkerUsage error: {}", err.what());
-    //         //     },
-    //         //     "EXPIRE %s %d",
-    //         //     std::format("WorkerUsage:{}", workerUUIDStr).c_str(),
-    //         //     3
-    //         // );
+    //         transPtr->execCommandAsync
+    //         (
+    //             [](const drogon::nosql::RedisResult &r) 
+    //             {
+    //                 spdlog::debug("EXPIRE WorkerUsage result: {}", r.asString());
+    //             },
+    //             [](const std::exception &err)
+    //             {
+    //                 spdlog::error("EXPIRE WorkerUsage error: {}", err.what());
+    //             },
+    //             std::format("EXPIRE WorkerUsage:{} 3", workerUUIDStr).c_str()
+    //         );
     //         // 执行事务
     //         transPtr->execute
     //         (
@@ -104,7 +146,7 @@ void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketC
     //             {
     //                 spdlog::debug("Transaction WorkerUsage result: {}", r.asString());
     //             },
-    //             [](const drogon::nosql::RedisException &err)
+    //             [](const std::exception &err)
     //             {
     //                 spdlog::error("Transaction WorkerUsage error: {}", err.what());
     //             }
@@ -126,12 +168,14 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
             if (Json::parseFromStream(reader, s, &root, &errs)) {
                 // spdlog::info("Message from Worker - {} : {}", wsConnPtr->peerAddr().toIpPort(), root.toStyledString());
                 // 根据 "command" 字段处理不同的指令
-                if (root.isMember("command")) {
+                if (root.isMember("command")) 
+                {
                     CommandType command = commandMap[root["command"].asString()];
                     switch (command) 
                     {
                         case CommandType::usage:
                             spdlog::debug("Message from Worker - {} : Command: usage", wsConnPtr->peerAddr().toIpPort());
+                            // spdlog::debug("Message from Worker - {} : Usage JSON: {}", wsConnPtr->peerAddr().toIpPort(), root.toStyledString());
                             writeUsage2redis(root, wsConnPtr);
                             break;
                         case CommandType::UNKNOWN:

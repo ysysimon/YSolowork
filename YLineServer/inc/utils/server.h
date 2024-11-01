@@ -17,6 +17,15 @@ using EnTTidType = entt::registry::entity_type;
 
 namespace YLineServer {
 
+
+// 定义跨平台的自定义哈希函数
+struct UuidHash {
+    std::size_t operator()(const boost::uuids::uuid& uuid) const noexcept {
+        return boost::uuids::hash_value(uuid); // 使用 boost 提供的 hash_value 函数
+    }
+};
+
+
 // 单例类: 配置 config
 class ServerSingleton {
 public:
@@ -51,7 +60,7 @@ public:
     entt::registry Registry; // EnTT registry 全局注册表
 
     // 工作机 UUID 到 EnTTid 映射
-    std::unordered_map<boost::uuids::uuid, EnTTidType> WorkerUUIDtoEnTTid; 
+    std::unordered_map<boost::uuids::uuid, EnTTidType, UuidHash> WorkerUUIDtoEnTTid; 
 
     // hash 表，存储 WebSocket 连接到工作机 UUID 的映射 
     std::unordered_map<drogon::WebSocketConnectionPtr, boost::uuids::uuid> wsConnToWorkerUUID;
