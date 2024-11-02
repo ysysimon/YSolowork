@@ -1,7 +1,6 @@
 #include "YLineServer_WorkerCtrl.h"
 #include "drogon/WebSocketConnection.h"
 
-#include "drogon/nosql/RedisClient.h"
 #include "spdlog/spdlog.h"
 #include "json/writer.h"
 #include <format>

@@ -12,7 +12,7 @@ void WorkerStatusCtrl::handleNewConnection(const HttpRequestPtr &req, const WebS
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::debug("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
-
+    
     // database
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
     // drogon::orm::Mapper<Workers> mapper(dbClient);
