@@ -24,6 +24,7 @@ set(YLineServer_SOURCES
     src/controllers/YLineServer_WorkerStatusCtrl.cc
     # Middleware
     src/middlewares/YLineServer_CORSMid.cc
+    src/middlewares/YLineServer_CSPMid.cc
     # Filter
     src/filters/YLineServer_LoginFilter.cc
     # UT
