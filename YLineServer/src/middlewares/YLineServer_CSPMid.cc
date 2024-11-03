@@ -17,10 +17,6 @@ void CSPMiddleware::invoke(const HttpRequestPtr &req,
                 "Content-Security-Policy", 
                 "connect-src ws:" 
             );
-            resp->addHeader(
-                "X-Content-Type-Options", 
-                "nosniff"
-            );
             // Api::addCORSHeader(resp, req);
             //resp->addHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
             resp->addHeader("Access-Control-Allow-Headers", "content-type");

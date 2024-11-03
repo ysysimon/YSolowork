@@ -19,9 +19,9 @@ class WorkerStatusCtrl : public drogon::WebSocketController<WorkerStatusCtrl>
     // list path definitions here;
     // WS_PATH_ADD("/path", "filter1", "filter2", ...);
     WS_PATH_ADD(
-      "/ws/worker_status", 
-      "YLineServer::LoginFilter",
-      "YLineServer::CSPMiddleware"
+      "/ws/worker_status"
+      // "YLineServer::LoginFilter",
+      // "YLineServer::CSPMiddleware"
     );
     WS_PATH_LIST_END
 };
