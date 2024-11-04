@@ -55,4 +55,18 @@ bool decodeAuthJwt(const std::string& token, Json::Value& payload, std::string& 
     }
 }
 
+bool validateBearerToken(const std::string &authHeader, Json::Value& payload, std::string& err)
+{
+    // 从Authorization头中提取JWT
+    if (authHeader.find("Bearer ") != 0)
+        return false;
+
+    const std::string& token = authHeader.substr(7);  // 去掉"Bearer "部分
+
+    // 验证 JWT
+    bool valid = Jwt::decodeAuthJwt(token, payload, err);
+
+    return valid;
+}
+
 } // namespace YLineServer::Jwt

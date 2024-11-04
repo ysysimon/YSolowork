@@ -14,6 +14,9 @@ std::string generateAuthJwt(const Users::PrimaryKeyType& userId, const std::stri
 // 函数: 解码 JWT
 bool decodeAuthJwt(const std::string& token, Json::Value& payload, std::string& err);
 
+// 函数: 验证 Bearer JWT
+bool validateBearerToken(const std::string &authHeader, Json::Value& payload, std::string& err);
+
 }
 
 #endif // YLINESERVER_JWT_H

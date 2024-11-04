@@ -1,19 +1,30 @@
 #include "YLineServer_WorkerStatusCtrl.h"
 #include "spdlog/spdlog.h"
+#include "utils/jwt.h"
+#include "utils/server.h"
+#include <json/value.h>
 
 using namespace YLineServer;
 
 void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::string &&message, const WebSocketMessageType &type)
 {
     // write your application logic here
-
+    const auto& user = wsConnPtr->getContext<EnTTidType>();
+    if (!user) 
+    {
+        Json::Value json;
+        json["command"] = "requireAuth";
+        wsConnPtr->sendJson(json);
+        // wsConnPtr->shutdown(CloseCode::kViolation, "Unauthorized");
+        return;
+    }
+    
 }
 
 void WorkerStatusCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::debug("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
-    // wsConnPtr->getContextRef<typename T>()
     // database
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
     // drogon::orm::Mapper<Workers> mapper(dbClient);

@@ -11,9 +11,11 @@
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 #include <shared_mutex>
+#include <vector>
 #include "drogon/WebSocketConnection.h"
 
 using EnTTidType = entt::registry::entity_type;
+using namespace drogon;
 
 namespace YLineServer {
 
@@ -65,6 +67,9 @@ public:
     // hash 表，存储 WebSocket 连接到工作机 UUID 的映射 
     std::unordered_map<drogon::WebSocketConnectionPtr, boost::uuids::uuid> wsConnToWorkerUUID;
 
+    // hash 表，存储用户名到 EnTTid 的映射
+    std::unordered_map<std::string, EnTTidType> usernameToEnTTid; // 用户名到 EnTTid 映射
+
     // 共享锁
     std::shared_mutex workerUUIDMapMutex;
     std::shared_mutex wsConnMapMutex;
@@ -81,8 +86,26 @@ private:
     boost::uuids::uuid server_instance_uuid; // 服务器实例 UUID
 };
 
+// EnTT Components
+struct Worker {
+    boost::uuids::uuid worker_uuid;
+    boost::uuids::uuid server_instance_uuid;
+    Json::Value worker_info;
+    WebSocketConnectionPtr wsConnPtr;
+};
 
-}
+// decided to remove this component
+// struct WSConnection {
+//     WebSocketConnectionPtr wsConnPtr;
+// };
+
+struct User {
+    std::string username;
+    bool isAdmin;
+    std::vector<WebSocketConnectionPtr> wsConnPtrs;
+};
+
+} // namespace YLineServer
 
 
 #endif // YLINESERVER_SERVER_H

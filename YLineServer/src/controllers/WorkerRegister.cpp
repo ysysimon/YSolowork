@@ -16,39 +16,6 @@ using EnTTidType = entt::registry::entity_type;
 using namespace YLineServer;
 using namespace drogon_model::yline;
 
-// void WorkerCtrl::registerWorkerEnTT(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const
-// {
-//     // EnTT
-//     auto &registry = ServerSingleton::getInstance().Registry;
-//     //uuid
-//     const auto& server_instance_uuid = ServerSingleton::getInstance().getServerInstanceUUID();
-//     // 解析 UUID
-//     boost::uuids::uuid worker_uuid;
-//     try {
-//         worker_uuid = boost::uuids::string_generator()(workerUUID);
-//     } catch(const std::exception& e) {
-//         wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to parse Worker UUID 解析工作机 UUID 失败");
-//         spdlog::error("Failed to parse Worker UUID 解析工作机 UUID 失败: {}", e.what());
-//         return;
-//     }
-
-//     // 注册 worker 实体
-//     auto workerEntity = registry.create();
-//     // 添加 worker 元数据组件
-//     registry.emplace<WorkerMeta>(
-//         workerEntity,
-//         worker_uuid,
-//         server_instance_uuid,
-//         workerInfo
-//     );
-//     // 添加 WebSocket 连接组件
-//     registry.emplace<WSConnection>(
-//         workerEntity,
-//         wsConnPtr
-//     );
-// }
-
-
 void registerNewWorkerDatabase(
     const std::string& workerUUID, 
     const Json::Value& workerInfo, 
@@ -92,10 +59,10 @@ void registerNewWorkerDatabase(
 EnTTidType findRegisteredWorkerEnTTbyUUIDSync(const boost::uuids::uuid& worker_uuid) noexcept
 {
     auto &registry = ServerSingleton::getInstance().Registry;
-    auto view = registry.view<WorkerMeta>();
+    auto view = registry.view<Worker>();
     for (auto entity : view)
     {
-        auto& workerMeta = view.get<WorkerMeta>(entity);
+        auto& workerMeta = view.get<Worker>(entity);
         if (workerMeta.worker_uuid == worker_uuid)
         {
             return entity;
@@ -139,16 +106,11 @@ EnTTidType registerNewWorkerEnTT(
     // 注册 worker 实体
     auto workerEntity = registry.create();
     // 添加 worker 元数据组件
-    registry.emplace<WorkerMeta>(
+    registry.emplace<Worker>(
         workerEntity,
         worker_uuid,
         server_instance_uuid,
-        workerInfo
-    );
-
-    // 添加 WebSocket 连接组件
-    registry.emplace<WSConnection>(
-        workerEntity,
+        workerInfo,
         wsConnPtr
     );
 

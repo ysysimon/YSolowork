@@ -7,6 +7,8 @@
 #include "YLineServer_LoginFilter.h"
 #include "spdlog/spdlog.h"
 #include <json/value.h>
+#include <string>
+#include "utils/jwt.h"
 
 using namespace drogon;
 using namespace YLineServer;
@@ -18,7 +20,8 @@ void LoginFilter::doFilter(const HttpRequestPtr &req,
     // 从请求头中获取Authorization字段
     const auto& authHeader = req->getHeader("Authorization");
     Json::Value payload;
-    if (authHeader.empty() || !validateToken(authHeader, payload))
+    std::string err;
+    if (authHeader.empty() || !Jwt::validateBearerToken(authHeader, payload, err))
     {
         //Check failed
         Json::Value json;
@@ -27,6 +30,10 @@ void LoginFilter::doFilter(const HttpRequestPtr &req,
         res->setStatusCode(k401Unauthorized);
         fcb(res);
         spdlog::warn("{} - Authorization Failed 鉴权失败", req->getPeerAddr().toIpPort());
+        if (!err.empty()) 
+        {
+            spdlog::error("JWT Error: {}", err);
+        }
         return;
     }
     
@@ -37,25 +44,4 @@ void LoginFilter::doFilter(const HttpRequestPtr &req,
     req->setBody(std::move(payload.toStyledString()));
     // spdlog::info("body: {}", req->body());
     fccb();
-}
-
-
-bool LoginFilter::validateToken(const std::string &authHeader, Json::Value& payload)
-{
-    // 从Authorization头中提取JWT
-    if (authHeader.find("Bearer ") != 0)
-        return false;
-
-    const std::string& token = authHeader.substr(7);  // 去掉"Bearer "部分
-
-    // 验证 JWT
-    std::string err;
-    bool valid = Jwt::decodeAuthJwt(token, payload, err);
-
-    if (!valid)
-    {
-        spdlog::error("JWT validation failed: {}", err);
-    }
-
-    return valid;
 }

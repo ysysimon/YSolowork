@@ -25,4 +25,8 @@ class WorkerStatusCtrl : public drogon::WebSocketController<WorkerStatusCtrl>
     );
     WS_PATH_LIST_END
 };
-}
+
+
+
+
+} // namespace YLineServer

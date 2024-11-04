@@ -39,18 +39,6 @@ class WorkerCtrl : public drogon::WebSocketController<WorkerCtrl>
     void writeUsage2redis(const Json::Value& usageJson, const WebSocketConnectionPtr& wsConnPtr) const;
 };
 
-
-// EnTT Components
-struct WorkerMeta {
-    boost::uuids::uuid worker_uuid;
-    boost::uuids::uuid server_instance_uuid;
-    Json::Value worker_info;
-};
-
-struct WSConnection {
-    WebSocketConnectionPtr wsConnPtr;
-};
-
 // Commands
 enum class CommandType {
     usage,
