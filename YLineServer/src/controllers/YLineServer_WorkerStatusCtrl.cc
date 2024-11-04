@@ -6,13 +6,14 @@ using namespace YLineServer;
 void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::string &&message, const WebSocketMessageType &type)
 {
     // write your application logic here
+
 }
 
 void WorkerStatusCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::debug("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
-    
+    // wsConnPtr->getContextRef<typename T>()
     // database
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
     // drogon::orm::Mapper<Workers> mapper(dbClient);

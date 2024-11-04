@@ -53,11 +53,11 @@ void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketC
     (
         [](const drogon::nosql::RedisResult &r) 
         {
-            spdlog::debug("HMSET WorkerUsage result: {}", r.asString());
+            // spdlog::debug("HMSET WorkerUsage result: {}", r.asString());
         },
-        [](const std::exception &err)
+        [wsConnPtr](const std::exception &err)
         {
-            spdlog::error("HMSET WorkerUsage error: {}", err.what());
+            spdlog::error("{} - HMSET WorkerUsage error: {}", wsConnPtr->peerAddr().toIpPort(), err.what());
         },
         redisCommand.c_str()
     );
@@ -66,11 +66,11 @@ void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketC
     (
         [](const drogon::nosql::RedisResult &r) 
         {
-            spdlog::debug("EXPIRE WorkerUsage result: {}", r.asString());
+            //spdlog::debug("EXPIRE WorkerUsage result: {}", r.asString());
         },
-        [](const std::exception &err)
+        [wsConnPtr](const std::exception &err)
         {
-            spdlog::error("EXPIRE WorkerUsage error: {}", err.what());
+            spdlog::error("{} - EXPIRE WorkerUsage error: {}", wsConnPtr->peerAddr().toIpPort(), err.what());
         },
         std::format("EXPIRE WorkerUsage:{} 3", workerUUIDStr).c_str()
     );
@@ -91,11 +91,11 @@ void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketC
             (
                 [](const drogon::nosql::RedisResult &r) 
                 {
-                    spdlog::debug("SETEX WorkerUsage:NVIDIA result: {}", r.asString());
+                    // spdlog::debug("SETEX WorkerUsage:NVIDIA result: {}", r.asString());
                 },
-                [](const std::exception &err)
+                [wsConnPtr](const std::exception &err)
                 {
-                    spdlog::error("SETEX WorkerUsage:NVIDIA error: {}", err.what());
+                    spdlog::error("{} - SETEX WorkerUsage:NVIDIA error: {}", wsConnPtr->peerAddr().toIpPort(), err.what());
                 },
                 std::format("SETEX WorkerUsage:NVIDIA:{} 3 {}", workerUUIDStr, dumpedNvidiaUsages).c_str()
             );
@@ -173,7 +173,7 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
                     switch (command) 
                     {
                         case CommandType::usage:
-                            spdlog::debug("Message from Worker - {} : Command: usage", wsConnPtr->peerAddr().toIpPort());
+                            spdlog::trace("Message from Worker - {} : Command: usage", wsConnPtr->peerAddr().toIpPort());
                             // spdlog::debug("Message from Worker - {} : Usage JSON: {}", wsConnPtr->peerAddr().toIpPort(), root.toStyledString());
                             writeUsage2redis(root, wsConnPtr);
                             break;

@@ -20,8 +20,8 @@ class WorkerStatusCtrl : public drogon::WebSocketController<WorkerStatusCtrl>
     // WS_PATH_ADD("/path", "filter1", "filter2", ...);
     WS_PATH_ADD(
       "/ws/worker_status"
-      // "YLineServer::LoginFilter",
-      // "YLineServer::CSPMiddleware"
+      // Ufortunately, we cannot use filters in WebSocket, because WebBrowser's javascript WebSocket API does not support custom headers
+      // "YLineServer::LoginFilter"
     );
     WS_PATH_LIST_END
 };

@@ -26,6 +26,7 @@ void LoginFilter::doFilter(const HttpRequestPtr &req,
         auto res = drogon::HttpResponse::newHttpJsonResponse(json);
         res->setStatusCode(k401Unauthorized);
         fcb(res);
+        spdlog::warn("{} - Authorization Failed 鉴权失败", req->getPeerAddr().toIpPort());
         return;
     }
     
