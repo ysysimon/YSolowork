@@ -50,5 +50,4 @@ inline std::unordered_map<std::string, CommandType> commandMap = {
     {"usage", CommandType::usage}
 };
 
-
 } // YLineServer

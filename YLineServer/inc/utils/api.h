@@ -2,6 +2,7 @@
 #include "drogon/HttpTypes.h"
 #include "drogon/HttpResponse.h"
 #include "drogon/lib/src/impl_forwards.h"
+#include "json/value.h"
 #include <json/json.h>
 
 #ifndef YLINESERVER_API_H
@@ -21,7 +22,7 @@ HttpResponsePtr makeJsonResponse(const Json::Value& json, const HttpStatusCode& 
 HttpResponsePtr makeHttpResponse(const std::string& body, const HttpStatusCode& status, const HttpRequestPtr& req, const ContentType& contentType);
 
 // 函数: 解析 JSON
-Json::Value parseJson(const std::string& jsonStr, std::string& errs);
+bool parseJson(const std::string& jsonStr, Json::Value& resultJson, std::string& errs);
 
 } // namespace YLineServer::Api
 #endif // YLINESERVER_API_H

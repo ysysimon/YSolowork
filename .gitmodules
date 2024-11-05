@@ -13,3 +13,6 @@
 [submodule "vendor/entt"]
 	path = vendor/entt
 	url = git@github.com:skypjack/entt.git
+[submodule "vendor/tl-expected"]
+	path = vendor/tl-expected
+	url = git@github.com:TartanLlama/expected.git

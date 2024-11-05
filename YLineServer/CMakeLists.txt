@@ -102,6 +102,12 @@ target_link_libraries(YLineServer PRIVATE EnTT::EnTT)
 target_compile_definitions(YLineServer PRIVATE ENTT_USE_ATOMIC)
 target_compile_definitions(YLineServer PRIVATE ENTT_ID_TYPE=std::uint32_t)
 
+# 添加 tl::expected 库
+add_subdirectory(
+    ${YSolowork_SOURCE_DIR}/vendor/tl-expected
+    ${YSolowork_BINARY_DIR}/vendor/tl-expected
+)
+target_link_libraries(YLineServer PRIVATE tl::expected)
 
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)

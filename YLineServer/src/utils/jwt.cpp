@@ -1,4 +1,5 @@
 #include "utils/jwt.h"
+#include "jwt-cpp/jwt.h"
 #include "utils/server.h"
 
 #include <json/value.h>
@@ -67,6 +68,48 @@ bool validateBearerToken(const std::string &authHeader, Json::Value& payload, st
     bool valid = Jwt::decodeAuthJwt(token, payload, err);
 
     return valid;
+}
+
+tl::expected<EnTTidType, std::error_code> verifyToken2EnTTUser(const std::string& token) noexcept
+{
+    const std::string& jwtSecret = ServerSingleton::getInstance().getConfigData().jwt_secret;
+
+    // 解码并验证 JWT
+    try 
+    {
+        const auto& decoded = jwt::decode<traits>(token);
+        auto verifier = jwt::verify<traits>()
+            .allow_algorithm(jwt::algorithm::hs256{ jwtSecret })
+            .with_issuer("YLineServer");
+        verifier.verify(decoded);
+    } 
+    catch (jwt::error::rsa_exception &e) 
+    {
+        return tl::make_unexpected(make_error_code(JwtError::JwtEncryptionError));
+    }
+    catch (jwt::error::ecdsa_exception &e)
+    {
+        return tl::make_unexpected(make_error_code(JwtError::JwtEncryptionError));
+    }
+    catch (jwt::error::token_verification_exception &e)
+    {
+        return tl::make_unexpected(make_error_code(JwtError::JwtVerificationError));
+    }
+    catch (jwt::error::signature_verification_error &e)
+    {
+        return tl::make_unexpected(make_error_code(JwtError::JwtInvalidSignature));
+    }
+    catch (std::invalid_argument &e) 
+    {
+        return tl::make_unexpected(make_error_code(JwtError::JwtFormatError));
+    }
+    catch (std::runtime_error &e) 
+    {
+        return tl::make_unexpected(make_error_code(JwtError::JwtDecodingError));
+    }
+
+    
+    
 }
 
 } // namespace YLineServer::Jwt
