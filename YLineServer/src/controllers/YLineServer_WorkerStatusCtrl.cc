@@ -26,14 +26,17 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
             return;
         }
 
-        const std::string& command = json["command"].asString();
-        if (commandMap.find(command) == commandMap.end())
+        CommandType command;
+        if (commandMap.find(json["command"].asString()) == commandMap.end())
         {
-            spdlog::error("{} - Unrecognized command: {}", wsConnPtr->peerAddr().toIpPort(), command);
-            return;
+            command = CommandType::UNKNOWN;
+        }
+        else
+        {
+            command = commandMap[json["command"].asString()];
         }
 
-        switch (commandMap[command])
+        switch (command)
         {
             case CommandType::auth:
             {
@@ -44,20 +47,18 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 }
 
                 const std::string& token = json["token"].asString();
-                // auto user = Jwt::verifyToken(token);
-                // if (!user)
-                // {
-                //     spdlog::error("{} - Invalid token in auth command", wsConnPtr->peerAddr().toIpPort());
-                //     return;
-                // }
+                const auto& user = Jwt::verifyToken2EnTTUser(token);
+                if (!user)
+                {
+                    spdlog::error("{} - Failed to verify token: {}", wsConnPtr->peerAddr().toIpPort(), user.error().message());
+                    return;
+                }
 
-                // // set context
-                // wsConnPtr->setContext<EnTTidType>(user);
                 break;
             }
             
             default:
-                spdlog::error("{} - Unrecognized command: {}", wsConnPtr->peerAddr().toIpPort(), command);
+                spdlog::error("{} - Unrecognized command: {}", wsConnPtr->peerAddr().toIpPort(), json["command"].asString());
                 break;
         }
     }

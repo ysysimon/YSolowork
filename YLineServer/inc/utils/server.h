@@ -13,9 +13,11 @@
 #include <shared_mutex>
 #include <vector>
 #include "drogon/WebSocketConnection.h"
+#include "models/Users.h"
 
 using EnTTidType = entt::registry::entity_type;
 using namespace drogon;
+using namespace drogon_model::yline;
 
 namespace YLineServer {
 
@@ -59,7 +61,12 @@ public:
         return server_instance_uuid;
     }
 
+    
+
     entt::registry Registry; // EnTT registry 全局注册表
+
+    // 添加工作机到 EnTT
+    EnTTidType addUserEntt(const Users::PrimaryKeyType& userId, const std::string& username, bool isAdmin = false);
 
     // 工作机 UUID 到 EnTTid 映射
     std::unordered_map<boost::uuids::uuid, EnTTidType, UuidHash> WorkerUUIDtoEnTTid; 
@@ -87,12 +94,18 @@ private:
 };
 
 // EnTT Components
+// Since ORM APIs usually update objects as a whole, 
+// we also store the entity components as a whole and do not split them up for now.
+
 struct Worker {
     boost::uuids::uuid worker_uuid;
     boost::uuids::uuid server_instance_uuid;
     Json::Value worker_info;
     WebSocketConnectionPtr wsConnPtr;
 };
+namespace Components {
+
+
 
 // decided to remove this component
 // struct WSConnection {
@@ -100,10 +113,14 @@ struct Worker {
 // };
 
 struct User {
+    Users::PrimaryKeyType userId;
     std::string username;
     bool isAdmin;
     std::vector<WebSocketConnectionPtr> wsConnPtrs;
 };
+
+
+} // namespace Components
 
 } // namespace YLineServer
 

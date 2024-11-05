@@ -169,7 +169,15 @@ void WorkerCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, std::
                 // 根据 "command" 字段处理不同的指令
                 if (root.isMember("command")) 
                 {
-                    CommandType command = commandMap[root["command"].asString()];
+                    CommandType command;
+                    if (commandMap.find(root["command"].asString()) == commandMap.end()) 
+                    {
+                        command = CommandType::UNKNOWN;
+                    }
+                    else 
+                    {
+                        command = commandMap[root["command"].asString()];
+                    }
                     switch (command) 
                     {
                         case CommandType::usage:

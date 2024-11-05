@@ -5,6 +5,7 @@
 #include <json/value.h>
 #include "jwt-cpp/traits/open-source-parsers-jsoncpp/traits.h"
 #include <json/json.h>
+#include <spdlog/spdlog.h> // for testing
 
 namespace YLineServer::Jwt {
 
@@ -82,6 +83,10 @@ tl::expected<EnTTidType, std::error_code> verifyToken2EnTTUser(const std::string
             .allow_algorithm(jwt::algorithm::hs256{ jwtSecret })
             .with_issuer("YLineServer");
         verifier.verify(decoded);
+
+        // 从 JWT 中提取载荷
+        const Json::Value& payload = decoded.get_payload_json();
+        spdlog::info("payload: {}", payload.toStyledString());
     } 
     catch (jwt::error::rsa_exception &e) 
     {
@@ -108,7 +113,7 @@ tl::expected<EnTTidType, std::error_code> verifyToken2EnTTUser(const std::string
         return tl::make_unexpected(make_error_code(JwtError::JwtDecodingError));
     }
 
-    
+    return EnTTidType{0}; // TODO: return user entity ID
     
 }
 

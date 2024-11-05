@@ -20,6 +20,7 @@ enum class JwtError {
     JwtInvalidSignature, // Signature verification failed
     JwtEncryptionError, // Encryption failed
     JwtVerificationError, // Verification failed
+    JwtExtractPayloadError, // Extracting payload failed
     UnknownError
 };
 // Jwt 错误码类别
@@ -40,6 +41,8 @@ public:
             return "Encryption failed";
         case JwtError::JwtVerificationError:
             return "Verification failed";
+        case JwtError::JwtExtractPayloadError:
+            return "Extracting payload failed";
         case JwtError::UnknownError:
             return "Unknown error";
         default:

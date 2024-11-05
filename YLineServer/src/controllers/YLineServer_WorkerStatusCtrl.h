@@ -25,19 +25,21 @@ class WorkerStatusCtrl : public drogon::WebSocketController<WorkerStatusCtrl>
     );
     WS_PATH_LIST_END
   private:
-    
-};
 
-// Commands
-enum class CommandType {
+  // Commands
+  enum class CommandType {
     auth,
     UNKNOWN  // 用于处理未识别的指令
-};
+  };
 
-// Command Map
-inline std::unordered_map<std::string, CommandType> commandMap = {
+  // Command Map
+  inline static std::unordered_map<std::string, CommandType> commandMap = {
     {"auth", CommandType::auth}
-};
+  };
+    
+}; // class WorkerStatusCtrl
+
+
 
 
 } // namespace YLineServer

@@ -35,19 +35,21 @@ class WorkerCtrl : public drogon::WebSocketController<WorkerCtrl>
     // void registerNewWorkerDatabase(const std::string& workerUUID, const Json::Value& workerInfo, EnTTidType workerEnTTid, const WebSocketConnectionPtr& wsConnPtr) const;
     // void registerWorkerEnTT(const std::string& workerUUID, const Json::Value& workerInfo, const WebSocketConnectionPtr& wsConnPtr) const;
 
+    // Commands
+    enum class CommandType {
+      usage,
+      UNKNOWN  // 用于处理未识别的指令
+    };
+
+    // Command Map
+    inline static std::unordered_map<std::string, CommandType> commandMap = {
+        {"usage", CommandType::usage}
+    };
+
     // command functions
     void writeUsage2redis(const Json::Value& usageJson, const WebSocketConnectionPtr& wsConnPtr) const;
 };
 
-// Commands
-enum class CommandType {
-    usage,
-    UNKNOWN  // 用于处理未识别的指令
-};
 
-// Command Map
-inline std::unordered_map<std::string, CommandType> commandMap = {
-    {"usage", CommandType::usage}
-};
 
 } // YLineServer
