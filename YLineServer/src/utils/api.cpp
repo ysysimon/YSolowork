@@ -1,5 +1,6 @@
 #include "utils/api.h"
 #include "utils/server.h"
+#include "utils/jwt.h"
 
 namespace YLineServer::Api {
 
@@ -58,6 +59,25 @@ bool parseJson(const std::string& jsonStr, Json::Value& resultJson, std::string&
     std::istringstream s(jsonStr);
     bool parse_result = Json::parseFromStream(reader, s, &resultJson, &errs);
     return parse_result;
+}
+
+
+void authWebSocketConnection(const WebSocketConnectionPtr& wsConnPtr, const std::string& token)
+{
+    const auto& user = Jwt::verifyToken2EnTTUser(token);
+    user.or_else(
+        [wsConnPtr](const std::error_code& err) 
+        {
+            spdlog::error("{} - Failed to verify token: {}", wsConnPtr->peerAddr().toIpPort(), err.message());
+        }
+    );
+    wsConnPtr->setContext(std::make_shared<EnTTidType>(user.value()));
+    const auto& username = ServerSingleton::getInstance().Registry.get<Components::User>(user.value()).username;
+    spdlog::info(
+        "{} - Authenticated as user: {}", 
+        wsConnPtr->peerAddr().toIpPort(), 
+        username
+    );
 }
 
 } // namespace YLineServer::Api

@@ -4,6 +4,7 @@
 #include "drogon/lib/src/impl_forwards.h"
 #include "json/value.h"
 #include <json/json.h>
+#include "drogon/WebSocketConnection.h"
 
 #ifndef YLINESERVER_API_H
 #define YLINESERVER_API_H
@@ -23,6 +24,9 @@ HttpResponsePtr makeHttpResponse(const std::string& body, const HttpStatusCode& 
 
 // 函数: 解析 JSON
 bool parseJson(const std::string& jsonStr, Json::Value& resultJson, std::string& errs);
+
+//函数: 鉴权 WebSocket 连接
+void authWebSocketConnection(const WebSocketConnectionPtr& wsConnPtr, const std::string& token);
 
 } // namespace YLineServer::Api
 #endif // YLINESERVER_API_H

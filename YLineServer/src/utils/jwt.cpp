@@ -86,7 +86,22 @@ tl::expected<EnTTidType, std::error_code> verifyToken2EnTTUser(const std::string
 
         // 从 JWT 中提取载荷
         const Json::Value& payload = decoded.get_payload_json();
-        spdlog::info("payload: {}", payload.toStyledString());
+        // spdlog::debug("payload: {}", payload.toStyledString());
+        if (
+            !payload.isMember("userId") ||
+            !payload.isMember("username") ||
+            !payload.isMember("isAdmin")
+        )
+            return tl::make_unexpected(make_error_code(JwtError::JwtExtractPayloadError));
+
+        const auto& User = ServerSingleton::getInstance().addUserEntt(
+            static_cast<Users::PrimaryKeyType>(payload["userId"].asUInt64()),
+            payload["username"].asString(),
+            payload["isAdmin"].asBool()
+        );
+
+        return User;
+        
     } 
     catch (jwt::error::rsa_exception &e) 
     {

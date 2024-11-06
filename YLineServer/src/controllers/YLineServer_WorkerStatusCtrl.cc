@@ -1,9 +1,9 @@
 #include "YLineServer_WorkerStatusCtrl.h"
 #include "spdlog/spdlog.h"
-#include "utils/jwt.h"
 #include "utils/server.h"
 #include "utils/api.h"
 #include <json/value.h>
+#include <memory>
 
 using namespace YLineServer;
 
@@ -47,13 +47,7 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 }
 
                 const std::string& token = json["token"].asString();
-                const auto& user = Jwt::verifyToken2EnTTUser(token);
-                if (!user)
-                {
-                    spdlog::error("{} - Failed to verify token: {}", wsConnPtr->peerAddr().toIpPort(), user.error().message());
-                    return;
-                }
-
+                Api::authWebSocketConnection(wsConnPtr, token);
                 break;
             }
             
