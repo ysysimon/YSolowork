@@ -1,5 +1,6 @@
 #pragma once
 
+#include "json/config.h"
 #include <drogon/WebSocketController.h>
 
 using namespace drogon;
@@ -29,13 +30,19 @@ class WorkerStatusCtrl : public drogon::WebSocketController<WorkerStatusCtrl>
   // Commands
   enum class CommandType {
     auth,
+    requireWorkerInfo,
     UNKNOWN  // 用于处理未识别的指令
   };
 
   // Command Map
   inline static std::unordered_map<std::string, CommandType> commandMap = {
-    {"auth", CommandType::auth}
+    {"auth", CommandType::auth},
+    {"requireWorkerInfo", CommandType::requireWorkerInfo}
   };
+
+  // Command Fucntions
+  void CommandsetWorkerCount(const WebSocketConnectionPtr& wsConnPtr);
+  void CommandsetWorkerStatus(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last);
     
 }; // class WorkerStatusCtrl
 

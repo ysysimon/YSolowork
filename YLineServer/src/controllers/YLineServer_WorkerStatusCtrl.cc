@@ -50,7 +50,24 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 Api::authWebSocketConnection(wsConnPtr, token);
                 break;
             }
-            
+            case CommandType::requireWorkerInfo:
+            {
+                if (!json.isMember("first") || !json.isMember("last"))
+                {
+                    spdlog::error("{} - No first or last in requireWorkerInfo command", wsConnPtr->peerAddr().toIpPort());
+                    return;
+                
+                }
+                if (!json["first"].isInt64() || !json["last"].isInt64()) 
+                {
+                    spdlog::error("{} - first or last is not int64 in requireWorkerInfo command", wsConnPtr->peerAddr().toIpPort());
+                    return;
+                }
+
+                CommandsetWorkerStatus(wsConnPtr, json["first"].asInt64(), json["last"].asInt64());
+                break;
+            }
+        
             default:
                 spdlog::error("{} - Unrecognized command: {}", wsConnPtr->peerAddr().toIpPort(), json["command"].asString());
                 break;
@@ -74,26 +91,39 @@ void WorkerStatusCtrl::handleNewConnection(const HttpRequestPtr &req, const WebS
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::debug("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
-    // database
-    auto dbClient = drogon::app().getFastDbClient("YLinedb");
-    // drogon::orm::Mapper<Workers> mapper(dbClient);
-    dbClient->execSqlAsync(
-        "SELECT COUNT(*) FROM workers",
-        [wsConnPtr](const drogon::orm::Result &result) 
-        {
-            int64_t count = result[0][0].as<int64_t>();
-            spdlog::info("{} Requested Worker Status 请求工作机状态", wsConnPtr->peerAddr().toIpPort());
-        },
-        [wsConnPtr](const drogon::orm::DrogonDbException &err) 
-        {
-            wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to query Worker database 查询工作机数据库失败");
-            spdlog::error("Failed to query Worker database 查询工作机数据库失败: {}", err.base().what());
-        }
-    );
+    CommandsetWorkerCount(wsConnPtr);
 }
 
 void WorkerStatusCtrl::handleConnectionClosed(const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
     spdlog::debug("{} disconnected from WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
+}
+
+void WorkerStatusCtrl::CommandsetWorkerCount(const WebSocketConnectionPtr& wsConnPtr)
+{
+    auto dbClient = drogon::app().getFastDbClient("YLinedb");
+    dbClient->execSqlAsync(
+        "SELECT COUNT(*) FROM workers",
+        [wsConnPtr](const drogon::orm::Result &result) 
+        {
+            int64_t count = result[0][0].as<int64_t>();
+            Json::Value json;
+            json["command"] = "setWorkerCount";
+            json["count"] = count;
+            wsConnPtr->sendJson(json);
+            spdlog::info("{} Requested Worker Status 请求工作机总数", wsConnPtr->peerAddr().toIpPort());
+        },
+        [wsConnPtr](const drogon::orm::DrogonDbException &err) 
+        {
+            // 如果查询失败，直接关闭连接，由客户端重连发起再一次查询
+            wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to query Worker database 查询工作机总数失败");
+            spdlog::error("Failed to query Worker database 查询工作机总数失败: {}", err.base().what());
+        }
+    );
+}
+
+void WorkerStatusCtrl::CommandsetWorkerStatus(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last)
+{
+    auto redis = drogon::app().getFastRedisClient("YLineRedis");
 }
