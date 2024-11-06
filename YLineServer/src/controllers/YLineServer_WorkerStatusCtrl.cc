@@ -1,9 +1,10 @@
 #include "YLineServer_WorkerStatusCtrl.h"
+#include "drogon/nosql/RedisResult.h"
 #include "spdlog/spdlog.h"
 #include "utils/server.h"
 #include "utils/api.h"
 #include <json/value.h>
-#include <memory>
+#include <format>
 
 using namespace YLineServer;
 
@@ -64,7 +65,7 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                     return;
                 }
 
-                CommandsetWorkerStatus(wsConnPtr, json["first"].asInt64(), json["last"].asInt64());
+                CommandrequireWorkerInfo(wsConnPtr, json["first"].asInt64(), json["last"].asInt64());
                 break;
             }
         
@@ -123,7 +124,43 @@ void WorkerStatusCtrl::CommandsetWorkerCount(const WebSocketConnectionPtr& wsCon
     );
 }
 
-void WorkerStatusCtrl::CommandsetWorkerStatus(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last)
+void WorkerStatusCtrl::CommandrequireWorkerInfo(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last)
 {
     auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    redis->execCommandAsync(
+        [wsConnPtr, fist, last](const drogon::nosql::RedisResult &r) 
+        {
+            if(r.type() == drogon::nosql::RedisResultType::kArray)
+            {
+                const auto& workers = r.asArray();
+                if (workers.size() != (last - fist + 1) || workers.empty())
+                {
+                    spdlog::info(
+                        "{} - WorkerList size mismatch trigger synchronization 工作机列表不匹配, 触发同步: {} != {}", 
+                        wsConnPtr->peerAddr().toIpPort(), workers.size(), last - fist + 1
+                    );
+
+                    return;
+                }
+
+                Json::Value json;
+                json["command"] = "setWorkerInfo";
+                for(const auto& worker : r.asArray())
+                {
+                    json["workers"].append(worker.asString());
+                }
+                wsConnPtr->sendJson(json);
+                spdlog::info("{} Requested Worker Info 请求工作机信息", wsConnPtr->peerAddr().toIpPort());
+            }
+            else
+            {
+                spdlog::error("{} - Unexpected Redis result type: {}", wsConnPtr->peerAddr().toIpPort(), static_cast<int>(r.type()));
+            }
+        },
+        [wsConnPtr](const std::exception &err)
+        {
+            spdlog::error("{} - Failed to query Worker database 查询工作机信息失败: {}", wsConnPtr->peerAddr().toIpPort(), err.what());
+        },
+        std::format("ZRANGE WorkerList {} {}", fist, last).c_str()
+    );
 }

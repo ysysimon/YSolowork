@@ -42,7 +42,7 @@ class WorkerStatusCtrl : public drogon::WebSocketController<WorkerStatusCtrl>
 
   // Command Fucntions
   void CommandsetWorkerCount(const WebSocketConnectionPtr& wsConnPtr);
-  void CommandsetWorkerStatus(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last);
+  void CommandrequireWorkerInfo(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last);
     
 }; // class WorkerStatusCtrl
 
