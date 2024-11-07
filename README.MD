@@ -29,6 +29,7 @@ MSVC 19.4 (经过测试)
 - toml++ (header only) (build with project)
 - jwt++ (build with project)
 - entt (build with project)
+- tl::expected (header only) (build with project)
 
 #### YLineWorker
 - spdlog

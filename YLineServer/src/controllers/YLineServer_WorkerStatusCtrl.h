@@ -30,14 +30,14 @@ class WorkerStatusCtrl : public drogon::WebSocketController<WorkerStatusCtrl>
   // Commands
   enum class CommandType {
     auth,
-    requireWorkerInfo,
+    requireWorkers,
     UNKNOWN  // 用于处理未识别的指令
   };
 
   // Command Map
   inline static std::unordered_map<std::string, CommandType> commandMap = {
     {"auth", CommandType::auth},
-    {"requireWorkerInfo", CommandType::requireWorkerInfo}
+    {"requireWorkers", CommandType::requireWorkers}
   };
 
   // Command Fucntions

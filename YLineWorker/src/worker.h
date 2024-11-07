@@ -71,10 +71,12 @@ public:
     Json::Value getRegisterJson() const;
 
     // 获取 worker info Json
-    Json::Value getSystomInfoJson() const;
+    // Json::Value getSystomInfoJson() const;
+    Json::Value getMachineInfoJson() const;
 
-    // 获取 Device Json
-    Json::Value getDeviceJson() const;
+    // 获取 Device Json 
+    // no need for this just use getMachineInfo() from UTmachineInfo.h
+    // Json::Value getDeviceJson() const;
 
     // 获取 nvDeviceRegister Json
     Json::Value getNvDeviceRegisterJson() const;

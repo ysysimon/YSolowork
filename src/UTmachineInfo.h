@@ -80,5 +80,8 @@ double getTotalMemoryGB();
 // 函数: 获取系统信息
 SystomInfo getSystomInfo();
 
+// 函数: 获取机器信息
+MachineInfo getMachineInfo();
+
 } // namespace YSolowork::util
 #endif // UTmachineInfo_H

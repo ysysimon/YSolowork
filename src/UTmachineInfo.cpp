@@ -221,4 +221,13 @@ std::vector<Device> getAllDevices()
     return devices;
 }
 
+MachineInfo getMachineInfo()
+{
+    MachineInfo machineInfo;
+    machineInfo.systomInfo = getSystomInfo();
+    machineInfo.machineName = getMachineName();
+    machineInfo.devices = getAllDevices();
+    return machineInfo;
+}
+
 } // namespace YSolowork::util

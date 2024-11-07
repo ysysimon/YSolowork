@@ -54,9 +54,55 @@ Json::Value WorkerSingleton::getUsageGPUJson()
     return json;
 }
 
-Json::Value WorkerSingleton::getDeviceJson() const
+// Json::Value WorkerSingleton::getDeviceJson() const
+// {
+//     Json::Value json;
+//     for (const auto& device : workerData_.worker_machineInfo.devices) 
+//     {
+//         Json::Value deviceJson;
+//         deviceJson["type"] = std::string(
+//             magic_enum::enum_name(device.type)
+//         );
+//         deviceJson["platformName"] = device.platformName;
+//         deviceJson["name"] = device.name;
+//         deviceJson["cores"] = device.cores;
+//         deviceJson["memoryGB"] = device.memoryGB;
+//         json.append(deviceJson);
+//     }
+
+//     return json;
+// }
+
+// Json::Value WorkerSingleton::getSystomInfoJson() const
+// {
+//     Json::Value json;
+//     json["OS"] = std::string(
+//          magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.os)
+//     );
+//     json["osName"] = workerData_.worker_machineInfo.systomInfo.osName;
+//     json["osRelease"] = workerData_.worker_machineInfo.systomInfo.osRelease;
+//     json["osVersion"] = workerData_.worker_machineInfo.systomInfo.osVersion;
+//     json["osArchitecture"] = std::string(
+//          magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.osArchitecture)
+//     );
+
+
+//     return json;
+// }
+
+Json::Value WorkerSingleton::getMachineInfoJson() const
 {
     Json::Value json;
+    json["machineName"] = workerData_.worker_machineInfo.machineName;
+    json["systomInfo"]["OS"] = std::string(
+         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.os)
+    );
+    json["systomInfo"]["osName"] = workerData_.worker_machineInfo.systomInfo.osName;
+    json["systomInfo"]["osRelease"] = workerData_.worker_machineInfo.systomInfo.osRelease;
+    json["systomInfo"]["osVersion"] = workerData_.worker_machineInfo.systomInfo.osVersion;
+    json["systomInfo"]["osArchitecture"] = std::string(
+         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.osArchitecture)
+    );
     for (const auto& device : workerData_.worker_machineInfo.devices) 
     {
         Json::Value deviceJson;
@@ -67,25 +113,8 @@ Json::Value WorkerSingleton::getDeviceJson() const
         deviceJson["name"] = device.name;
         deviceJson["cores"] = device.cores;
         deviceJson["memoryGB"] = device.memoryGB;
-        json.append(deviceJson);
+        json["devices"].append(deviceJson);
     }
-
-    return json;
-}
-
-Json::Value WorkerSingleton::getSystomInfoJson() const
-{
-    Json::Value json;
-    json["OS"] = std::string(
-         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.os)
-    );
-    json["osName"] = workerData_.worker_machineInfo.systomInfo.osName;
-    json["osRelease"] = workerData_.worker_machineInfo.systomInfo.osRelease;
-    json["osVersion"] = workerData_.worker_machineInfo.systomInfo.osVersion;
-    json["osArchitecture"] = std::string(
-         magic_enum::enum_name(workerData_.worker_machineInfo.systomInfo.osArchitecture)
-    );
-    json["devices"] = getDeviceJson();
 
     return json;
 }
@@ -146,7 +175,7 @@ Json::Value WorkerSingleton::getRegisterJson() const
     Json::Value json;
     json["worker_uuid"] = boost::uuids::to_string(worker_uuid);
     json["register_secret"] = workerData_.register_secret;
-    json["worker_info"]["worker_machineInfo"] = getSystomInfoJson();
+    json["worker_info"]["machineInfo"] = getMachineInfoJson();
 
     if (nvml_.has_value() && nvDevices_.has_value() && !nvDevices_.value().empty()) 
     {

@@ -5,6 +5,7 @@
 #include "utils/api.h"
 #include <json/value.h>
 #include <format>
+#include "models/Workers.h"
 
 using namespace YLineServer;
 
@@ -51,7 +52,7 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 Api::authWebSocketConnection(wsConnPtr, token);
                 break;
             }
-            case CommandType::requireWorkerInfo:
+            case CommandType::requireWorkers:
             {
                 if (!json.isMember("first") || !json.isMember("last"))
                 {
@@ -111,7 +112,7 @@ void WorkerStatusCtrl::CommandsetWorkerCount(const WebSocketConnectionPtr& wsCon
             int64_t count = result[0][0].as<int64_t>();
             Json::Value json;
             json["command"] = "setWorkerCount";
-            json["count"] = count;
+            json["data"] = count;
             wsConnPtr->sendJson(json);
             spdlog::info("{} Requested Worker Status 请求工作机总数", wsConnPtr->peerAddr().toIpPort());
         },
@@ -126,41 +127,100 @@ void WorkerStatusCtrl::CommandsetWorkerCount(const WebSocketConnectionPtr& wsCon
 
 void WorkerStatusCtrl::CommandrequireWorkerInfo(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last)
 {
-    auto redis = drogon::app().getFastRedisClient("YLineRedis");
-    redis->execCommandAsync(
-        [wsConnPtr, fist, last](const drogon::nosql::RedisResult &r) 
-        {
-            if(r.type() == drogon::nosql::RedisResultType::kArray)
-            {
-                const auto& workers = r.asArray();
-                if (workers.size() != (last - fist + 1) || workers.empty())
-                {
-                    spdlog::info(
-                        "{} - WorkerList size mismatch trigger synchronization 工作机列表不匹配, 触发同步: {} != {}", 
-                        wsConnPtr->peerAddr().toIpPort(), workers.size(), last - fist + 1
-                    );
+    // all right maybe let's not optimize too early
+    // worker list is not that big maybe we can just query the database
 
-                    return;
-                }
+    // auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    // redis->execCommandAsync(
+    //     [wsConnPtr, fist, last](const drogon::nosql::RedisResult &r) 
+    //     {
+    //         if(r.type() == drogon::nosql::RedisResultType::kArray)
+    //         {
+    //             const auto& workers = r.asArray();
+    //             if (workers.size() != (last - fist + 1) || workers.empty())
+    //             {
+    //                 spdlog::info(
+    //                     "{} - WorkerList size mismatch trigger synchronization 工作机列表不匹配, 触发同步: {} != {}", 
+    //                     wsConnPtr->peerAddr().toIpPort(), workers.size(), last - fist + 1
+    //                 );
+    //                 // database
+    //                 auto dbClient = drogon::app().getFastDbClient("YLinedb");
+    //                 drogon::orm::Mapper<Workers> mapper(dbClient);
+    //                 mapper.orderBy(Workers::Cols::_id, drogon::orm::SortOrder::ASC)
+    //                         .limit(last - fist + 1)
+    //                         .offset(fist)
+    //                         .findAll(
+    //                             [wsConnPtr](const std::vector<Workers>& workers)
+    //                             {
+    //                                 auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    //                                 Json::Value json;
+    //                                 json["command"] = "setWorkerInfo";
+    //                                 for(const auto& worker : workers)
+    //                                 {
+    //                                     json["workers"].append(worker.toJson());
+    //                                 }
+    //                                 wsConnPtr->sendJson(json);
+    //                                 spdlog::info("{} Requested Worker Info 请求工作机信息", wsConnPtr->peerAddr().toIpPort());
+    //                             },
+    //                             [wsConnPtr](const drogon::orm::DrogonDbException &err)
+    //                             {
+    //                                 wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to query Worker database 查询工作机信息失败");
+    //                                 spdlog::error("{} - Failed to query Worker database 查询工作机信息失败: {}", wsConnPtr->peerAddr().toIpPort(), err.base().what());
+    //                             }
+    //                         );
 
-                Json::Value json;
-                json["command"] = "setWorkerInfo";
-                for(const auto& worker : r.asArray())
+    //                 return;
+    //             }
+
+    //             Json::Value json;
+    //             json["command"] = "setWorkerInfo";
+    //             for(const auto& worker : r.asArray())
+    //             {
+    //                 json["workers"].append(worker.asString());
+    //             }
+    //             wsConnPtr->sendJson(json);
+    //             spdlog::info("{} Requested Worker Info 请求工作机信息", wsConnPtr->peerAddr().toIpPort());
+    //         }
+    //         else
+    //         {
+    //             wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Unexpected Redis result type");
+    //             spdlog::error("{} - Unexpected Redis result type: {}", wsConnPtr->peerAddr().toIpPort(), static_cast<int>(r.type()));
+    //         }
+    //     },
+    //     [wsConnPtr](const std::exception &err)
+    //     {
+    //         wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to query Worker Redis 查询工作机信息失败");
+    //         spdlog::error("{} - Failed to query Worker database 查询工作机信息失败: {}", wsConnPtr->peerAddr().toIpPort(), err.what());
+    //     },
+    //     std::format("ZRANGE WorkerList {} {}", fist, last).c_str()
+    // );
+
+
+
+    // database
+    auto dbClient = drogon::app().getFastDbClient("YLinedb");
+    drogon::orm::Mapper<Workers> mapper(dbClient);
+    mapper.orderBy(Workers::Cols::_id, drogon::orm::SortOrder::ASC)
+            .limit(last - fist + 1)
+            .offset(fist)
+            .findAll(
+                [wsConnPtr, fist](const std::vector<Workers>& workers)
                 {
-                    json["workers"].append(worker.asString());
+                    auto redis = drogon::app().getFastRedisClient("YLineRedis");
+                    Json::Value json;
+                    json["command"] = "setWorkers";
+                    json["data"]["first"] = fist;
+                    for(const auto& worker : workers)
+                    {
+                        json["data"]["workers"].append(worker.toJson());
+                    }
+                    wsConnPtr->sendJson(json);
+                    spdlog::info("{} Requested Worker Info 请求工作机信息", wsConnPtr->peerAddr().toIpPort());
+                },
+                [wsConnPtr](const drogon::orm::DrogonDbException &err)
+                {
+                    wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to query Worker database 查询工作机信息失败");
+                    spdlog::error("{} - Failed to query Worker database 查询工作机信息失败: {}", wsConnPtr->peerAddr().toIpPort(), err.base().what());
                 }
-                wsConnPtr->sendJson(json);
-                spdlog::info("{} Requested Worker Info 请求工作机信息", wsConnPtr->peerAddr().toIpPort());
-            }
-            else
-            {
-                spdlog::error("{} - Unexpected Redis result type: {}", wsConnPtr->peerAddr().toIpPort(), static_cast<int>(r.type()));
-            }
-        },
-        [wsConnPtr](const std::exception &err)
-        {
-            spdlog::error("{} - Failed to query Worker database 查询工作机信息失败: {}", wsConnPtr->peerAddr().toIpPort(), err.what());
-        },
-        std::format("ZRANGE WorkerList {} {}", fist, last).c_str()
-    );
+            );
 }
