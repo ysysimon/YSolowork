@@ -23,6 +23,7 @@ void WorkerCtrl::writeUsage2redis(const Json::Value& usageJson, const WebSocketC
     std::vector<std::pair<std::string, std::string>> redisHashfileds;
 
     // redis hash 设置指令, 用于设置工作机的使用情况
+    redisHashfileds.emplace_back("workerIP", wsConnPtr->peerAddr().toIp());
     if (usageJson.isMember("cpuUsage")) 
     {
         redisHashfileds.emplace_back("cpuUsage", usageJson["cpuUsage"].asString());

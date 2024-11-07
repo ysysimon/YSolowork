@@ -210,6 +210,7 @@ void WorkerStatusCtrl::CommandrequireWorkerInfo(const WebSocketConnectionPtr& ws
                     Json::Value json;
                     json["command"] = "setWorkers";
                     json["data"]["first"] = fist;
+                    json["data"]["last"] = fist + workers.size();
                     for(const auto& worker : workers)
                     {
                         json["data"]["workers"].append(worker.toJson());
