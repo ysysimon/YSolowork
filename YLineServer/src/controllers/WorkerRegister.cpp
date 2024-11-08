@@ -219,6 +219,10 @@ void WorkerCtrl::registerWorker(const std::string& workerUUID, const Json::Value
                     newWorkerEntity
                 );
 
+                // check if entity is really valid
+                // auto& __test = ServerSingleton::getInstance().Registry.get<Worker>(newWorkerEntity);
+                // spdlog::info("Worker UUID: {}", boost::uuids::to_string(__test.worker_uuid));
+
                 updateWorkerDatabase(mapper, updateWorker, workerUUID, wsConnPtr);
                                 
             }
