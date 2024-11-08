@@ -74,11 +74,19 @@ set(HAS_COROUTINE ON CACHE BOOL "Force enable coroutine support for all subproje
 # hiredis
 # find_package(hiredis CONFIG REQUIRED) # seems hiredis don't support debug build on windows
 set(BUILD_REDIS ON CACHE BOOL "Build Redis support" FORCE)
+
+cmake_policy(SET CMP0079 NEW) # 3.13 之后的版本需要设置这个来允许跨目录链接
 add_subdirectory(
     ${YSolowork_SOURCE_DIR}/vendor/drogon
     ${YSolowork_BINARY_DIR}/vendor/drogon
 )
-cmake_policy(SET CMP0079 NEW) # 3.13 之后的版本需要设置这个来允许跨目录链接
+
+# 添加 magic_enum 库
+# find_package(magic_enum CONFIG REQUIRED)
+add_subdirectory(
+    ${YSolowork_SOURCE_DIR}/vendor/magic_enum
+    ${YSolowork_BINARY_DIR}/vendor/magic_enum
+)
 
 # 添加选项来控制是否构建 YLineServer 和 YLineWorker
 option(BUILD_YLINESERVER "Build YLineServer" ON)

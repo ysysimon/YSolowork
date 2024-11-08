@@ -70,14 +70,19 @@ void authWebSocketConnection(const WebSocketConnectionPtr& wsConnPtr, const std:
         {
             spdlog::error("{} - Failed to verify token: {}", wsConnPtr->peerAddr().toIpPort(), err.message());
         }
+    ).map(
+        [wsConnPtr](const EnTTidType& userId) 
+        {
+            wsConnPtr->setContext(std::make_shared<EnTTidType>(userId));
+            const auto& username = ServerSingleton::getInstance().Registry.get<Components::User>(userId).username;
+            spdlog::info(
+                "{} - Authenticated as user: {}", 
+                wsConnPtr->peerAddr().toIpPort(), 
+                username
+            );
+        }
     );
-    wsConnPtr->setContext(std::make_shared<EnTTidType>(user.value()));
-    const auto& username = ServerSingleton::getInstance().Registry.get<Components::User>(user.value()).username;
-    spdlog::info(
-        "{} - Authenticated as user: {}", 
-        wsConnPtr->peerAddr().toIpPort(), 
-        username
-    );
+    
 }
 
 } // namespace YLineServer::Api

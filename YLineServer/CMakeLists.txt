@@ -109,6 +109,9 @@ add_subdirectory(
 )
 target_link_libraries(YLineServer PRIVATE tl::expected)
 
+# 添加 magic_enum 库
+target_link_libraries(YLineServer PRIVATE magic_enum::magic_enum)
+
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)
 

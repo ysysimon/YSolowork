@@ -110,11 +110,6 @@ target_link_libraries(YLineWorker PRIVATE drogon) # 注意大小写!!! 作为 gi
 target_precompile_headers(YLineWorker PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)
 
 # 添加 magic_enum 库
-# find_package(magic_enum CONFIG REQUIRED)
-add_subdirectory(
-    ${YSolowork_SOURCE_DIR}/vendor/magic_enum
-    ${YSolowork_BINARY_DIR}/vendor/magic_enum
-)
 target_link_libraries(YLineWorker PRIVATE magic_enum::magic_enum)
 
 # 添加 Boost::uuid 库
