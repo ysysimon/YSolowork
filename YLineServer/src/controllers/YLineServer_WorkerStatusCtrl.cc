@@ -1,11 +1,12 @@
 #include "YLineServer_WorkerStatusCtrl.h"
-#include "drogon/nosql/RedisResult.h"
 #include "spdlog/spdlog.h"
 #include "utils/server.h"
 #include "utils/api.h"
+#include <cstddef>
 #include <json/value.h>
-#include <format>
 #include "models/Workers.h"
+#include <format>
+#include <magic_enum.hpp>
 
 using namespace YLineServer;
 
@@ -69,6 +70,18 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 CommandrequireWorkerInfo(wsConnPtr, json["first"].asInt64(), json["last"].asInt64());
                 break;
             }
+            case CommandType::requireWorkerStatus:
+            {
+                if (!json.isMember("workerUUID"))
+                {
+                    spdlog::error("{} - No workerUUID in requireWorkerStatus command", wsConnPtr->peerAddr().toIpPort());
+                    return;
+                
+                }
+
+                CommandrequireWorkerStatus(wsConnPtr, json["workerUUID"].asString());
+                break;
+            }
         
             default:
                 spdlog::error("{} - Unrecognized command: {}", wsConnPtr->peerAddr().toIpPort(), json["command"].asString());
@@ -114,7 +127,7 @@ void WorkerStatusCtrl::CommandsetWorkerCount(const WebSocketConnectionPtr& wsCon
             json["command"] = "setWorkerCount";
             json["data"] = count;
             wsConnPtr->sendJson(json);
-            spdlog::info("{} Requested Worker Status 请求工作机总数", wsConnPtr->peerAddr().toIpPort());
+            spdlog::info("{} Requested Worker Count 请求工作机总数", wsConnPtr->peerAddr().toIpPort());
         },
         [wsConnPtr](const drogon::orm::DrogonDbException &err) 
         {
@@ -224,4 +237,95 @@ void WorkerStatusCtrl::CommandrequireWorkerInfo(const WebSocketConnectionPtr& ws
                     spdlog::error("{} - Failed to query Worker database 查询工作机信息失败: {}", wsConnPtr->peerAddr().toIpPort(), err.base().what());
                 }
             );
+}
+
+
+void WorkerStatusCtrl::CommandrequireWorkerStatus(const WebSocketConnectionPtr& wsConnPtr, const std::string& workerUUID)
+{
+    spdlog::debug("{} Requested Worker {} Status 请求工作机状态", wsConnPtr->peerAddr().toIpPort(), workerUUID);
+    auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    redis->execCommandAsync(
+        [wsConnPtr, workerUUID](const drogon::nosql::RedisResult &r) 
+        {
+            Json::Value json;
+            json["command"] = "setWorkerStatus";
+            json["data"]["workerUUID"] = workerUUID;
+
+            if (r.type() == drogon::nosql::RedisResultType::kArray)
+            {
+                const auto& workers = r.asArray();
+                if (workers.size() == 0)
+                {
+                    json["data"]["status"] = false;
+                    wsConnPtr->sendJson(json);
+                    spdlog::debug("Worker {} Status is Nil, So it's not Online 工作机不在线", workerUUID);
+                    return;
+                }
+
+                json["data"]["status"] = true;
+                for (size_t i = 0; i < workers.size(); i += 2)
+                {
+                    if (workers[i].type() == drogon::nosql::RedisResultType::kString && workers[i + 1].type() == drogon::nosql::RedisResultType::kString)
+                    {
+                        json["data"][workers[i].asString()] = workers[i + 1].asString();
+                        spdlog::debug("Worker {} Status: {} = {}", workerUUID, workers[i].asString(), workers[i + 1].asString());
+                    }
+                    else
+                    {
+                        wsConnPtr->shutdown(
+                            CloseCode::kUnexpectedCondition, 
+                            std::format(
+                                "Unexpected Worker {} Status Redis result pair type",
+                                    workerUUID
+                                )
+                        );
+                        spdlog::error(
+                            "{} - Unexpected Worker {} Status Redis result pair type: {} {}", 
+                            wsConnPtr->peerAddr().toIpPort(), 
+                            workerUUID,
+                            magic_enum::enum_name(workers[i].type()), 
+                            magic_enum::enum_name(workers[i + 1].type())
+                        );
+                        return;
+                    }
+                }
+
+                wsConnPtr->sendJson(json);
+                
+            }
+            else 
+            {
+                wsConnPtr->shutdown(
+                    CloseCode::kUnexpectedCondition, 
+                    std::format(
+                        "Unexpected Worker {} Status Redis result type",
+                        workerUUID
+                    )
+                );
+                spdlog::error(
+                    "{} - Unexpected Worker {} Status Redis result type: {}", 
+                    wsConnPtr->peerAddr().toIpPort(), 
+                    workerUUID,
+                    magic_enum::enum_name(r.type())
+                );
+            }
+        },
+        [wsConnPtr, workerUUID](const std::exception &err)
+        {
+            wsConnPtr->shutdown(
+                CloseCode::kUnexpectedCondition, 
+                std::format(
+                    "Failed to query Worker {} Status in Redis 查询工作机状态失败",
+                    workerUUID
+                )
+            );
+            spdlog::error(
+                "{} - Failed to query Worker {} Status 查询工作机状态失败: {}", 
+                wsConnPtr->peerAddr().toIpPort(), 
+                workerUUID,
+                err.what()
+            );
+        },
+        std::format("HGETALL WorkerUsage:{}", workerUUID).c_str()
+    );
 }
