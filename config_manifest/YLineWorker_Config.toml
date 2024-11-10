@@ -11,7 +11,7 @@ register_secret = "your_register_secret"
 [YLineServer]
 # YLineServer 的ip和端口
 # YLineServer's ip and port
-ip = "localhost"
+ip = "127.0.0.1"
 port = 33383
 
 [middleware]
