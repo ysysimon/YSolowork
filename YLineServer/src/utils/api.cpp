@@ -4,6 +4,7 @@
 
 namespace YLineServer::Api {
 
+// this is a workaround maybe will be removed in the future
 void addCORSHeader(const HttpResponsePtr& resp, const HttpRequestPtr& req)
 {
     auto& config = ServerSingleton::getInstance().getConfigData();

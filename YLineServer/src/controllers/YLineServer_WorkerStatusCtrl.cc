@@ -39,20 +39,36 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
             command = commandMap[json["command"].asString()];
         }
 
+        // auth command is special
+        if (command == CommandType::auth)
+        {
+            if (!json.isMember("token"))
+            {
+                spdlog::error("{} - No token in auth command", wsConnPtr->peerAddr().toIpPort());
+                Json::Value json;
+                json["command"] = "requireAuth";
+                wsConnPtr->sendJson(json);
+                wsConnPtr->shutdown(CloseCode::kViolation, "Unauthorized");
+                return;
+            }
+            const std::string& token = json["token"].asString();
+            Api::authWebSocketConnection(wsConnPtr, token);
+        }
+
+        // get context to check if user is authenticated
+        const auto& user = wsConnPtr->getContext<EnTTidType>();
+        if (!user) 
+        {
+            Json::Value json;
+            json["command"] = "requireAuth";
+            wsConnPtr->sendJson(json);
+            wsConnPtr->shutdown(CloseCode::kViolation, "Unauthorized");
+            return;
+        }
+
+        // other commands
         switch (command)
         {
-            case CommandType::auth:
-            {
-                if (!json.isMember("token"))
-                {
-                    spdlog::error("{} - No token in auth command", wsConnPtr->peerAddr().toIpPort());
-                    return;
-                }
-
-                const std::string& token = json["token"].asString();
-                Api::authWebSocketConnection(wsConnPtr, token);
-                break;
-            }
             case CommandType::requireWorkers:
             {
                 if (!json.isMember("first") || !json.isMember("last"))
@@ -76,7 +92,6 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 {
                     spdlog::error("{} - No workerUUID in requireWorkerStatus command", wsConnPtr->peerAddr().toIpPort());
                     return;
-                
                 }
 
                 CommandrequireWorkerStatus(wsConnPtr, json["workerUUID"].asString());
@@ -87,17 +102,6 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 spdlog::error("{} - Unrecognized command: {}", wsConnPtr->peerAddr().toIpPort(), json["command"].asString());
                 break;
         }
-    }
-
-    // get context to check if user is authenticated
-    const auto& user = wsConnPtr->getContext<EnTTidType>();
-    if (!user) 
-    {
-        Json::Value json;
-        json["command"] = "requireAuth";
-        wsConnPtr->sendJson(json);
-        // wsConnPtr->shutdown(CloseCode::kViolation, "Unauthorized");
-        return;
     }
     
 }

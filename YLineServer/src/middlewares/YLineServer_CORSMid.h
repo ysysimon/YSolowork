@@ -8,6 +8,7 @@ namespace YLineServer
 
 using namespace drogon;
 
+// Coroutine version
 // class CORSMiddleware : public drogon::HttpCoroMiddleware<CORSMiddleware>
 // {
 // public:
@@ -21,6 +22,7 @@ using namespace drogon;
 //     std::unordered_set<std::string> allowedOrigins_;
 // };
 
+// Callback version
 class CORSMiddleware : public drogon::HttpMiddleware<CORSMiddleware>
 {
 public:

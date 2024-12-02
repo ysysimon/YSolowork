@@ -107,7 +107,8 @@ void WorkerSingleton::saveUUIDtoAppData(const boost::uuids::uuid& uuid, const st
     std::filesystem::create_directories(path.parent_path());
     std::ofstream UUIDfile(path, std::ios::binary);
     if (UUIDfile.is_open()) {
-#if BOOST_WORKAROUND(BOOST_MSVC, < 1910) // this is a workaround for old MSVC compilers 
+// #if BOOST_WORKAROUND(BOOST_MSVC, < 1910) // this is a workaround for old MSVC compilers 
+#if _WIN32 // dont know why MSVC 1941 need to use this
         UUIDfile.write(reinterpret_cast<const char*>(uuid.data), uuid.size());
 #else
         UUIDfile.write(reinterpret_cast<const char*>(uuid.data()), uuid.size());
@@ -129,7 +130,8 @@ boost::uuids::uuid WorkerSingleton::readUUIDfromAppData(const std::filesystem::p
     {
         std::ifstream UUIDfile(path, std::ios::binary);
         if (UUIDfile.is_open()) {
-#if BOOST_WORKAROUND(BOOST_MSVC, < 1910) // this is a workaround for old MSVC compilers 
+// #if BOOST_WORKAROUND(BOOST_MSVC, < 1910) // this is a workaround for old MSVC compilers 
+#if _WIN32 // dont know why MSVC 1941 need to use this
             UUIDfile.read(reinterpret_cast<char*>(uuid.data), uuid.size());
 #else
             UUIDfile.read(reinterpret_cast<char*>(uuid.data()), uuid.size());

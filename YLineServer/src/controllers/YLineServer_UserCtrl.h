@@ -2,6 +2,7 @@
 
 #include <drogon/HttpController.h>
 
+#include "drogon/HttpTypes.h"
 #include "drogon/utils/coroutine.h"
 #include <drogon/orm/CoroMapper.h>            // ORM Mapper 用于数据库操作
 #include <drogon/HttpAppFramework.h>      // 获取数据库客户端和其他框架功能
@@ -16,12 +17,12 @@ class UserCtrl : public drogon::HttpController<UserCtrl>
   public:
     METHOD_LIST_BEGIN
     // use METHOD_ADD to add your custom processing function here;
-    ADD_METHOD_TO(UserCtrl::getUserById, "/api/user/{1}", Get);
-    ADD_METHOD_TO(UserCtrl::getAllUsers, "/api/users", Get);
-    ADD_METHOD_TO(UserCtrl::createUser, "/api/user", Post);
-    ADD_METHOD_TO(UserCtrl::updateUser, "/api/user/{1}", Put);
+    ADD_METHOD_TO(UserCtrl::getUserById, "/api/user/{1}", Get, "YLineServer::LoginFilter");
+    ADD_METHOD_TO(UserCtrl::getAllUsers, "/api/users", Get, "YLineServer::LoginFilter");
+    ADD_METHOD_TO(UserCtrl::createUser, "/api/user", Post, "YLineServer::LoginFilter");
+    ADD_METHOD_TO(UserCtrl::updateUser, "/api/user/{1}", Put, "YLineServer::LoginFilter");
     ADD_METHOD_TO(UserCtrl::login, "/api/auth/login", Post);
-    ADD_METHOD_TO(UserCtrl::logout, "/api/auth/logout", Post);
+    ADD_METHOD_TO(UserCtrl::logout, "/api/auth/logout", Post, "YLineServer::LoginFilter");
 
     METHOD_LIST_END
     // your declaration of processing function maybe like this:
