@@ -29,8 +29,8 @@ set(YLineServer_SOURCES
     # UT
     src/utils/logger.cpp
     src/utils/config.cpp
-    src/utils/server.cpp
     src/utils/api.cpp
+    src/utils/server.cpp
     src/utils/passwd.cpp
     src/utils/jwt.cpp
 )
@@ -92,6 +92,10 @@ else()
     find_package(Boost REQUIRED)  # 仅查找 Boost，跳过 uuid 组件检查
     target_include_directories(YLineServer PRIVATE ${Boost_INCLUDE_DIRS})
 endif()
+
+# 添加 Boost::graph 库
+find_package(Boost REQUIRED COMPONENTS graph)
+target_link_libraries(YLineServer PRIVATE Boost::graph)
 
 # 添加 entt 库
 add_subdirectory(

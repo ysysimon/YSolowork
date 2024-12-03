@@ -1,7 +1,7 @@
 #ifndef YLINESERVER_SERVER_H
 #define YLINESERVER_SERVER_H
 
-#include "config.h"
+#include "utils/config.h"
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
