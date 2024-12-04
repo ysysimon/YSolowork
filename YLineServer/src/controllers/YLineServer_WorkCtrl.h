@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <drogon/HttpController.h>
 #include "drogon/utils/coroutine.h"
 
@@ -11,6 +12,7 @@ namespace YLineServer
 struct task
 {
     int id;
+    std::size_t order;
     std::string name;
     std::string belongJob;
 };

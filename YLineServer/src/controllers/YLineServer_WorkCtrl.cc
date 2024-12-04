@@ -51,9 +51,15 @@ resolveJob(const Json::Value &json, std::string &err, bool dependency = false)
     // valid task dict is actually done here
     for(const auto & task: json["tasks"])
     {
-        if (!task.isMember("id") && task.isInt())
+        if (!task.isMember("id"))
         {
             err = "JSON Error: Missing `id` field in task, 缺少 `id` 字段";
+            return false;
+        }
+
+        if (!task.isString())
+        {
+            err = "JSON Error: `id` field should be a string, `id` 字段应为字符串";
             return false;
         }
 
@@ -63,12 +69,31 @@ resolveJob(const Json::Value &json, std::string &err, bool dependency = false)
             return false;
         }
 
-        int id = task["id"].asInt();
+        std::string id = task["id"].asString();
+        if(dependency)
+        {
+            if(!task.isMember("dependency") && task.isString())
+            {
+                err = "JSON Error: Missing `dependency` field in task, 缺少 `dependency` 字段";
+                return false;
+            }
+
+            taskSet.insert(id);
+        }
+    }
+
+    // need to use two-step to adaptive the dependency
+    for (std::size_t i = 0; i < json["tasks"].size(); i++) 
+    {
+        const auto &task = json["tasks"].get(i, Json::Value::null);
+        
         std::string name = task["name"].asString();
         std::string belongJob = jobName;
-
-        taskSet.insert(name);
     }
+
+
+
+
 
 
     return true;
