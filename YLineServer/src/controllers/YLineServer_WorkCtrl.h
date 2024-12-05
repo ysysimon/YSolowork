@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <drogon/HttpController.h>
+#include <string>
 #include "drogon/utils/coroutine.h"
 
 using namespace drogon;
@@ -9,18 +10,27 @@ using namespace drogon;
 namespace YLineServer
 {
 
-struct task
+namespace Components {
+struct Task
 {
-    int id;
+    std::string task_id;
     std::size_t order;
     std::string name;
-    std::string belongJob;
+    std::string belongJob_id;
+    bool dependency;
+    bool complete;
 };
 
-struct job
+struct Job
 {
+    std::string job_id;
     std::string name;
+    std::string submit_user;
+    std::string submit_time;
 };
+}
+
+
 
 class WorkCtrl : public drogon::HttpController<WorkCtrl>
 {

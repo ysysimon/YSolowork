@@ -19,6 +19,7 @@ set(YLineServer_SOURCES
     # Controller
     src/controllers/YLineServer_HealthCheckCtrl.cc
     src/controllers/YLineServer_UserCtrl.cc
+    src/controllers/YLineServer_WorkCtrl.cc
     src/controllers/YLineServer_WorkerCtrl.cc
     src/controllers/WorkerRegister.cpp
     src/controllers/YLineServer_WorkerStatusCtrl.cc
