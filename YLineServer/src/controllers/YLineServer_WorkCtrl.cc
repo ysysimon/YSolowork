@@ -113,9 +113,9 @@ resolve_DAG
 }
 
 bool
-WorkCtrl::resolveJob(const Json::Value &json, std::string &err, std::vector<Components::Task> &task_Components, bool dependency)
+WorkCtrl::resolveTasks(const Json::Value &json, std::string &err, std::vector<Components::Task> &task_Components, bool dependency)
 {
-    std::string job_id = json["job_id"].asString();
+    const std::string &job_id = json["job_id"].asString();
     // std::vector<Components::Task> task_Components;
 
     // valid task dict is actually done here
@@ -248,6 +248,44 @@ WorkCtrl::resolveJob(const Json::Value &json, std::string &err, std::vector<Comp
     return true;
 }
 
+bool
+WorkCtrl::resolveJob(const Json::Value &json, std::string &err, const HttpRequestPtr req, Components::Job &job_Component)
+{
+
+    if(!json["job_id"].isString())
+    {
+        err = "JSON Error: `job_id` field should be a string, `job_id` 字段应为字符串";
+        return false;
+    }
+
+    if(!json["jobName"].isString())
+    {
+        err = "JSON Error: `jobName` field should be a string, `jobName` 字段应为字符串";
+        return false;
+    }
+
+    if(!req->attributes()->find("JWTpayload"))
+    {
+        err = "Missing JWTpayload in attributes, 在 attributes 中找不到 JWTpayload";
+        return false;
+    }
+
+    const std::string &job_id = json["job_id"].asString();
+    const std::string &jobName = json["jobName"].asString();
+    // 从 JWTpayload 中获取 username
+    const auto& payload = req->attributes()->get<Json::Value>("JWTpayload");
+    if (!payload.isMember("username") && !payload["username"].isString())
+    {
+        err = "Missing `username` field in JWT payload, JWT 载荷中缺少 `username` 字段";
+        return false;
+    
+    }
+    const std::string &submit_user = payload["username"].asString();
+
+    spdlog::info("job id: {}, name: {}, submit_user: {}", job_id, jobName, submit_user);
+
+    return true;
+}
 
 drogon::Task<void> 
 WorkCtrl::submitNonDependentJob(const HttpRequestPtr req, std::function<void(const HttpResponsePtr &)> callback)
@@ -269,8 +307,15 @@ WorkCtrl::submitNonDependentJob(const HttpRequestPtr req, std::function<void(con
     }
 
     // 解析任务
+    Components::Job job_Component;
+    if(!resolveJob(*json, err, req, job_Component))
+    {
+        callbackErrorJson(req, callback, err);
+        co_return;
+    }
+
     std::vector<Components::Task> task_Components;
-    if (!resolveJob(*json, err, task_Components)) 
+    if (!resolveTasks(*json, err, task_Components)) 
     {
         callbackErrorJson(req, callback, err);
         co_return;
@@ -306,13 +351,21 @@ WorkCtrl::submitDependentJob(const HttpRequestPtr req, std::function<void(const 
     }
 
     // 解析任务
+    Components::Job job_Component;
+    if(!resolveJob(*json, err, req, job_Component))
+    {
+        callbackErrorJson(req, callback, err);
+        co_return;
+    }
+    
     std::vector<Components::Task> task_Components;
-    if (!resolveJob(*json, err, task_Components, true)) 
+    if (!resolveTasks(*json, err, task_Components, true)) 
     {
         callbackErrorJson(req, callback, err);
         co_return;
     }
 
+    // auto dbClient = drogon::app().getFastDbClient("YLinedb");
     
 
     Json::Value respJson;

@@ -26,7 +26,6 @@ struct Job
     std::string job_id;
     std::string name;
     std::string submit_user;
-    std::string submit_time;
 };
 }
 
@@ -60,6 +59,9 @@ class WorkCtrl : public drogon::HttpController<WorkCtrl>
     validJobJson(const Json::Value &json, std::string &err);
 
     bool
-    resolveJob(const Json::Value &json, std::string &err, std::vector<Components::Task> &task_Components, bool dependency = false);
+    resolveTasks(const Json::Value &json, std::string &err, std::vector<Components::Task> &task_Components, bool dependency = false);
+
+    bool
+    resolveJob(const Json::Value &json, std::string &err, const HttpRequestPtr req, Components::Job &job_Component);
 };
 }
