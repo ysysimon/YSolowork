@@ -27,6 +27,7 @@ set(YLineServer_SOURCES
     src/middlewares/YLineServer_CORSMid.cc
     # Filter
     src/filters/YLineServer_LoginFilter.cc
+    src/filters/YLineServer_AdminFilter.cc
     # UT
     src/utils/logger.cpp
     src/utils/config.cpp

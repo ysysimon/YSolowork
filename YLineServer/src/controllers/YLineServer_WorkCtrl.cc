@@ -90,16 +90,17 @@ resolve_DAG
         std::size_t order = 0;
         for(auto v: sorted)
         {
+            // correct the order
             task_Components[v].order = order;
             order++;
-            spdlog::info("task id: {}, order: {}, name: {}, belongJob_id: {}, dependency: {}, complete: {}", 
-                task_Components[v].task_id, 
-                task_Components[v].order, 
-                task_Components[v].name, 
-                task_Components[v].belongJob_id, 
-                task_Components[v].dependency, 
-                task_Components[v].complete
-            );
+            // spdlog::info("task id: {}, order: {}, name: {}, belongJob_id: {}, dependency: {}, complete: {}", 
+            //     task_Components[v].task_id, 
+            //     task_Components[v].order, 
+            //     task_Components[v].name, 
+            //     task_Components[v].belongJob_id, 
+            //     task_Components[v].dependency, 
+            //     task_Components[v].complete
+            // );
         }
     }
     catch (const boost::not_a_dag &e)
@@ -112,10 +113,10 @@ resolve_DAG
 }
 
 bool
-WorkCtrl::resolveJob(const Json::Value &json, std::string &err, bool dependency)
+WorkCtrl::resolveJob(const Json::Value &json, std::string &err, std::vector<Components::Task> &task_Components, bool dependency)
 {
     std::string job_id = json["job_id"].asString();
-    std::vector<Components::Task> task_Components;
+    // std::vector<Components::Task> task_Components;
 
     // valid task dict is actually done here
     std::unordered_set<std::string> taskIDSet;
@@ -232,6 +233,16 @@ WorkCtrl::resolveJob(const Json::Value &json, std::string &err, bool dependency)
         {
             return false;
         }
+
+        // sort the task components according to the order, which is the topological order
+        std::sort
+        (
+            task_Components.begin(), task_Components.end(), 
+            [](const Components::Task &a, const Components::Task &b) 
+            {
+                return a.order < b.order;
+            }
+        );
     }
     
     return true;
@@ -258,7 +269,8 @@ WorkCtrl::submitNonDependentJob(const HttpRequestPtr req, std::function<void(con
     }
 
     // 解析任务
-    if (!resolveJob(*json, err)) 
+    std::vector<Components::Task> task_Components;
+    if (!resolveJob(*json, err, task_Components)) 
     {
         callbackErrorJson(req, callback, err);
         co_return;
@@ -294,11 +306,14 @@ WorkCtrl::submitDependentJob(const HttpRequestPtr req, std::function<void(const 
     }
 
     // 解析任务
-    if (!resolveJob(*json, err, true)) 
+    std::vector<Components::Task> task_Components;
+    if (!resolveJob(*json, err, task_Components, true)) 
     {
         callbackErrorJson(req, callback, err);
         co_return;
     }
+
+    
 
     Json::Value respJson;
     respJson["message"] = "Job submitted 任务提交成功";

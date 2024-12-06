@@ -37,8 +37,18 @@ class WorkCtrl : public drogon::HttpController<WorkCtrl>
   public:
     METHOD_LIST_BEGIN
     // use METHOD_ADD to add your custom processing function here;
-    ADD_METHOD_TO(WorkCtrl::submitNonDependentJob, "/api/work/submitNonDependentJob", Post);
-    ADD_METHOD_TO(WorkCtrl::submitDependentJob, "/api/work/submitDependentJob", Post);
+    ADD_METHOD_TO(
+      WorkCtrl::submitNonDependentJob, 
+      "/api/work/submitNonDependentJob", 
+      Post,
+      "YLineServer::LoginFilter"
+    );
+    ADD_METHOD_TO(
+      WorkCtrl::submitDependentJob, 
+      "/api/work/submitDependentJob", 
+      Post,
+      "YLineServer::LoginFilter"
+    );
 
     METHOD_LIST_END
     // your declaration of processing function maybe like this:
@@ -50,6 +60,6 @@ class WorkCtrl : public drogon::HttpController<WorkCtrl>
     validJobJson(const Json::Value &json, std::string &err);
 
     bool
-    resolveJob(const Json::Value &json, std::string &err, bool dependency = false);
+    resolveJob(const Json::Value &json, std::string &err, std::vector<Components::Task> &task_Components, bool dependency = false);
 };
 }

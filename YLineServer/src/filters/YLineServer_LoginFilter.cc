@@ -40,8 +40,7 @@ void LoginFilter::doFilter(const HttpRequestPtr &req,
 
     //Passed
     spdlog::debug("Payload: {}", payload.toStyledString());
-    // spdlog::info("body: {}", req->body());
-    req->setBody(std::move(payload.toStyledString()));
-    // spdlog::info("body: {}", req->body());
+    req->attributes()->insert("JWTpayload", payload);
+
     fccb();
 }

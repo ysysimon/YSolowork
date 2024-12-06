@@ -17,10 +17,10 @@ class UserCtrl : public drogon::HttpController<UserCtrl>
   public:
     METHOD_LIST_BEGIN
     // use METHOD_ADD to add your custom processing function here;
-    ADD_METHOD_TO(UserCtrl::getUserById, "/api/user/{1}", Get, "YLineServer::LoginFilter");
-    ADD_METHOD_TO(UserCtrl::getAllUsers, "/api/users", Get, "YLineServer::LoginFilter");
-    ADD_METHOD_TO(UserCtrl::createUser, "/api/user", Post, "YLineServer::LoginFilter");
-    ADD_METHOD_TO(UserCtrl::updateUser, "/api/user/{1}", Put, "YLineServer::LoginFilter");
+    ADD_METHOD_TO(UserCtrl::getUserById, "/api/user/{1}", Get, "YLineServer::LoginFilter", "YLineServer::AdminFilter");
+    ADD_METHOD_TO(UserCtrl::getAllUsers, "/api/users", Get, "YLineServer::LoginFilter", "YLineServer::AdminFilter");
+    ADD_METHOD_TO(UserCtrl::createUser, "/api/user", Post, "YLineServer::LoginFilter", "YLineServer::AdminFilter");
+    ADD_METHOD_TO(UserCtrl::updateUser, "/api/user/{1}", Put, "YLineServer::LoginFilter", "YLineServer::AdminFilter");
     ADD_METHOD_TO(UserCtrl::login, "/api/auth/login", Post);
     ADD_METHOD_TO(UserCtrl::logout, "/api/auth/logout", Post, "YLineServer::LoginFilter");
 
