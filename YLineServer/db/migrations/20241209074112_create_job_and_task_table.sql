@@ -25,9 +25,6 @@ CREATE TABLE task (
 );
 -- migrate:down
 
--- Drop the hash index on task table
-DROP INDEX IF EXISTS idx_task_hash;
-
 -- Drop the task table
 DROP TABLE IF EXISTS task;
 
