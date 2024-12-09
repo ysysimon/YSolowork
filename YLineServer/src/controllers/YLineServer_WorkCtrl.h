@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstddef>
 #include <drogon/HttpController.h>
 #include <string>
 #include "drogon/utils/coroutine.h"
@@ -14,16 +13,14 @@ namespace Components {
 struct Task
 {
     std::string task_id;
-    std::size_t order;
+    int order;
     std::string name;
-    std::string belongJob_id;
+    // std::string belongJob_id; // use database generated job id
     bool dependency;
-    bool complete;
 };
 
 struct Job
 {
-    std::string job_id;
     std::string name;
     std::string submit_user;
 };
@@ -63,5 +60,9 @@ class WorkCtrl : public drogon::HttpController<WorkCtrl>
 
     bool
     resolveJob(const Json::Value &json, std::string &err, const HttpRequestPtr req, Components::Job &job_Component);
+
+    drogon::Task<void>
+    jobSubmit2DBTrans(const Components::Job &job_Component, const std::vector<Components::Task> &task_Components);
+
 };
 }

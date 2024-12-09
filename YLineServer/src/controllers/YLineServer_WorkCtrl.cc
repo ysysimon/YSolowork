@@ -29,11 +29,12 @@ callbackErrorJson(const HttpRequestPtr req, std::function<void(const HttpRespons
 bool
 WorkCtrl::validJobJson(const Json::Value &json, std::string &err)
 {
-    if(!json.isMember("job_id"))
-    {
-        err = "JSON Error: Missing `job_id` field, 缺少 `job_id` 字段";
-        return false;
-    }
+    // job id needs to be gerenated by the database
+    // if(!json.isMember("job_id"))
+    // {
+    //     err = "JSON Error: Missing `job_id` field, 缺少 `job_id` 字段";
+    //     return false;
+    // }
 
     if(!json.isMember("jobName"))
     {
@@ -93,14 +94,6 @@ resolve_DAG
             // correct the order
             task_Components[v].order = order;
             order++;
-            // spdlog::info("task id: {}, order: {}, name: {}, belongJob_id: {}, dependency: {}, complete: {}", 
-            //     task_Components[v].task_id, 
-            //     task_Components[v].order, 
-            //     task_Components[v].name, 
-            //     task_Components[v].belongJob_id, 
-            //     task_Components[v].dependency, 
-            //     task_Components[v].complete
-            // );
         }
     }
     catch (const boost::not_a_dag &e)
@@ -115,8 +108,9 @@ resolve_DAG
 bool
 WorkCtrl::resolveTasks(const Json::Value &json, std::string &err, std::vector<Components::Task> &task_Components, bool dependency)
 {
-    const std::string &job_id = json["job_id"].asString();
-    // std::vector<Components::Task> task_Components;
+    // job id needs to be gerenated by the database
+    // const std::string &job_id = json["job_id"].asString();
+    // std::vector<Components::Task> task_Components; // use pass in reference instead of return value
 
     // valid task dict is actually done here
     std::unordered_set<std::string> taskIDSet;
@@ -124,6 +118,7 @@ WorkCtrl::resolveTasks(const Json::Value &json, std::string &err, std::vector<Co
     {
         const auto &task = json["tasks"].get(i, Json::nullValue);
 
+        
         if (!task.isMember("task_id"))
         {
             err = "JSON Error: Missing `task_id` field in task, 缺少 `task_id` 字段";
@@ -170,15 +165,16 @@ WorkCtrl::resolveTasks(const Json::Value &json, std::string &err, std::vector<Co
         
         const std::string &id = task["task_id"].asString();
         const std::string &name = task["name"].asString();
-        const std::string &belongJob_id = job_id;
+
+        // job id needs to be gerenated by the database
+        // const std::string &belongJob_id = job_id;
 
         Components::Task taskCom{
             id, 
-            i, // default order is submition order
+            static_cast<int>(i), // default order is submition order
             name, 
-            belongJob_id, 
+            // belongJob_id, // // use database generated job id
             false, // default no dependency
-            false // default not complete
         };
 
         if(dependency)
@@ -212,20 +208,6 @@ WorkCtrl::resolveTasks(const Json::Value &json, std::string &err, std::vector<Co
         task_Components.push_back(taskCom);
     }
 
-    // debug print
-    // for(auto &task_Component: task_Components)
-    // {
-    //     spdlog::info(
-    //         "task id: {}, order: {}, name: {}, belongJob_id: {}, dependency: {}, complete: {}", 
-    //         task_Component.task_id, 
-    //         task_Component.order, 
-    //         task_Component.name, 
-    //         task_Component.belongJob_id, 
-    //         task_Component.dependency, 
-    //         task_Component.complete
-    //     );
-    // }
-
     // resolve DAG
     if (dependency)
     {
@@ -244,6 +226,10 @@ WorkCtrl::resolveTasks(const Json::Value &json, std::string &err, std::vector<Co
             }
         );
     }
+
+    const std::string &job_name = json["job_name"].asString();
+    const std::string &submit_user = json["submit_user"].asString();
+    spdlog::debug("Task of Job - {} submitted by {} has resolved", job_name, submit_user);
     
     return true;
 }
@@ -251,12 +237,12 @@ WorkCtrl::resolveTasks(const Json::Value &json, std::string &err, std::vector<Co
 bool
 WorkCtrl::resolveJob(const Json::Value &json, std::string &err, const HttpRequestPtr req, Components::Job &job_Component)
 {
-
-    if(!json["job_id"].isString())
-    {
-        err = "JSON Error: `job_id` field should be a string, `job_id` 字段应为字符串";
-        return false;
-    }
+    // job id needs to be gerenated by the database
+    // if(!json["job_id"].isString())
+    // {
+    //     err = "JSON Error: `job_id` field should be a string, `job_id` 字段应为字符串";
+    //     return false;
+    // }
 
     if(!json["jobName"].isString())
     {
@@ -270,7 +256,8 @@ WorkCtrl::resolveJob(const Json::Value &json, std::string &err, const HttpReques
         return false;
     }
 
-    const std::string &job_id = json["job_id"].asString();
+    // job id needs to be gerenated by the database
+    // const std::string &job_id = json["job_id"].asString();
     const std::string &jobName = json["jobName"].asString();
     // 从 JWTpayload 中获取 username
     const auto& payload = req->attributes()->get<Json::Value>("JWTpayload");
@@ -282,9 +269,77 @@ WorkCtrl::resolveJob(const Json::Value &json, std::string &err, const HttpReques
     }
     const std::string &submit_user = payload["username"].asString();
 
-    spdlog::info("job id: {}, name: {}, submit_user: {}", job_id, jobName, submit_user);
+    job_Component = Components::Job{
+        jobName,
+        submit_user,
+    };
+
+    spdlog::debug("job - {} submitted by {} has resolved", jobName, submit_user);
 
     return true;
+}
+
+drogon::Task<void>
+WorkCtrl::jobSubmit2DBTrans(const Components::Job &job_Component, const std::vector<Components::Task> &task_Components)
+{
+    try
+    {
+        auto dbClient = drogon::app().getFastDbClient("YLinedb");
+
+        auto transPtr = co_await dbClient->newTransactionCoro();
+        // 插入 job 并获取生成的 job_id
+        auto result = co_await transPtr->execSqlCoro
+        (
+            "INSERT INTO job (job_name, submit_user) "
+            "VALUES ($1, $2) RETURNING id",
+            job_Component.name,
+            job_Component.submit_user
+        );
+
+        if (result.empty())
+        {
+            transPtr->rollback();
+            spdlog::error(
+                "Job - {} submitted by {} failed to insert into database, return job_id is empty 任务提交失败, 返回的 job_id 为空", 
+                job_Component.name, job_Component.submit_user
+            );
+            co_return;
+        }
+
+        // 获取生成的 job id
+        int job_id = result[0]["id"].as<int>();
+        // 插入 task
+        for(const auto &task: task_Components)
+        {
+            co_await transPtr->execSqlCoro
+            (
+                "INSERT INTO task (task_id, job_id, task_name, task_order, dependency) "
+                "VALUES ($1, $2, $3, $4, $5)",
+                task.task_id,
+                job_id,
+                task.name,
+                task.order,
+                task.dependency
+            );
+        }
+
+    }
+    catch (const drogon::orm::DrogonDbException &e) 
+    {
+        // 自动回滚
+        spdlog::error(
+            "Job - {} submitted by {} failed to insert into database, {} 任务提交失败, 数据库异常", 
+            job_Component.name, job_Component.submit_user, e.base().what()
+        );
+        co_return;
+    }
+    
+    spdlog::info(
+        "Job - {} submitted by {} is being inserted into database 任务提交成功, 已插入数据库", 
+        job_Component.name, job_Component.submit_user
+    );
+
+    co_return;
 }
 
 drogon::Task<void> 
@@ -320,6 +375,8 @@ WorkCtrl::submitNonDependentJob(const HttpRequestPtr req, std::function<void(con
         callbackErrorJson(req, callback, err);
         co_return;
     }
+
+    co_await jobSubmit2DBTrans(job_Component, task_Components);
 
     Json::Value respJson;
     respJson["message"] = "Job submitted 任务提交成功";
@@ -365,8 +422,7 @@ WorkCtrl::submitDependentJob(const HttpRequestPtr req, std::function<void(const 
         co_return;
     }
 
-    // auto dbClient = drogon::app().getFastDbClient("YLinedb");
-    
+    co_await jobSubmit2DBTrans(job_Component, task_Components);
 
     Json::Value respJson;
     respJson["message"] = "Job submitted 任务提交成功";
