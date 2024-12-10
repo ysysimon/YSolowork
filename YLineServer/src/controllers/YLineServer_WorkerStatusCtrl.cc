@@ -53,6 +53,7 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
             }
             const std::string& token = json["token"].asString();
             Api::authWebSocketConnection(wsConnPtr, token);
+            return;
         }
 
         // get context to check if user is authenticated
