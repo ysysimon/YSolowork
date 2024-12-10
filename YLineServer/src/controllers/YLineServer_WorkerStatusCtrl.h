@@ -1,6 +1,5 @@
 #pragma once
 
-#include "json/config.h"
 #include <drogon/WebSocketController.h>
 
 using namespace drogon;

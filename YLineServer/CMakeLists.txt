@@ -16,6 +16,8 @@ set(YLineServer_SOURCES
     # ORM
     src/models/Users.cc
     src/models/Workers.cc
+    src/models/Jobs.cc
+    src/models/Tasks.cc
     # Controller
     src/controllers/YLineServer_HealthCheckCtrl.cc
     src/controllers/YLineServer_UserCtrl.cc
@@ -23,6 +25,7 @@ set(YLineServer_SOURCES
     src/controllers/YLineServer_WorkerCtrl.cc
     src/controllers/WorkerRegister.cpp
     src/controllers/YLineServer_WorkerStatusCtrl.cc
+    src/controllers/YLineServer_JobStatusCtrl.cc
     # Middleware
     src/middlewares/YLineServer_CORSMid.cc
     # Filter

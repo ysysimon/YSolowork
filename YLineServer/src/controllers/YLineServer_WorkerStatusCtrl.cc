@@ -52,7 +52,7 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
                 return;
             }
             const std::string& token = json["token"].asString();
-            Api::authWebSocketConnection(wsConnPtr, token);
+            Api::authWebSocketConnection(wsConnPtr, token, "WorkerStatusCtrl");
             return;
         }
 
@@ -110,14 +110,14 @@ void WorkerStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr,
 void WorkerStatusCtrl::handleNewConnection(const HttpRequestPtr &req, const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
-    spdlog::debug("{} connected to WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
+    spdlog::debug("{} connected to WorkerStatusCtrl WebSocket", wsPeerAddr.toIpPort());
     CommandsetWorkerCount(wsConnPtr);
 }
 
 void WorkerStatusCtrl::handleConnectionClosed(const WebSocketConnectionPtr& wsConnPtr)
 {
     const auto& wsPeerAddr = wsConnPtr->peerAddr();
-    spdlog::debug("{} disconnected from WorkerCtrl WebSocket", wsPeerAddr.toIpPort());
+    spdlog::debug("{} disconnected from WorkerStatusCtrl WebSocket", wsPeerAddr.toIpPort());
 }
 
 void WorkerStatusCtrl::CommandsetWorkerCount(const WebSocketConnectionPtr& wsConnPtr)

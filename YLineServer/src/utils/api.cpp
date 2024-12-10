@@ -63,23 +63,27 @@ bool parseJson(const std::string& jsonStr, Json::Value& resultJson, std::string&
 }
 
 
-void authWebSocketConnection(const WebSocketConnectionPtr& wsConnPtr, const std::string& token)
+void authWebSocketConnection(const WebSocketConnectionPtr& wsConnPtr, const std::string& token, const std::string &from)
 {
     const auto& user = Jwt::verifyToken2EnTTUser(token);
     user.or_else(
-        [wsConnPtr](const std::error_code& err) 
+        [wsConnPtr, &from](const std::error_code& err) 
         {
-            spdlog::error("{} - Failed to verify token: {}", wsConnPtr->peerAddr().toIpPort(), err.message());
+            spdlog::error(
+                "{} - Failed to verify token: {} at {}", 
+                wsConnPtr->peerAddr().toIpPort(), err.message(), from
+            );
         }
     ).map(
-        [wsConnPtr](const EnTTidType& userId) 
+        [wsConnPtr, &from](const EnTTidType& userId) 
         {
             wsConnPtr->setContext(std::make_shared<EnTTidType>(userId));
             const auto& username = ServerSingleton::getInstance().Registry.get<Components::User>(userId).username;
             spdlog::info(
-                "{} - Authenticated as user: {}", 
+                "{} - Authenticated as user: {} at {}", 
                 wsConnPtr->peerAddr().toIpPort(), 
-                username
+                username,
+                from
             );
         }
     );

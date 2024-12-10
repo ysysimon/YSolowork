@@ -26,7 +26,7 @@ HttpResponsePtr makeHttpResponse(const std::string& body, const HttpStatusCode& 
 bool parseJson(const std::string& jsonStr, Json::Value& resultJson, std::string& errs);
 
 //函数: 鉴权 WebSocket 连接
-void authWebSocketConnection(const WebSocketConnectionPtr& wsConnPtr, const std::string& token);
+void authWebSocketConnection(const WebSocketConnectionPtr& wsConnPtr, const std::string& token, const std::string &from);
 
 } // namespace YLineServer::Api
 #endif // YLINESERVER_API_H
