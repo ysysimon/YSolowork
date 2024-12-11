@@ -40,10 +40,12 @@ target_include_directories(
 )
 
 # 添加 FTXUI 库
+set(FTXUI_ENABLE_INSTALL OFF CACHE BOOL "Disable FTXUI INSTALL" FORCE)
 add_subdirectory(
     ${YSolowork_SOURCE_DIR}/vendor/ftxui
     ${YSolowork_BINARY_DIR}/vendor/ftxui
 )
+
 target_link_libraries(
     YLineWorkerUI PRIVATE 
     ftxui::screen

@@ -51,6 +51,6 @@ level = "info"
 
 [dbmate]
 migration = true
-download_url = "https://github.com/amacneil/dbmate/releases/download/v2.23.0"
+download_url = "https://github.com/amacneil/dbmate/releases/download/v2.24.0"
 win_name = "dbmate-windows-amd64.exe"
 linux_name = "dbmate-linux-amd64"

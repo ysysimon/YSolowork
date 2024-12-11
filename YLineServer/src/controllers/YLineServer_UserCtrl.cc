@@ -138,7 +138,7 @@ drogon::Task<void> UserCtrl::login(const HttpRequestPtr req, std::function<void(
     drogon::orm::CoroMapper<Users> mapper(dbClient);
 
     // 解析请求体
-    const auto& json = req->getJsonObject();
+    const auto json = req->getJsonObject();
     const auto& peerAddr = req->getPeerAddr();
     if (!json) {
         // 返回错误信息

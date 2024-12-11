@@ -3,14 +3,7 @@ project(
     YSolowork 
     VERSION 0.0.0
     DESCRIPTION "YSolowork made by ysysimon" 
-    )
-
-# 设置输出目录
-# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${YSolowork_BINARY_DIR}/build/bin)
-# set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${YSolowork_BINARY_DIR}/build/lib)
-# set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${YSolowork_BINARY_DIR}/build/lib)
-# message("YSolowork_BINARY_DIR: ${YSolowork_BINARY_DIR}")
-# message("YSolowork_SOURCE_DIR: ${YSolowork_SOURCE_DIR}")
+)
 
 # 编译器特定的设置
 if (MSVC)
@@ -19,16 +12,16 @@ if (MSVC)
     #  Windows.h 定义了 min 和 max 与 std::numeric_limits 发生冲突 (jwt-cpp)
     add_definitions(-DNOMINMAX)
     # 强制子项目继承 MSVC 运行时库设置
-    set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+    # set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
     # 仅在 Release 模式下设置 MSVC 静态运行时库
     # Only set MSVC static runtime library in Release mode
-    if(CMAKE_BUILD_TYPE STREQUAL "Release")
-        # 单配置生成器（如 Makefile 或 Ninja）
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
-    elseif(CMAKE_CONFIGURATION_TYPES)
-        # 多配置生成器（如 Visual Studio）
-        set(CMAKE_MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Release>:MultiThreaded>")
-    endif()
+    # if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    #     # 单配置生成器（如 Makefile 或 Ninja）
+    #     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+    # elseif(CMAKE_CONFIGURATION_TYPES)
+    #     # 多配置生成器（如 Visual Studio）
+    #     set(CMAKE_MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Release>:MultiThreaded>")
+    # endif()
 
     # for debug MSVC runtim static linking of debug build, but it's not working
     # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
@@ -71,10 +64,7 @@ set_target_properties(YSolowork PROPERTIES
 # 添加 Drogon 子模块
 # 不知为何 drogon 的 check_include_file_cxx(coroutine HAS_COROUTINE) 无法检测到 coroutine 头文件，所以这里强制开启 coroutine
 set(HAS_COROUTINE ON CACHE BOOL "Force enable coroutine support for all subprojects" FORCE)
-# hiredis
-# find_package(hiredis CONFIG REQUIRED) # seems hiredis don't support debug build on windows
 set(BUILD_REDIS ON CACHE BOOL "Build Redis support" FORCE)
-
 cmake_policy(SET CMP0079 NEW) # 3.13 之后的版本需要设置这个来允许跨目录链接
 add_subdirectory(
     ${YSolowork_SOURCE_DIR}/vendor/drogon
