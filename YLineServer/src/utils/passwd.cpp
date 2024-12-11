@@ -16,9 +16,7 @@ std::string generateSalt(size_t length) {
 }
 
 std::string hashPassword(const std::string& password, const std::string& salt, const std::string& ALGORITHM) {
-    spdlog::info("before hashPassword");
     std::unique_ptr<Botan::HashFunction> hashFunction(Botan::HashFunction::create(ALGORITHM));
-    spdlog::info("after hashPassword");
     hashFunction->update(password);
     hashFunction->update(salt);
     return Botan::hex_encode(hashFunction->final());

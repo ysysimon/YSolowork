@@ -12,16 +12,16 @@ if (MSVC)
     #  Windows.h 定义了 min 和 max 与 std::numeric_limits 发生冲突 (jwt-cpp)
     add_definitions(-DNOMINMAX)
     # 强制子项目继承 MSVC 运行时库设置
-    # set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+    set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
     # 仅在 Release 模式下设置 MSVC 静态运行时库
     # Only set MSVC static runtime library in Release mode
-    # if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    #     # 单配置生成器（如 Makefile 或 Ninja）
-    #     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
-    # elseif(CMAKE_CONFIGURATION_TYPES)
-    #     # 多配置生成器（如 Visual Studio）
-    #     set(CMAKE_MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Release>:MultiThreaded>")
-    # endif()
+    if(CMAKE_BUILD_TYPE STREQUAL "Release")
+        # 单配置生成器（如 Makefile 或 Ninja）
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+    elseif(CMAKE_CONFIGURATION_TYPES)
+        # 多配置生成器（如 Visual Studio）
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "$<$<CONFIG:Release>:MultiThreaded>")
+    endif()
 
     # for debug MSVC runtim static linking of debug build, but it's not working
     # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
