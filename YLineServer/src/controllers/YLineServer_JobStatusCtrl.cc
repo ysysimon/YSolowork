@@ -1,5 +1,6 @@
 #include "YLineServer_JobStatusCtrl.h"
 
+#include "json/value.h"
 #include <spdlog/spdlog.h>
 #include "utils/api.h"
 #include "utils/server.h"
@@ -81,18 +82,18 @@ void JobStatusCtrl::handleNewMessage(const WebSocketConnectionPtr& wsConnPtr, st
                     return;
                 }
 
-                // CommandrequireWorkerInfo(wsConnPtr, json["first"].asInt64(), json["last"].asInt64());
+                CommandrequireJobInfo(wsConnPtr, json["first"].asInt64(), json["last"].asInt64());
                 break;
             }
             case CommandType::requireJobStatus:
             {
-                if (!json.isMember("workerUUID"))
+                if (!json.isMember("job_id"))
                 {
-                    spdlog::error("{} - No workerUUID in requireJobStatus command", wsConnPtr->peerAddr().toIpPort());
+                    spdlog::error("{} - No job_id in requireJobStatus command", wsConnPtr->peerAddr().toIpPort());
                     return;
                 }
 
-                // CommandrequireWorkerStatus(wsConnPtr, json["workerUUID"].asString());
+                CommandrequireJobStatus(wsConnPtr, json["job_id"].asInt64());
                 break;
             }
         
@@ -143,5 +144,51 @@ JobStatusCtrl::CommandsetJobCount(const WebSocketConnectionPtr& wsConnPtr)
 void
 JobStatusCtrl::CommandrequireJobInfo(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last)
 {
+    auto dbClient = drogon::app().getFastDbClient("YLinedb");
+    drogon::orm::Mapper<Jobs> mapper(dbClient);
+    mapper.orderBy(Jobs::Cols::_id, drogon::orm::SortOrder::ASC)
+            .limit(last - fist + 1)
+            .offset(fist)
+            .findAll(
+                [wsConnPtr, fist](const std::vector<Jobs> &jobs)
+                {
+                    Json::Value json;
+                    json["command"] = "setJobs";
+                    json["data"]["first"] = fist;
+                    json["data"]["last"] = fist + jobs.size();
+                    for(const auto& job : jobs)
+                    {
+                        json["data"]["jobs"].append(job.toJson());
+                    }
+                    wsConnPtr->sendJson(json);
+                    spdlog::info("{} Requested Job Info 请求工作信息", wsConnPtr->peerAddr().toIpPort());
+                },
+                [wsConnPtr](const drogon::orm::DrogonDbException &err)
+                {
+                    wsConnPtr->shutdown(CloseCode::kUnexpectedCondition, "Failed to query Job database 查询工作信息失败");
+                    spdlog::error("{} - Failed to query Job database 查询工作信息失败: {}", wsConnPtr->peerAddr().toIpPort(), err.base().what());
+                }
+            );
+}
 
+void
+JobStatusCtrl::CommandrequireJobStatus(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 job_id)
+{
+    spdlog::debug("{} Requested Job {} Status 请求工作状态", wsConnPtr->peerAddr().toIpPort(), job_id);
+    auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    redis->execCommandAsync(
+        [wsConnPtr, job_id](const drogon::nosql::RedisResult &r)
+        {
+            Json::Value json;
+            json["command"] = "setJobStatus";
+            json["data"]["job_id"] = job_id;
+
+            // todo: send job status
+        },
+        [wsConnPtr, job_id](const std::exception &err)
+        {
+            // todo: send error message
+        },
+        std::format("").c_str()
+    );
 }

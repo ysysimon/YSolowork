@@ -45,7 +45,7 @@ class JobStatusCtrl : public drogon::WebSocketController<JobStatusCtrl>
   CommandrequireJobInfo(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 fist, const Json::Int64 last);
 
   void
-  CommandrequireJobStatus(const WebSocketConnectionPtr& wsConnPtr, const int job_id);
+  CommandrequireJobStatus(const WebSocketConnectionPtr& wsConnPtr, const Json::Int64 job_id);
 
 };
 }
