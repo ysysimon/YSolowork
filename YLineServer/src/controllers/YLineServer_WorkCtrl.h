@@ -4,28 +4,12 @@
 #include <string>
 #include "drogon/utils/coroutine.h"
 
+#include "job.h"
+
 using namespace drogon;
 
 namespace YLineServer
 {
-
-namespace Components {
-struct Task
-{
-    std::string task_id;
-    int order;
-    std::string name;
-    // std::string belongJob_id; // use database generated job id
-    bool dependency;
-};
-
-struct Job
-{
-    std::string name;
-    std::string submit_user;
-};
-}
-
 
 
 class WorkCtrl : public drogon::HttpController<WorkCtrl>

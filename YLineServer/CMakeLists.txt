@@ -26,6 +26,7 @@ set(YLineServer_SOURCES
     src/controllers/WorkerRegister.cpp
     src/controllers/YLineServer_WorkerStatusCtrl.cc
     src/controllers/YLineServer_JobStatusCtrl.cc
+    src/controllers/YLineServer_JobCtrl.cc
     # Middleware
     src/middlewares/YLineServer_CORSMid.cc
     # Filter
