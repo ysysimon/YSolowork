@@ -3,6 +3,7 @@
 #include <cstdint>
 #include "drogon/orm/CoroMapper.h"
 #include <spdlog/spdlog.h>
+#include <vector>
 #include "utils/api.h"
 #include "utils/server.h"
 #include "models/Jobs.h"
@@ -105,9 +106,10 @@ JobCtrl::queueJob(const HttpRequestPtr req, std::function<void(const HttpRespons
 
     // first check if the job exists in the database
     drogon::orm::CoroMapper<Jobs> jobMapper(dbClient);
+    Jobs job;
     try 
     {
-        auto job = co_await jobMapper.findByPrimaryKey(jobId);
+        job = co_await jobMapper.findByPrimaryKey(jobId);
     } 
     catch (const drogon::orm::UnexpectedRows &e) 
     {
@@ -147,9 +149,10 @@ JobCtrl::queueJob(const HttpRequestPtr req, std::function<void(const HttpRespons
 
     // job lock acquired, now we can query job's tasks from database
     drogon::orm::CoroMapper<Tasks> taskMapper(dbClient);
+    std::vector<Tasks> tasks;
     try
     {
-        auto tasks = co_await taskMapper.orderBy(
+        tasks = co_await taskMapper.orderBy(
             Tasks::Cols::_task_order, 
             SortOrder::ASC
         )
@@ -183,6 +186,8 @@ JobCtrl::queueJob(const HttpRequestPtr req, std::function<void(const HttpRespons
         co_return;   
     }
 
+    // we get job and it's tasks, now we can queue the job
+    
 
     spdlog::info("Job - {} request execute from {} has being queued 任务请求执行成功, 已进入队列", jobId, submit_user);
     co_return;
