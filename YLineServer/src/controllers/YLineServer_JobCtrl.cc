@@ -10,6 +10,8 @@
 #include "job.h"
 
 using namespace YLineServer;
+using namespace drogon::orm;
+using namespace drogon_model::yline;
 
 void
 failedResp(
@@ -30,6 +32,37 @@ failedResp(
         who,
         what
     );
+}
+
+void
+unlockJobatRedis(const int64_t jobId, const std::string &server_instance_uuid, const std::string &reason)
+{
+    auto redis = drogon::app().getFastRedisClient("YLineRedis");
+
+    try
+    {
+        redis->execCommandAsync(
+            [reason](const drogon::nosql::RedisResult &r) 
+            {
+                spdlog::debug("Because of `{}`, DEL JobLock result: {}", reason, r.asString());
+            },
+            [jobId, server_instance_uuid, reason](const std::exception &err)
+            {
+                spdlog::error(
+                    "Job - {} unlock failed, server instance {} try to unlock it because of `{}` but failed , error: {} 解锁任务失败",
+                    jobId,
+                    server_instance_uuid,
+                    reason,
+                    err.what()
+                );
+            },
+            "DEL JobLock:%d", jobId 
+        );
+    }
+    catch (const drogon::orm::DrogonDbException &e)
+    {
+        spdlog::error("{} try to Unlock Job failed - Redis Error 异常: {}", reason, e.base().what());
+    }
 }
 
 drogon::Task<void> 
@@ -69,14 +102,12 @@ JobCtrl::queueJob(const HttpRequestPtr req, std::function<void(const HttpRespons
     const std::string &server_instance_uuid = boost::uuids::to_string(ServerSingleton::getInstance().getServerInstanceUUID());
     auto redis = drogon::app().getFastRedisClient("YLineRedis");
     auto dbClient = drogon::app().getFastDbClient("YLinedb");
-    drogon::orm::CoroMapper<Jobs> jobMapper(dbClient);
 
-    // database
+    // first check if the job exists in the database
+    drogon::orm::CoroMapper<Jobs> jobMapper(dbClient);
     try 
     {
-        // first check if the job exists in the database
         auto job = co_await jobMapper.findByPrimaryKey(jobId);
-        
     } 
     catch (const drogon::orm::UnexpectedRows &e) 
     {
@@ -85,12 +116,12 @@ JobCtrl::queueJob(const HttpRequestPtr req, std::function<void(const HttpRespons
     }
     catch (const drogon::orm::DrogonDbException &e) 
     {
-        failedResp(req, "queueJob", std::format("Database Error 数据库异常: {}", e.base().what()), callback);
+        failedResp(req, "queueJob", std::format("Find Job - Database Error 数据库异常: {}", e.base().what()), callback);
         co_return;   
     }
     
     
-    // redis
+    // acquired job lock from redis
     try
     {
         // note %d not $d, this string format, not sql format
@@ -108,11 +139,50 @@ JobCtrl::queueJob(const HttpRequestPtr req, std::function<void(const HttpRespons
     }
     catch (const drogon::orm::DrogonDbException &e)
     {
-        failedResp(req, "queueJob", std::format("Redis Error 异常: {}", e.base().what()), callback);
+        failedResp(req, "queueJob", std::format("Acquired Job Lock - Redis Error 异常: {}", e.base().what()), callback);
         co_return;
     }
 
-    // job lock acquired, now we can queue the job
+    // ------------------ below here, when error occurs, we need to unlock the job ------------------
+
+    // job lock acquired, now we can query job's tasks from database
+    drogon::orm::CoroMapper<Tasks> taskMapper(dbClient);
+    try
+    {
+        auto tasks = co_await taskMapper.orderBy(
+            Tasks::Cols::_task_order, 
+            SortOrder::ASC
+        )
+        .findBy(
+            Criteria(
+                Tasks::Cols::_job_id,  
+                CompareOperator::EQ, 
+                // jobId // this will cause error, it's needs to be int.....
+                static_cast<int>(jobId)
+            )
+        );
+
+        for(const auto &task : tasks)
+        {
+            spdlog::info(
+                "Task - {} {} {} {} {} {}",
+                *task.getTaskId(),
+                *task.getTaskName(),
+                *task.getTaskOrder(),
+                *task.getJobId(),
+                *task.getDependency(),
+                *task.getStatus()
+            );
+        }
+    }
+    catch (const drogon::orm::DrogonDbException &e) 
+    {
+        failedResp(req, "queueJob", std::format("Find Tasks - Database Error 数据库异常: {}", e.base().what()), callback);
+        // 'co_await' cannot be used in the handler of a try block, so we need to use callback to unlock the job
+        unlockJobatRedis(jobId, server_instance_uuid, "Find Tasks - Database Error 数据库异常");
+        co_return;   
+    }
+
 
     spdlog::info("Job - {} request execute from {} has being queued 任务请求执行成功, 已进入队列", jobId, submit_user);
     co_return;
