@@ -16,3 +16,6 @@
 [submodule "vendor/tl-expected"]
 	path = vendor/tl-expected
 	url = git@github.com:TartanLlama/expected.git
+[submodule "vendor/amqpcpp"]
+	path = vendor/amqpcpp
+	url = git@github.com:CopernicaMarketingSoftware/AMQP-CPP.git

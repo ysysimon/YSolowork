@@ -39,6 +39,7 @@ set(YLineServer_SOURCES
     src/utils/server.cpp
     src/utils/passwd.cpp
     src/utils/jwt.cpp
+    src/utils/AMQP_Trantor.cpp
 )
 
 # 创建 YLineServer 可执行文件
@@ -121,6 +122,13 @@ target_link_libraries(YLineServer PRIVATE tl::expected)
 
 # 添加 magic_enum 库
 target_link_libraries(YLineServer PRIVATE magic_enum::magic_enum)
+
+# 添加 AMQP-CPP 库
+add_subdirectory(
+    ${YSolowork_SOURCE_DIR}/vendor/amqpcpp
+    ${YSolowork_BINARY_DIR}/vendor/amqpcpp
+)
+target_link_libraries(YLineServer PRIVATE amqpcpp)
 
 # 设置预编译头文件 for toml.hpp
 target_precompile_headers(YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor/vendor_include/toml.hpp)

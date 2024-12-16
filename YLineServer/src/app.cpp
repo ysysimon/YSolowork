@@ -11,6 +11,7 @@
 #include <drogon/drogon.h>
 #include <trantor/utils/Logger.h>
 
+#include <utils/AMQP_Trantor.h>
 
 namespace YLineServer {
 
@@ -99,10 +100,16 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
         spdlog::info("CORS middleware enabled 跨域请求中间件已启用");
     }
     
+    // AMQP 连接
+    auto *loop = drogon::app().getLoop();
+    auto handler = std::make_shared<YLineServer::TrantorHandler>(loop);
+    // use fake address for test
+    // AMQP::Address address("amqp://user:password@localhost/");
+    // AMQP::TcpConnection connection(handler.get(), address);
+    // AMQP::TcpChannel channel(&connection);
 
     spdlog::info("Start Listening 开始监听");
     drogon::app().run();
-
 }
 
 }
