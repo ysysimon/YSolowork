@@ -1,5 +1,6 @@
 #include "app.h"
 
+#include "drogon/HttpAppFramework.h"
 #include "drogon/IntranetIpFilter.h"
 #include "drogon/LocalHostFilter.h"
 #include "utils/logger.h"
@@ -30,6 +31,9 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     // set drogon logger
     trantor::Logger::enableSpdLog(custom_logger);
     trantor::Logger::setLogLevel(YLineServer::spdlogToDrogonLogLevel.at(config.log_level));
+
+    // 设置工作线程数量 默认为 4
+    drogon::app().setThreadNum(4);
 
     drogon::app().addListener(config.server_ip, config.server_port);
 

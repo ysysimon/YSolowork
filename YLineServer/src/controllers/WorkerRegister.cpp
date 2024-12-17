@@ -77,7 +77,12 @@ std::shared_future<EnTTidType> findRegisteredWorkerEnTTbyUUIDAsync(const boost::
     auto promise = std::make_shared<std::promise<EnTTidType>>();
     auto future = promise->get_future().share(); // 获取共享 future
     // 将任务放入事件循环
-    app().getLoop()->queueInLoop([promise, worker_uuid]() {
+    static std::atomic<int> currentThreadIndex{0};
+    int threadNum = drogon::app().getThreadNum();
+    // 获取当前线程索引，并轮询递增
+    int index = currentThreadIndex.fetch_add(1) % threadNum;
+    spdlog::debug("Assigning `findRegisteredWorkerEnTTbyUUIDAsync` task to IOLoop index {}", index);
+    app().getIOLoop(index)->queueInLoop([promise, worker_uuid]() {
         std::shared_lock<std::shared_mutex> lock(ServerSingleton::getInstance().workerUUIDMapMutex);
         auto it = ServerSingleton::getInstance().WorkerUUIDtoEnTTid.find(worker_uuid);
         // 首先在 hash 表中查找

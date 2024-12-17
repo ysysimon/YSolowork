@@ -18,16 +18,25 @@ TrantorHandler::onData(AMQP::Connection *connection, const char *data, size_t si
 void 
 TrantorHandler::onReady(AMQP::Connection *connection)
 {
+    // the input connection is _amqpConnection
     spdlog::debug("AMQP connection is ready AMQP 连接已准备就绪");
 
     // 声明队列并消费消息
-    AMQP::Channel channel(connection);
-    channel.declareQueue("test-queue").onSuccess([]() {
-        std::cout << "Queue declared successfully!" << std::endl;
+    // AMQP::Channel channel(connection);
+    _channel = std::make_shared<AMQP::Channel>(connection);
+    _channel->declareQueue("test-queue").onSuccess([]() {
+        spdlog::info("Queue declared successfully! 队列声明成功!");
     });
-    channel.consume("test-queue").onReceived([](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered) {
-        std::cout << "Received message: " << message.body() << std::endl;
-    });
+    _channel->consume("test-queue").onReceived
+    (
+        [this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+        {
+            std::string messageBody(message.body(), message.bodySize());
+            spdlog::info("Received message 接收到新的队列消息: {}", messageBody);
+            _channel->ack(deliveryTag);
+        }
+    );
+    _channel->publish("", "test-queue", "Hello, AMQP!");
 }
 
 void 
@@ -35,7 +44,8 @@ TrantorHandler::setConnection(const trantor::TcpConnectionPtr& conn)
 {
     if (conn && conn->connected()) 
     {
-        spdlog::debug("Initializing AMQP connection...");
+        spdlog::debug("Initializing AMQP connection 初始化 AMQP 连接 ...");
+        // pass `this` to AMQP::Connection, when it's ready, it will call onReady()
         _amqpConnection = std::make_shared<AMQP::Connection>(this, AMQP::Login("guest", "guest"), "/");
         // 设置接收数据的回调
         conn->setRecvMsgCallback
