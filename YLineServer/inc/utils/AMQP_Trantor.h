@@ -1,9 +1,10 @@
 #ifndef YLINE_AMQP_TRANTOR_H
 #define YLINE_AMQP_TRANTOR_H
 
+#include "trantor/net/TcpClient.h"
 #include <amqpcpp/include/amqpcpp.h>
-#include <amqpcpp/include/amqpcpp/linux_tcp.h>
 
+#include <memory>
 #include <trantor/net/EventLoop.h>
 #include <trantor/net/Channel.h>
 
@@ -11,45 +12,39 @@
 
 namespace YLineServer{
 
-class TrantorHandler : public AMQP::TcpHandler 
+class TrantorHandler : public AMQP::ConnectionHandler 
 {
 public:
     explicit 
-    TrantorHandler(trantor::EventLoop *loop) : _loop(loop) {}
+    TrantorHandler(const std::shared_ptr<trantor::TcpClient> &tcpClient) : m_tcpClient(tcpClient) {}
 
-    // 连接成功时的回调
+    ~TrantorHandler() override = default;
+     
     void inline
-    onConnected(AMQP::TcpConnection *connection) override 
+    onError(AMQP::Connection *connection, const char *message) override
     {
-        spdlog::info("AMQP connection established 连接建立成功");
+        spdlog::error("AMQP error 错误: {}", message);
     }
 
-     // 连接关闭时的回调
-    void inline 
-    onClosed(AMQP::TcpConnection *connection) override 
-    {
-        spdlog::info("AMQP connection closed 连接关闭");
-    }
-
-    // 连接出错时的回调
     void inline
-    onError(AMQP::TcpConnection *connection, const char *message) override 
+    onClosed(AMQP::Connection *connection) override 
     {
-        spdlog::error("AMQP connection error 错误: {}", message);
+        spdlog::debug("AMQP connection closed 连接已关闭");
     }
 
-    // 注册或更新文件描述符上的事件
+    void
+    onData(AMQP::Connection *connection, const char *data, size_t size) override;
+
     void 
-    monitor(AMQP::TcpConnection *connection, int fd, int flags) override;
+    onReady(AMQP::Connection *connection) override;
+
+    void 
+    setConnection(const trantor::TcpConnectionPtr& conn);
 
 private:
-    // 处理事件
-    void 
-    handleEvent(const std::shared_ptr<trantor::Channel> &channel, int events);
-
-    trantor::EventLoop *_loop;  // Drogon 的事件循环
-    std::unordered_map<int, std::shared_ptr<trantor::Channel>> _channels;  // FD 到 Channel 的映射
-    std::unordered_map<int, AMQP::TcpConnection *> _connections;  
+    std::shared_ptr<trantor::TcpClient> m_tcpClient;
+    std::shared_ptr<AMQP::Connection> _amqpConnection;
+    std::shared_ptr<AMQP::Channel> _channel;
 
 }; // class TrantorHandler
 
@@ -58,7 +53,15 @@ private:
 #endif // YLINE_AMQP_TRANTOR_H
 
 /*
-文件描述符（File Descriptor，FD）与 RabbitMQ 的连接有关，RabbitMQ 的 AMQP 通信协议依赖底层的 TCP 连接，在操作系统中，网络套接字（Socket）是通过文件描述符来表示的。
-这是因为 AMQP 是一个应用层协议，其底层是基于 TCP 的二进制通信，每个 RabbitMQ 的连接（AMQP::TcpConnection）会使用一个 TCP 套接字，操作系统为这个套接字分配一个文件描述符，用于标识该连接，
-应用程序需要使用文件描述符来读取和写入数据，以实现 AMQP 协议的数据交互
+通过 Trantor 发起和管理 TCP 连接，然后将接收到的 TCP 数据 交给 AMQP-CPP 进行 AMQP 协议解析
+
+RabbitMQ <----> Trantor::TcpClient <----> Trantor::TcpConnection
+                          |                       |
+                   setRecvMsgCallback           send()
+                          |                       |
+                          v                       ^
+                AMQP::Connection::parse      AMQP::ConnectionHandler::onData
+                          |
+           AMQP 协议处理，触发回调 (onReady, onClosed, onError 等)
+
 */

@@ -1,4 +1,5 @@
 #include "app.h"
+
 #include "drogon/IntranetIpFilter.h"
 #include "drogon/LocalHostFilter.h"
 #include "utils/logger.h"
@@ -6,6 +7,7 @@
 #include "middlewares/YLineServer_CORSMid.h"
 #include "utils/api.h"
 
+#include <memory>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <drogon/drogon.h>
@@ -102,13 +104,34 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     
     // AMQP 连接
     auto *loop = drogon::app().getLoop();
-    auto handler = std::make_shared<YLineServer::TrantorHandler>(loop);
-    // use fake address for test
-    // AMQP::Address address("amqp://user:password@localhost/");
-    // AMQP::TcpConnection connection(handler.get(), address);
-    // AMQP::TcpChannel channel(&connection);
+    auto amqpTcpClient = std::make_shared<trantor::TcpClient>(
+        loop,
+        trantor::InetAddress("127.0.0.1", 5672), // RabbitMQ 默认端口
+        "RabbitMQClient"
+    );
+    auto amqpHandler = std::make_shared<YLineServer::TrantorHandler>(amqpTcpClient);
+
+    amqpTcpClient->setConnectionCallback
+    (
+        [amqpHandler](const trantor::TcpConnectionPtr &conn)
+        {
+            if (conn && conn->connected()) 
+            {
+                spdlog::debug("AMQP connection established AMQP 连接已建立");
+                amqpHandler->setConnection(conn);
+            } 
+            else 
+            {
+                spdlog::error("AMQP connection failed AMQP 连接失败");
+            }
+        }
+    );
+
+    // 将 AMQP 服务器 TCP 连接 注册到事件循环
+    amqpTcpClient->connect();
 
     spdlog::info("Start Listening 开始监听");
+    // 启动事件循环
     drogon::app().run();
 }
 

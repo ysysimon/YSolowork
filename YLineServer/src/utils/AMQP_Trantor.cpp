@@ -2,72 +2,56 @@
 
 namespace YLineServer{
 
-// 处理事件
-void 
-TrantorHandler::handleEvent(const std::shared_ptr<trantor::Channel> &channel, int events)
+void
+TrantorHandler::onData(AMQP::Connection *connection, const char *data, size_t size)
 {
-    int fd = channel->fd();  // 使用 Channel 提供的 fd() 方法获取文件描述符
-    auto it = _connections.find(fd);
-    if (it == _connections.end()) 
+    if (m_tcpClient && m_tcpClient->connection()) 
     {
-        spdlog::warn("AMQP - Event received for unknown fd 未知的文件描述符: {}", fd);
-    }
-
-    auto *connection = it->second;
-
-    // 通知 AMQP 连接处理事件
-    connection->process(fd, events);
-}
-
-// 注册或更新文件描述符上的事件
-void 
-TrantorHandler::monitor(AMQP::TcpConnection *connection, int fd, int flags)
-{
-    auto it = _channels.find(fd);
-
-    if (flags == 0) 
-    {
-        // 如果 flags 为 0，则移除事件监听
-        if (it != _channels.end()) {
-            it->second->disableAll();
-            it->second->remove();
-            _channels.erase(it);
-            spdlog::debug("AMQP - Stopped monitoring fd 停止监控文件描述符: {}", fd);
-        }
-        return;
-    }
-
-    if (it == _channels.end()) 
-    {
-        // 如果是新文件描述符，则注册事件
-        spdlog::debug("AMQP - Monitoring new fd 监控新文件描述符: {}", fd);
-        auto channel = std::make_shared<trantor::Channel>(_loop, fd);
-        channel->setReadCallback([this, channel]() { handleEvent(channel, AMQP::readable); });
-        channel->setWriteCallback([this, channel]() { handleEvent(channel, AMQP::writable); });
-        channel->enableReading();
-        channel->enableWriting();
-
-        _channels[fd] = channel;
+        m_tcpClient->connection()->send(data, size); // 发送数据到 TCP 连接
     } 
     else 
     {
-        // 如果是已存在的文件描述符，则更新事件
-        spdlog::debug("AMQP - Updating monitoring for fd 更新文件描述符监控: {}", fd);
-        auto channel = it->second;
-        if (flags & AMQP::readable) {
-            channel->enableReading();
-        } else {
-            channel->disableReading();
-        }
-        if (flags & AMQP::writable) {
-            channel->enableWriting();
-        } else {
-            channel->disableWriting();
-        }
+        spdlog::error("AMQP TCP connection is not available TCP 连接不可用");
+    }
+}
+
+void 
+TrantorHandler::onReady(AMQP::Connection *connection)
+{
+    spdlog::debug("AMQP connection is ready AMQP 连接已准备就绪");
+
+    // 声明队列并消费消息
+    AMQP::Channel channel(connection);
+    channel.declareQueue("test-queue").onSuccess([]() {
+        std::cout << "Queue declared successfully!" << std::endl;
+    });
+    channel.consume("test-queue").onReceived([](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered) {
+        std::cout << "Received message: " << message.body() << std::endl;
+    });
+}
+
+void 
+TrantorHandler::setConnection(const trantor::TcpConnectionPtr& conn)
+{
+    if (conn && conn->connected()) 
+    {
+        spdlog::debug("Initializing AMQP connection...");
+        _amqpConnection = std::make_shared<AMQP::Connection>(this, AMQP::Login("guest", "guest"), "/");
+        // 设置接收数据的回调
+        conn->setRecvMsgCallback
+        (
+            [this](const trantor::TcpConnectionPtr& conn, trantor::MsgBuffer* buffer) 
+            {
+                if (_amqpConnection) 
+                {
+                    // 将数据传递给 AMQP::Connection 进行解析
+                    _amqpConnection->parse(buffer->peek(), buffer->readableBytes());
+                    buffer->retrieveAll(); // 清空缓冲区
+                }
+            }
+        );
     }
 
-    // 将文件描述符与 AMQP::TcpConnection 关联
-    _connections[fd] = connection;
 }
 
 } // namespace YLineServer
