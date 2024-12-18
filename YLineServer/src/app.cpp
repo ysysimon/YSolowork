@@ -14,7 +14,7 @@
 #include <drogon/drogon.h>
 #include <trantor/utils/Logger.h>
 
-#include <utils/AMQP_Trantor.h>
+#include "amqp/AMQPconnectionPool.h"
 
 namespace YLineServer {
 
@@ -106,36 +106,23 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
         spdlog::info("CORS middleware enabled 跨域请求中间件已启用");
     }
     
-    // AMQP 连接
-    auto *loop = drogon::app().getLoop();
-    auto amqpTcpClient = std::make_shared<trantor::TcpClient>(
-        loop,
-        trantor::InetAddress("127.0.0.1", 5672), // RabbitMQ 默认端口
-        "RabbitMQClient"
-    );
-    auto amqpHandler = std::make_shared<YLineServer::TrantorHandler>(amqpTcpClient);
-
-    amqpTcpClient->setConnectionCallback
+    // AMQP 连接池
+    app().getLoop()->queueInLoop
     (
-        [amqpHandler](const trantor::TcpConnectionPtr &conn)
+        []()
         {
-            if (conn && conn->connected()) 
-            {
-                spdlog::debug("AMQP connection established AMQP 连接已建立");
-                amqpHandler->setConnection(conn);
-            } 
-            else 
-            {
-                spdlog::error("AMQP connection failed AMQP 连接失败");
-            }
+            auto amqpConnectionPool = std::make_shared<YLineServer::AMQPConnectionPool>
+            (
+                "127.0.0.1",
+                5672,
+                "guest",
+                "guest"
+            );
         }
     );
 
-    // 将 AMQP 服务器 TCP 连接 注册到事件循环
-    amqpTcpClient->connect();
-
-    spdlog::info("Start Listening 开始监听");
     // 启动事件循环
+    spdlog::info("Start Listening 开始监听");
     drogon::app().run();
 }
 

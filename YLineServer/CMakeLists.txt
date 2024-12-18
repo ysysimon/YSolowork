@@ -39,7 +39,9 @@ set(YLineServer_SOURCES
     src/utils/server.cpp
     src/utils/passwd.cpp
     src/utils/jwt.cpp
-    src/utils/AMQP_Trantor.cpp
+    # AMQP
+    src/amqp/TrantorHandler.cpp
+    src/amqp/AMQPconnectionPool.cpp
 )
 
 # 创建 YLineServer 可执行文件

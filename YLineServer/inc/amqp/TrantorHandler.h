@@ -16,20 +16,27 @@ class TrantorHandler : public AMQP::ConnectionHandler
 {
 public:
     explicit 
-    TrantorHandler(const std::shared_ptr<trantor::TcpClient> &tcpClient) : m_tcpClient(tcpClient) {}
+    TrantorHandler(
+        const std::string &name, 
+        trantor::EventLoop *loop, 
+        const std::string &host, 
+        const uint16_t port,
+        const std::string &username,
+        const std::string &password
+    );
 
     ~TrantorHandler() override = default;
      
     void inline
     onError(AMQP::Connection *connection, const char *message) override
     {
-        spdlog::error("AMQP error 错误: {}", message);
+        spdlog::error("{} AMQP error 错误: {}", m_name, message);
     }
 
     void inline
     onClosed(AMQP::Connection *connection) override 
     {
-        spdlog::debug("AMQP connection closed 连接已关闭");
+        spdlog::debug("{} connection closed 连接已关闭", m_name);
     }
 
     void
@@ -38,13 +45,18 @@ public:
     void 
     onReady(AMQP::Connection *connection) override;
 
-    void 
-    setConnection(const trantor::TcpConnectionPtr& conn);
-
 private:
     std::shared_ptr<trantor::TcpClient> m_tcpClient;
     std::shared_ptr<AMQP::Connection> _amqpConnection;
     std::shared_ptr<AMQP::Channel> _channel;
+    std::string m_name;
+
+    void
+    setConnection(
+        const trantor::TcpConnectionPtr& conn,
+        const std::string &username,
+        const std::string &password
+    );
 
 }; // class TrantorHandler
 
