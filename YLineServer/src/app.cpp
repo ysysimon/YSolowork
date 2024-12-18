@@ -107,11 +107,12 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     }
     
     // AMQP 连接池
+    std::shared_ptr<AMQPConnectionPool> amqpConnectionPool;
     app().getLoop()->queueInLoop
     (
-        []()
+        [amqpConnectionPool]() mutable
         {
-            auto amqpConnectionPool = std::make_shared<YLineServer::AMQPConnectionPool>
+            amqpConnectionPool = std::make_shared<YLineServer::AMQPConnectionPool>
             (
                 "127.0.0.1",
                 5672,
