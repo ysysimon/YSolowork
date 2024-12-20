@@ -31,6 +31,7 @@ MSVC 19.4 (经过测试)
 - jwt++ (build with project)
 - entt (build with project)
 - tl::expected (header only) (build with project)
+- amqpcpp (build with project)
 
 #### YLineWorker
 - spdlog
