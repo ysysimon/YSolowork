@@ -43,6 +43,7 @@ Config parseConfig() {
     const auto& server = getTable("server", YLineServerConfig);
     const std::string& serverIp = server["ip"].value_or("0.0.0.0"); // 默认值 ip
     int serverPort = server["port"].value_or(33383);         // 默认端口
+    int serverThreadNum = server["work_thread"].value_or(4); // 默认线程数
 
     // 读取 worker 部分
     const auto& worker = getTable("worker", YLineServerConfig);
@@ -109,6 +110,13 @@ Config parseConfig() {
     size_t redisConnectionNumber = redis["connection_number"].value_or(10);
     float redisTimeout = redis["timeout"].value_or(5.0);
 
+    // 读取 RabbitMQ 部分
+    const auto& amqp = getTable("RabbitMQ", YLineServerConfig);
+    const std::string& amqpHost = amqp["host"].value_or("127.0.0.1");
+    int amqpPort = amqp["port"].value_or(5672); // RabbitMQ 默认端口
+    const std::string& amqpUser = amqp["username"].value_or("guest");
+    const std::string& amqpPassword = amqp["password"].value_or("guest");
+
     // 读取 logger 部分
     const auto& loggerTbl = getTable("logger", YLineServerConfig);
     const std::string& logLevelStr = loggerTbl["level"].value_or("debug");
@@ -138,6 +146,7 @@ Config parseConfig() {
     return Config{
         serverIp, 
         serverPort,
+        serverThreadNum,
         registerSecret,
         intranetIpFilter,
         localHostFilter,
@@ -159,6 +168,10 @@ Config parseConfig() {
         redisIndex,
         redisConnectionNumber,
         redisTimeout,
+        amqpHost,
+        amqpPort,
+        amqpUser,
+        amqpPassword,
         logLevel,
         migration,
         dbmate_download_url,

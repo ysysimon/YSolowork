@@ -14,6 +14,7 @@ struct Config {
     // server
     std::string server_ip;
     int server_port;
+    int server_thread_num;
 
     // worker
     std::string register_secret;
@@ -45,6 +46,12 @@ struct Config {
     int redis_index;
     size_t redis_connection_number;
     float redis_timeout;
+
+    // RabbitMQ
+    std::string amqp_host;
+    int amqp_port;
+    std::string amqp_user;
+    std::string amqp_password;
 
     // log
     spdlog::level::level_enum log_level;

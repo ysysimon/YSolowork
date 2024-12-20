@@ -33,7 +33,7 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     trantor::Logger::setLogLevel(YLineServer::spdlogToDrogonLogLevel.at(config.log_level));
 
     // 设置工作线程数量 默认为 4
-    drogon::app().setThreadNum(4);
+    drogon::app().setThreadNum(config.server_thread_num);
 
     drogon::app().addListener(config.server_ip, config.server_port);
 
@@ -110,15 +110,15 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     std::shared_ptr<AMQPConnectionPool> amqpConnectionPool;
     app().getLoop()->queueInLoop
     (
-        // 注意需要按引用捕获，因为上面的 shared_ptr 还未初始化，引用计数并未生效
-        [&amqpConnectionPool]() mutable
+        // 注意需要按引用捕获 amqpConnectionPool，因为上面的 shared_ptr 还未初始化，引用计数并未生效
+        [ =, &amqpConnectionPool]() mutable
         {
             amqpConnectionPool = std::make_shared<YLineServer::AMQPConnectionPool>
             (
-                "127.0.0.1",
-                5672,
-                "guest",
-                "guest"
+                config.amqp_host,
+                config.amqp_port,
+                config.amqp_user,
+                config.amqp_password
             );
         }
     );
