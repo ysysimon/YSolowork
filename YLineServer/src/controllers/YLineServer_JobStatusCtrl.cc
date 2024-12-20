@@ -176,6 +176,7 @@ JobStatusCtrl::CommandrequireJobStatus(const WebSocketConnectionPtr& wsConnPtr, 
 {
     spdlog::debug("{} Requested Job {} Status 请求工作状态", wsConnPtr->peerAddr().toIpPort(), job_id);
     auto redis = drogon::app().getFastRedisClient("YLineRedis");
+    // not done yet, it will cause crash now
     redis->execCommandAsync(
         [wsConnPtr, job_id](const drogon::nosql::RedisResult &r)
         {

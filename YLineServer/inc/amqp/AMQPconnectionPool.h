@@ -31,7 +31,7 @@ public:
     port() const { return m_port; }
 
 private:
-    std::vector<std::shared_ptr<TrantorHandler>> m_AMQPConnections;
+    std::vector<std::shared_ptr<TrantorHandler>> m_AMQPHandler;
     std::string m_host;
     uint16_t m_port;
 

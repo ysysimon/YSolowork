@@ -21,7 +21,8 @@ TrantorHandler::TrantorHandler(
 
     m_tcpClient->setConnectionCallback
     (
-        [this, &username, &password](const trantor::TcpConnectionPtr &conn) 
+        // need to copy username and password for lifetime
+        [this, username, password](const trantor::TcpConnectionPtr &conn) 
         {
             if (conn && conn->connected()) 
             {
@@ -34,9 +35,9 @@ TrantorHandler::TrantorHandler(
         }
     );
 
-    // 将 AMQP 服务器 TCP 连接 注册到事件循环
+    // 将 AMQP 服务器 TCP 连接设置为可重试
     m_tcpClient->enableRetry();
-    m_tcpClient->connect();
+
 }
 
 void

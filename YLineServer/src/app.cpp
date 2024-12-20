@@ -110,7 +110,8 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     std::shared_ptr<AMQPConnectionPool> amqpConnectionPool;
     app().getLoop()->queueInLoop
     (
-        [amqpConnectionPool]() mutable
+        // 注意需要按引用捕获，因为上面的 shared_ptr 还未初始化，引用计数并未生效
+        [&amqpConnectionPool]() mutable
         {
             amqpConnectionPool = std::make_shared<YLineServer::AMQPConnectionPool>
             (

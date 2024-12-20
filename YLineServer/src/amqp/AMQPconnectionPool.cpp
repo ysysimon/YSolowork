@@ -14,7 +14,7 @@ AMQPConnectionPool::AMQPConnectionPool(
     for (size_t i = 0; i < threadNum; ++i)
     {
         // AMQP 连接
-        auto *loop = drogon::app().getIOLoop(i);
+        auto loop = drogon::app().getIOLoop(i);
         auto amqpHandler = std::make_shared<TrantorHandler>(
             std::format("RabbitMQTCP-{}", i),
             loop,
@@ -24,8 +24,10 @@ AMQPConnectionPool::AMQPConnectionPool(
             password
         );
 
-        m_AMQPConnections.push_back(amqpHandler);
+        // 将 AMQP 服务器 TCP 连接 注册到事件循环
+        amqpHandler->connect();
 
+        m_AMQPHandler.push_back(amqpHandler);
     }
 }
 

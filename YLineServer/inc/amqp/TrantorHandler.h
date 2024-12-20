@@ -39,6 +39,12 @@ public:
         spdlog::debug("{} connection closed 连接已关闭", m_name);
     }
 
+    void inline
+    connect()
+    {
+        m_tcpClient->connect();
+    }
+
     void
     onData(AMQP::Connection *connection, const char *data, size_t size) override;
 
