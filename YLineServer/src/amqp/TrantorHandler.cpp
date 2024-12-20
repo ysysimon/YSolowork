@@ -19,6 +19,19 @@ TrantorHandler::TrantorHandler(
         m_name
     );
 
+    // 设置回调
+    m_tcpClient->setConnectionErrorCallback
+    (
+        [this]() 
+        {
+            spdlog::error("{} connection failed - TCP connection error 连接失败 - TCP 连接错误", m_name);
+            auto loop = m_tcpClient->getLoop();
+            loop->runAfter(1000, [this]() {
+                m_tcpClient->connect();
+            }); // reconnect after 1s, but seems not working
+        }
+    );
+
     m_tcpClient->setConnectionCallback
     (
         // need to copy username and password for lifetime
@@ -35,7 +48,7 @@ TrantorHandler::TrantorHandler(
         }
     );
 
-    // 将 AMQP 服务器 TCP 连接设置为可重试
+    // 将 AMQP 服务器 TCP 连接设置为可重试，不知道这有什么意义，似乎没做什么
     m_tcpClient->enableRetry();
 
 }
