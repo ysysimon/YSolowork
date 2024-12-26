@@ -1,5 +1,6 @@
 #include "amqp/TrantorHandler.h"
 #include "amqpcpp/connection.h"
+#include "spdlog/spdlog.h"
 
 namespace YLineServer{
 
@@ -13,44 +14,98 @@ TrantorHandler::TrantorHandler(
 )
     : m_name(name)
 {
-    m_tcpClient = std::make_shared<trantor::TcpClient>(
+    // 设置 tcpclient
+    setupTcpClient(loop, host, port, username, password);
+}
+
+void
+TrantorHandler::setupTcpClient
+(
+    trantor::EventLoop * loop, 
+    const std::string & host, 
+    const uint16_t port,
+    const std::string & username,
+    const std::string & password
+)
+{
+    if (!loop)
+    {
+        spdlog::error("{} Event loop is not available 事件循环不可用", m_name);
+        return;
+    }
+
+    // 创建 TCP 客户端
+    m_tcpClient = std::make_shared<trantor::TcpClient>
+    (
         loop,
         trantor::InetAddress(host, port),
         m_name
     );
 
-    // 设置回调
+    // 设置当前对象弱引用
+    auto weakPtr = std::weak_ptr<TrantorHandler>(shared_from_this());
+
+    // 设置错误回调
     m_tcpClient->setConnectionErrorCallback
     (
-        [this]() 
+        [weakPtr, username, password, host, port, name = m_name]()
         {
-            spdlog::error("{} connection failed - TCP connection error 连接失败 - TCP 连接错误", m_name);
-            auto loop = m_tcpClient->getLoop();
-            loop->runAfter(1000, [this]() {
-                m_tcpClient->connect();
-            }); // reconnect after 1s, but seems not working
-        }
-    );
+            // 获取当前对象的强引用
+            if(auto sharedPtr = weakPtr.lock())
+            {
+                spdlog::error("{} connection failed - TCP connection error 连接失败 - TCP 连接错误", sharedPtr->m_name);
+                
+                // this loop should be available
+                auto loop = sharedPtr->m_tcpClient->getLoop();
 
-    m_tcpClient->setConnectionCallback
-    (
-        // need to copy username and password for lifetime
-        [this, username, password](const trantor::TcpConnectionPtr &conn) 
-        {
-            if (conn && conn->connected()) 
-            {
-                setConnection(conn, username, password);
-            } 
-            else 
-            {
-                spdlog::error("{} connection failed - TCP connection is not available 连接失败 - TCP 连接不可用", m_name);
+                // 销毁旧客户端
+                sharedPtr->m_tcpClient.reset();
+
+                // 再次设置 m_tcpClient 并设置相应回调
+                loop->runAfter
+                (
+                    1.0,
+                    [weakPtr, username, password, host, port, name]()
+                    {
+                        if(auto sharedPtr = weakPtr.lock())
+                        {
+                            spdlog::info("{} Reconnecting TCP 重新连接 TCP", sharedPtr->m_name);
+                            auto loop = sharedPtr->m_tcpClient->getLoop();
+                            sharedPtr->setupTcpClient(loop, host, port, username, password);
+                        }
+                        else 
+                        {
+                            spdlog::error("Weak pointer `{}` is expired 弱指针已过期", name);
+                        }
+                    }
+                );
             }
         }
     );
 
-    // 将 AMQP 服务器 TCP 连接设置为可重试，不知道这有什么意义，似乎没做什么
-    m_tcpClient->enableRetry();
-
+    // 设置连接回调
+    m_tcpClient->setConnectionCallback
+    (
+        [weakPtr, username, password, name = m_name](const trantor::TcpConnectionPtr &conn) 
+        {
+            if(auto sharedPtr = weakPtr.lock())
+            {
+                if (conn && conn->connected()) 
+                {
+                    sharedPtr->setConnection(conn, username, password);
+                    spdlog::debug("{} connection established TCP 连接已建立", sharedPtr->m_name);
+                } 
+                else 
+                {
+                    spdlog::error("{} connection failed - TCP connection is not available 连接失败 - TCP 连接不可用", sharedPtr->m_name);
+                }
+            }
+            else
+            {
+                spdlog::error("Weak pointer `{}` is expired 弱指针已过期", name);
+            }
+        }
+    );
 }
 
 void
@@ -100,7 +155,7 @@ TrantorHandler::setConnection(
 {
     if (conn && conn->connected()) 
     {
-        spdlog::debug("Initializing {} connection 初始化 AMQP 连接 ...", m_name);
+        spdlog::debug("Initializing {} AMQP connection 初始化 AMQP 连接 ...", m_name);
         // pass `this` to AMQP::Connection, when it's ready, it will call onReady()
         _amqpConnection = std::make_shared<AMQP::Connection>(
             this, 
@@ -124,7 +179,7 @@ TrantorHandler::setConnection(
     }
     else 
     {
-        spdlog::error("{} connection failed - TCP connection is not available 连接失败 - TCP 连接不可用", m_name);
+        spdlog::error("Initializing {} AMQP connection failed - TCP connection is not available 连接失败 - TCP 连接不可用", m_name);
     }
 }
 

@@ -12,20 +12,12 @@
 
 namespace YLineServer{
 
-class TrantorHandler : public AMQP::ConnectionHandler 
+class TrantorHandler
+// std::enable_shared_from_this<T> 是一个标准库提供的工具类
+// 允许 std::shared_ptr 管理的对象在其内部安全地生成 std::shared_ptr 的实例
+    : public AMQP::ConnectionHandler, public std::enable_shared_from_this<TrantorHandler>
 {
 public:
-    explicit 
-    TrantorHandler(
-        const std::string &name, 
-        trantor::EventLoop *loop, 
-        const std::string &host, 
-        const uint16_t port,
-        const std::string &username,
-        const std::string &password
-    );
-
-    ~TrantorHandler() override = default;
      
     void inline
     onError(AMQP::Connection *connection, const char *message) override
@@ -57,11 +49,33 @@ private:
     std::shared_ptr<AMQP::Channel> _channel;
     std::string m_name;
 
+    explicit 
+    TrantorHandler(
+        const std::string &name, 
+        trantor::EventLoop *loop, 
+        const std::string &host, 
+        const uint16_t port,
+        const std::string &username,
+        const std::string &password
+    );
+
+    ~TrantorHandler() override = default;
+
     void
     setConnection(
         const trantor::TcpConnectionPtr& conn,
         const std::string &username,
         const std::string &password
+    );
+
+    void
+    setupTcpClient
+    (
+        trantor::EventLoop * loop, 
+        const std::string & host, 
+        const uint16_t port,
+        const std::string & username,
+        const std::string & password
     );
 
 }; // class TrantorHandler
