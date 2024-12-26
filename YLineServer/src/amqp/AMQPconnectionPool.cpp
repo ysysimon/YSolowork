@@ -15,7 +15,17 @@ AMQPConnectionPool::AMQPConnectionPool(
     {
         // AMQP 连接
         auto loop = drogon::app().getIOLoop(i);
-        auto amqpHandler = std::make_shared<TrantorHandler>
+        // auto amqpHandler = std::make_shared<TrantorHandler>
+        // (
+        //     std::format("RabbitMQTCP-{}", i),
+        //     loop,
+        //     m_host,
+        //     m_port,
+        //     username,
+        //     password
+        // );
+
+        auto amqpHandler = TrantorHandler::create
         (
             std::format("RabbitMQTCP-{}", i),
             loop,

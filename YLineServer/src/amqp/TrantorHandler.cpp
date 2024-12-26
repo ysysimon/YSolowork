@@ -4,20 +4,6 @@
 
 namespace YLineServer{
 
-TrantorHandler::TrantorHandler(
-    const std::string &name, 
-    trantor::EventLoop *loop, 
-    const std::string &host, 
-    const uint16_t port,
-    const std::string &username,
-    const std::string &password
-)
-    : m_name(name)
-{
-    // 设置 tcpclient
-    setupTcpClient(loop, host, port, username, password);
-}
-
 void
 TrantorHandler::setupTcpClient
 (
@@ -54,15 +40,12 @@ TrantorHandler::setupTcpClient
             if(auto sharedPtr = weakPtr.lock())
             {
                 spdlog::error("{} connection failed - TCP connection error 连接失败 - TCP 连接错误", sharedPtr->m_name);
-                
-                // this loop should be available
-                auto loop = sharedPtr->m_tcpClient->getLoop();
 
                 // 销毁旧客户端
                 sharedPtr->m_tcpClient.reset();
 
                 // 再次设置 m_tcpClient 并设置相应回调
-                loop->runAfter
+                sharedPtr->m_loop->runAfter
                 (
                     1.0,
                     [weakPtr, username, password, host, port, name]()
@@ -70,8 +53,7 @@ TrantorHandler::setupTcpClient
                         if(auto sharedPtr = weakPtr.lock())
                         {
                             spdlog::info("{} Reconnecting TCP 重新连接 TCP", sharedPtr->m_name);
-                            auto loop = sharedPtr->m_tcpClient->getLoop();
-                            sharedPtr->setupTcpClient(loop, host, port, username, password);
+                            sharedPtr->setupTcpClient(sharedPtr->m_loop, host, port, username, password);
                         }
                         else 
                         {
