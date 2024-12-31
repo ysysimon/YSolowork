@@ -1,8 +1,42 @@
 #include "amqp/TrantorHandler.h"
 #include "amqpcpp/connection.h"
 #include "spdlog/spdlog.h"
+#include <memory>
 
 namespace YLineServer{
+
+void
+TrantorHandler::reConnectTcpClient
+(
+    const std::weak_ptr<TrantorHandler> weakPtr,
+    const std::string & username,
+    const std::string & password,
+    const std::string & host,
+    const uint16_t port
+)
+{
+    // 销毁旧客户端
+    m_tcpClient.reset();
+    // 再次设置 m_tcpClient 并设置相应回调
+    m_loop->runAfter
+    (
+        1.0,
+        [weakPtr, username, password, host, port, name = m_name]()
+        {
+            if(auto sharedPtr = weakPtr.lock())
+            {
+                spdlog::info("{} Reconnecting TCP 重新连接 TCP", name);
+                sharedPtr->setupTcpClient(sharedPtr->m_loop, host, port, username, password);
+                // 执行重连
+                sharedPtr->connect();
+            }
+            else 
+            {
+                spdlog::error("Weak pointer `{}` is expired 弱指针已过期", name);
+            }
+        }
+    );
+}
 
 void
 TrantorHandler::setupTcpClient
@@ -39,28 +73,10 @@ TrantorHandler::setupTcpClient
             // 获取当前对象的强引用
             if(auto sharedPtr = weakPtr.lock())
             {
-                spdlog::error("{} connection failed - TCP connection error 连接失败 - TCP 连接错误", sharedPtr->m_name);
+                spdlog::error("{} connection failed - TCP connection error 连接失败 - TCP 连接错误", name);
 
-                // 销毁旧客户端
-                sharedPtr->m_tcpClient.reset();
-
-                // 再次设置 m_tcpClient 并设置相应回调
-                sharedPtr->m_loop->runAfter
-                (
-                    1.0,
-                    [weakPtr, username, password, host, port, name]()
-                    {
-                        if(auto sharedPtr = weakPtr.lock())
-                        {
-                            spdlog::info("{} Reconnecting TCP 重新连接 TCP", sharedPtr->m_name);
-                            sharedPtr->setupTcpClient(sharedPtr->m_loop, host, port, username, password);
-                        }
-                        else 
-                        {
-                            spdlog::error("Weak pointer `{}` is expired 弱指针已过期", name);
-                        }
-                    }
-                );
+                // 重新连接
+                sharedPtr->reConnectTcpClient(weakPtr, username, password, host, port);
             }
         }
     );
@@ -68,18 +84,21 @@ TrantorHandler::setupTcpClient
     // 设置连接回调
     m_tcpClient->setConnectionCallback
     (
-        [weakPtr, username, password, name = m_name](const trantor::TcpConnectionPtr &conn) 
+        [weakPtr, username, password, host, port, name = m_name](const trantor::TcpConnectionPtr &conn) 
         {
             if(auto sharedPtr = weakPtr.lock())
             {
                 if (conn && conn->connected()) 
                 {
                     sharedPtr->setConnection(conn, username, password);
-                    spdlog::debug("{} connection established TCP 连接已建立", sharedPtr->m_name);
+                    spdlog::debug("{} connection established TCP 连接已建立", name);
                 } 
                 else 
                 {
-                    spdlog::error("{} connection failed - TCP connection is not available 连接失败 - TCP 连接不可用", sharedPtr->m_name);
+                    spdlog::error("{} set connection callback failed - TCP connection is not available 设置连接回调失败 - TCP 连接不可用", name);
+
+                    // 重新连接
+                    sharedPtr->reConnectTcpClient(weakPtr, username, password, host, port);
                 }
             }
             else
@@ -100,7 +119,7 @@ TrantorHandler::onData(AMQP::Connection *connection, const char *data, size_t si
     } 
     else 
     {
-        spdlog::error("{} TCP connection is not available TCP 连接不可用", m_name);
+        spdlog::error("{} - [onData] TCP connection is not available TCP 连接不可用", m_name);
     }
 }
 

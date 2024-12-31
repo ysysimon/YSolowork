@@ -92,6 +92,16 @@ private:
         const std::string & password
     );
 
+    void
+    reConnectTcpClient
+    (
+        const std::weak_ptr<TrantorHandler> weakPtr,
+        const std::string & username,
+        const std::string & password,
+        const std::string & host,
+        const uint16_t port
+    );
+
 }; // class TrantorHandler
 
 } // namespace YLineServer
