@@ -1,4 +1,5 @@
 #include "amqp/AMQPconnectionPool.h"
+#include "spdlog/spdlog.h"
 
 namespace YLineServer
 {
@@ -32,5 +33,44 @@ AMQPConnectionPool::AMQPConnectionPool(
         m_AMQPHandler.push_back(amqpHandler);
     }
 }
+
+std::optional<AMQP::Channel>
+AMQPConnectionPool::make_channel()
+{
+    static std::atomic<size_t> index = 0; // 使用原子变量保证线程安全
+    size_t handlerIndex = index.fetch_add(1, std::memory_order_relaxed) % m_AMQPHandler.size();
+    spdlog::debug("Try to create AMQP Channel comes from Handler {0} 尝试创建 AMQP 通道来自 Handler {0}", handlerIndex);
+    
+    // 获取 AMQP 连接
+    auto connection = m_AMQPHandler[handlerIndex]->getAMQPConnection();
+    if (!connection)
+    {
+        spdlog::error
+        (
+            "AMQP Channel create failed Connection is not available 通道创建失败, AMQP 连接不可用"
+        );
+        return std::nullopt; // 返回空值
+    }
+
+    // 创建 AMQP 通道
+    auto new_channel = AMQP::Channel(connection);
+
+    // 设置错误回调
+    new_channel.onError
+    (
+        [this, handlerIndex](const char *message)
+        {
+            spdlog::error
+            (
+                "AMQP Channel comes from Handler {0} has error: {1} 来自 Handler {0} 的 AMQP 通道发生错误: {1}",
+                handlerIndex,
+                message
+            ); 
+        }
+    );
+
+    return new_channel;
+}
+
 
 }// namespace YLineServer

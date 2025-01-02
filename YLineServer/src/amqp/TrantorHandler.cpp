@@ -25,7 +25,7 @@ TrantorHandler::reConnectTcpClient
         {
             if(auto sharedPtr = weakPtr.lock())
             {
-                spdlog::info("{} Reconnecting TCP 重新连接 TCP", name);
+                spdlog::warn("{} Reconnecting TCP 重新连接 TCP", name);
                 sharedPtr->setupTcpClient(sharedPtr->m_loop, host, port, username, password);
                 // 执行重连
                 sharedPtr->connect();
@@ -127,24 +127,7 @@ void
 TrantorHandler::onReady(AMQP::Connection *connection)
 {
     // the input connection is _amqpConnection
-    spdlog::debug("{} connection is ready AMQP 连接已准备就绪", m_name);
-
-    // 声明队列并消费消息
-    // AMQP::Channel channel(connection);
-    _channel = std::make_shared<AMQP::Channel>(connection);
-    _channel->declareQueue("test-queue").onSuccess([this]() {
-        spdlog::info("{} Queue declared successfully! 队列声明成功!", m_name);
-    });
-    _channel->consume("test-queue").onReceived
-    (
-        [this](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-        {
-            std::string messageBody(message.body(), message.bodySize());
-            spdlog::info("{} Received message 接收到新的队列消息: {}", m_name, messageBody);
-            _channel->ack(deliveryTag);
-        }
-    );
-    _channel->publish("", "test-queue", "Hello, AMQP!");
+    spdlog::info("{} connection is ready 连接已准备就绪", m_name);
 }
 
 void
@@ -158,7 +141,7 @@ TrantorHandler::setConnection(
     {
         spdlog::debug("Initializing {} AMQP connection 初始化 AMQP 连接 ...", m_name);
         // pass `this` to AMQP::Connection, when it's ready, it will call onReady()
-        _amqpConnection = std::make_shared<AMQP::Connection>(
+        _amqpConnection = std::make_unique<AMQP::Connection>(
             this, 
             AMQP::Login( username, password),
             "/"

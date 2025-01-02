@@ -7,6 +7,7 @@
 #include <amqpcpp/include/amqpcpp.h>
 #include <drogon/HttpAppFramework.h>
 #include "amqp/TrantorHandler.h"
+#include "amqpcpp/channel.h"
 
 namespace YLineServer
 {
@@ -30,11 +31,13 @@ public:
     inline const uint16_t
     port() const { return m_port; }
 
+    std::optional<AMQP::Channel>
+    make_channel();
+
 private:
     std::vector<std::shared_ptr<TrantorHandler>> m_AMQPHandler;
     std::string m_host;
     uint16_t m_port;
-
 };
 
 } // namespace YLineServer

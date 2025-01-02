@@ -62,10 +62,15 @@ public:
     void 
     onReady(AMQP::Connection *connection) override;
 
+    inline AMQP::Connection * const
+    getAMQPConnection() const
+    {
+        return _amqpConnection.get();
+    }
+
 private:
     std::shared_ptr<trantor::TcpClient> m_tcpClient;
-    std::shared_ptr<AMQP::Connection> _amqpConnection;
-    std::shared_ptr<AMQP::Channel> _channel;
+    std::unique_ptr<AMQP::Connection> _amqpConnection;
     std::string m_name;
     trantor::EventLoop * m_loop;
 
