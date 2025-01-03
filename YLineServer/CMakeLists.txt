@@ -40,8 +40,8 @@ set(YLineServer_SOURCES
     src/utils/passwd.cpp
     src/utils/jwt.cpp
     # AMQP
-    src/amqp/TrantorHandler.cpp
-    src/amqp/AMQPconnectionPool.cpp
+    src/AMQP/TrantorHandler.cpp
+    src/AMQP/AMQPconnectionPool.cpp
 )
 
 # 创建 YLineServer 可执行文件
@@ -60,10 +60,6 @@ set_target_properties(YLineServer PROPERTIES
 target_include_directories(
     # add include directory for YLineServer
     YLineServer PRIVATE ${YLineServer_SOURCE_DIR}/inc
-    # add include directory for vendor lib
-    YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/vendor
-    # add YSolowork include directory
-    YLineServer PRIVATE ${YSolowork_SOURCE_DIR}/src
 )
 
 # 添加 YSolowork 库
@@ -73,9 +69,6 @@ target_link_libraries(YLineServer PRIVATE YSolowork)
 find_package(spdlog REQUIRED)
 # need to use header only version for building on Windows
 target_link_libraries(YLineServer PRIVATE spdlog::spdlog_header_only)
-
-# 添加 Drogon 库
-target_link_libraries(YLineServer PRIVATE drogon) # 注意大小写!!! 作为 git 子模块的 drogon 项目名为小写
 
 # 添加 jwt++ 库
 add_subdirectory(
@@ -122,9 +115,6 @@ add_subdirectory(
 )
 target_link_libraries(YLineServer PRIVATE tl::expected)
 
-# 添加 magic_enum 库
-target_link_libraries(YLineServer PRIVATE magic_enum::magic_enum)
-
 # 添加 AMQP-CPP 库
 add_subdirectory(
     ${YSolowork_SOURCE_DIR}/vendor/amqpcpp
@@ -147,22 +137,7 @@ add_custom_command(
     COMMENT "Copying config files to build directory"
 )
 
-# 自定义命令：复制数据库迁移文件
-# file(GLOB DB_MIGRATIONS_FILES "${YLineServer_SOURCE_DIR}/db/migrations/*.sql")
-# foreach(DB_MIGRATIONS_FILE ${DB_MIGRATIONS_FILES})
-#     # 获取文件名
-#     get_filename_component(DB_MIGRATIONS_FILE_NAME ${DB_MIGRATIONS_FILE} NAME)
-#     add_custom_command(
-#         TARGET YLineServer POST_BUILD  # 在 YLineServer 构建完成后执行
-#         # 创建目录, 放在 foreach 里是安全的，只会创建一次，不会覆盖和报错
-#         COMMAND ${CMAKE_COMMAND} -E make_directory ${YLineServer_BUILD_PATH}/db/migrations
-#         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#                 ${DB_MIGRATIONS_FILE}  # 数据库迁移文件源路径
-#                 ${YLineServer_BUILD_PATH}/db/migrations/${DB_MIGRATIONS_FILE_NAME}  # 目标路径
-#         COMMENT "Copying database migration files to build directory"
-#     )
-# endforeach()
-# 用 copy_directory 代替上面的 foreach, 保持迁移文件的一致性
+# 用 copy_directory 复制数据库迁移脚本, 保持迁移文件的一致性
 add_custom_command(
     TARGET YLineServer POST_BUILD  # 在 YLineServer 构建完成后执行
     COMMAND ${CMAKE_COMMAND} -E copy_directory

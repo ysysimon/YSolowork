@@ -27,10 +27,28 @@ if (MSVC)
     # set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
 endif()
 
-# 使用 GLOB 来找到所有的 .cpp 文件
-file(GLOB YSolowork_SOURCES "${YSolowork_SOURCE_DIR}/src/*.cpp")
-# 添加 YSolowork 库
-add_library(YSolowork STATIC ${YSolowork_SOURCES})
+# 添加 YSolowork 库 源文件
+add_library(
+    YSolowork STATIC 
+    # UT
+    src/UTappdata.cpp
+    src/UTconsoleUTF8.cpp
+    src/UTdbmate.cpp
+    src/UTdynlib.cpp
+    src/UTfile.cpp
+    src/UTmachineInfo.cpp
+    src/UTnvml.cpp
+    src/UTtime.cpp
+    src/UTusage.cpp
+)
+# 添加头文件路径
+target_include_directories(
+    YSolowork PUBLIC 
+    # 添加 YSolowork 的 include 目录
+    ${YSolowork_SOURCE_DIR}/inc
+    # 添加 vendor
+    ${YSolowork_SOURCE_DIR}/vendor
+)
 
 # 引入 Boost::process, Boost::system, Boost::interprocess 
 find_package(Boost REQUIRED COMPONENTS process system)
@@ -70,6 +88,7 @@ add_subdirectory(
     ${YSolowork_SOURCE_DIR}/vendor/drogon
     ${YSolowork_BINARY_DIR}/vendor/drogon
 )
+target_link_libraries(YSolowork PUBLIC drogon)
 
 # 添加 magic_enum 库
 # find_package(magic_enum CONFIG REQUIRED)
@@ -77,6 +96,7 @@ add_subdirectory(
     ${YSolowork_SOURCE_DIR}/vendor/magic_enum
     ${YSolowork_BINARY_DIR}/vendor/magic_enum
 )
+target_link_libraries(YSolowork PUBLIC magic_enum::magic_enum)
 
 # 添加选项来控制是否构建 YLineServer 和 YLineWorker
 option(BUILD_YLINESERVER "Build YLineServer" ON)
