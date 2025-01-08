@@ -15,6 +15,8 @@
 #include "drogon/WebSocketConnection.h"
 #include "models/Users.h"
 
+#include "amqp/AMQPconnectionPool.h"
+
 using EnTTidType = entt::registry::entity_type;
 using namespace drogon;
 using namespace drogon_model::yline;
@@ -81,6 +83,8 @@ public:
     std::shared_mutex workerUUIDMapMutex;
     std::shared_mutex wsConnMapMutex;
 
+    // AMQP 连接池
+    std::shared_ptr<AMQPConnectionPool> amqpConnectionPool;
 private:
     inline ServerSingleton()  // 私有构造函数，防止外部实例化
         : server_instance_uuid(boost::uuids::random_generator()())

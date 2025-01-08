@@ -90,7 +90,7 @@ JobCtrl::queueJob(const HttpRequestPtr req, std::function<void(const HttpRespons
     }
     int64_t jobId = (*json)["job_id"].asInt64();
 
-    // 验证身份
+    // 验证身份, 获取提交此操作的用户
     const auto &payload = req->attributes()->get<Json::Value>("JWTpayload");
     if (!payload.isMember("username") && !payload["username"].isString()) 
     {

@@ -16,7 +16,7 @@
 #include <trantor/utils/Logger.h>
 #include <vector>
 
-#include "amqp/AMQPconnectionPool.h"
+#include "utils/server.h"
 
 namespace YLineServer {
 
@@ -112,7 +112,7 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
     std::vector<std::optional<AMQP::Channel>> test_channels;
 
     // AMQP 连接池
-    std::shared_ptr<AMQPConnectionPool> amqpConnectionPool;
+    auto & amqpConnectionPool = YLineServer::ServerSingleton::getInstance().amqpConnectionPool;
     app().getLoop()->queueInLoop
     (
         // 注意需要按引用捕获 amqpConnectionPool，因为上面的 shared_ptr 还未初始化，引用计数并未生效
@@ -128,38 +128,39 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
         }
     );
 
-    app().getLoop()->runAfter
-    (
-        3.0, 
-        [ &amqpConnectionPool, &test_channels]() mutable
-        {
-            auto threadNum = drogon::app().getThreadNum();
-            for (size_t i = 0; i < threadNum; ++i)
-            {
-                auto channel = amqpConnectionPool->make_channel();
-                if (!channel)
-                {
-                    spdlog::error("AMQP Channel create failed 通道创建失败");
-                    continue;
-                }
-                channel->declareQueue("test-queue").onSuccess([i]() {
-                    spdlog::info("AMQP Channel {} Queue declared successfully! 队列声明成功!", i);
-                });
+    // a test for AMQP make channel
+    // app().getLoop()->runAfter
+    // (
+    //     3.0, 
+    //     [ &amqpConnectionPool, &test_channels]() mutable
+    //     {
+    //         auto threadNum = drogon::app().getThreadNum();
+    //         for (size_t i = 0; i < threadNum; ++i)
+    //         {
+    //             auto channel = amqpConnectionPool->make_channel();
+    //             if (!channel)
+    //             {
+    //                 spdlog::error("AMQP Channel create failed 通道创建失败");
+    //                 continue;
+    //             }
+    //             channel->declareQueue("test-queue").onSuccess([i]() {
+    //                 spdlog::info("AMQP Channel {} Queue declared successfully! 队列声明成功!", i);
+    //             });
 
-                channel->consume("test-queue", AMQP::noack).onReceived
-                (
-                    [i](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-                    {
-                        std::string msg(message.body(), message.bodySize());
-                        spdlog::info("AMQP Channel {} Received message: {}", i, msg);
-                    }
-                );
+    //             channel->consume("test-queue", AMQP::noack).onReceived
+    //             (
+    //                 [i](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
+    //                 {
+    //                     std::string msg(message.body(), message.bodySize());
+    //                     spdlog::info("AMQP Channel {} Received message: {}", i, msg);
+    //                 }
+    //             );
 
-                channel->publish("", "test-queue", "Hello, AMQP!");
-                test_channels.push_back(std::move(channel));
-            }
-        }
-    );
+    //             channel->publish("", "test-queue", "Hello, AMQP!");
+    //             test_channels.push_back(std::move(channel));
+    //         }
+    //     }
+    // );
 
     // 启动事件循环
     spdlog::info("Start Listening 开始监听");
