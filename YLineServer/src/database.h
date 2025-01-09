@@ -5,6 +5,7 @@
 
 #include "utils/config.h"
 #include <drogon/orm/DbConfig.h>
+#include <drogon/orm/DbClient.h>
 
 namespace YLineServer::DB {
 
@@ -22,6 +23,27 @@ void initDataBasePostgres(const Config& config);
 
 // 函数: 迁移数据库
 void migrateDatabase(const Config& config);
+
+// 函数: 获取一个 PgClient 以供临时使用
+inline std::shared_ptr<drogon::orm::DbClient> getTempPgClient
+(
+    const std::string & db_host,
+    const int db_port,
+    const std::string & db_name,
+    const std::string & db_user,
+    const std::string & db_password
+)
+{
+    return drogon::orm::DbClient::newPgClient
+    (
+        std::format
+        (
+            "host={} port={} dbname={} user={} password={}",
+            db_host, db_port, db_name, db_user, db_password
+        ), // connInfo
+        1 // connection number
+    );
+}
 
 }
 

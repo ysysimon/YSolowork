@@ -107,17 +107,15 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
 
         spdlog::info("CORS middleware enabled 跨域请求中间件已启用");
     }
-    
-    // test amqp channels
-    std::vector<std::optional<AMQP::Channel>> test_channels;
 
     // AMQP 连接池
     auto & amqpConnectionPool = YLineServer::ServerSingleton::getInstance().amqpConnectionPool;
     app().getLoop()->queueInLoop
     (
         // 注意需要按引用捕获 amqpConnectionPool，因为上面的 shared_ptr 还未初始化，引用计数并未生效
-        [ =, &amqpConnectionPool]() mutable
+        [ &config, &amqpConnectionPool]() mutable
         {
+            // 创建 AMQP 连接池
             amqpConnectionPool = std::make_shared<YLineServer::AMQPConnectionPool>
             (
                 config.amqp_host,
@@ -125,42 +123,53 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
                 config.amqp_user,
                 config.amqp_password
             );
+
+            if (!amqpConnectionPool)
+            {
+                throw std::runtime_error("AMQP Connection Pool creation failed AMQP 连接池创建失败");
+            }
+            
+            spdlog::info("AMQP Connection Pool created AMQP 连接池已创建");
+
+            // 声明已经创建的 AMQP 通道
+            const auto PgClient = YLineServer::DB::getTempPgClient
+            (
+                config.db_host, config.db_port, config.db_name, config.db_user, config.db_password
+            );
+
+            // TODO: 从数据库中读取已经创建的 AMQP 队列
+
+            // 声明默认队列
+            auto channel = amqpConnectionPool->make_channel();
+            while (!channel)
+            {
+                spdlog::warn("Failed to create default Queue, because of AMQP Channel creation failed 无法创建默认队列，因为 AMQP 通道创建失败");
+                spdlog::warn("Retrying in 1 seconds 1 秒后重试");
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+                channel = amqpConnectionPool->make_channel();
+            }
+
+            AMQP::Table arguments;
+            arguments["x-max-priority"] = 100; // 设置最大优先级
+
+            channel->declareQueue("default", AMQP::durable, arguments)
+                .onSuccess
+                (
+                    [](const std::string &name, uint32_t messageCount, uint32_t consumerCount)
+                    {
+                        spdlog::info("Queue `{}` declared Success, 队列声明成功", name);
+                    }
+                )
+                .onError
+                (
+                    [](const char *message)
+                    {
+                        throw std::runtime_error("Queue `default` declare failed, 队列声明失败: " + std::string(message));
+                    }
+                );
+                
         }
     );
-
-    // a test for AMQP make channel
-    // app().getLoop()->runAfter
-    // (
-    //     3.0, 
-    //     [ &amqpConnectionPool, &test_channels]() mutable
-    //     {
-    //         auto threadNum = drogon::app().getThreadNum();
-    //         for (size_t i = 0; i < threadNum; ++i)
-    //         {
-    //             auto channel = amqpConnectionPool->make_channel();
-    //             if (!channel)
-    //             {
-    //                 spdlog::error("AMQP Channel create failed 通道创建失败");
-    //                 continue;
-    //             }
-    //             channel->declareQueue("test-queue").onSuccess([i]() {
-    //                 spdlog::info("AMQP Channel {} Queue declared successfully! 队列声明成功!", i);
-    //             });
-
-    //             channel->consume("test-queue", AMQP::noack).onReceived
-    //             (
-    //                 [i](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered)
-    //                 {
-    //                     std::string msg(message.body(), message.bodySize());
-    //                     spdlog::info("AMQP Channel {} Received message: {}", i, msg);
-    //                 }
-    //             );
-
-    //             channel->publish("", "test-queue", "Hello, AMQP!");
-    //             test_channels.push_back(std::move(channel));
-    //         }
-    //     }
-    // );
 
     // 启动事件循环
     spdlog::info("Start Listening 开始监听");

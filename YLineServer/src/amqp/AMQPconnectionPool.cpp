@@ -1,5 +1,7 @@
 #include "AMQP/AMQPconnectionPool.h"
 #include "spdlog/spdlog.h"
+#include <cstddef>
+#include <memory>
 
 namespace YLineServer
 {
@@ -34,7 +36,7 @@ AMQPConnectionPool::AMQPConnectionPool(
     }
 }
 
-std::optional<AMQP::Channel>
+std::unique_ptr<AMQP::Channel>
 AMQPConnectionPool::make_channel()
 {
     static std::atomic<size_t> index = 0; // 使用原子变量保证线程安全
@@ -49,14 +51,14 @@ AMQPConnectionPool::make_channel()
         (
             "AMQP Channel create failed Connection is not available 通道创建失败, AMQP 连接不可用"
         );
-        return std::nullopt; // 返回空值
+        return nullptr; // 返回空指针
     }
 
     // 创建 AMQP 通道
-    auto new_channel = AMQP::Channel(connection);
+    auto new_channel = std::make_unique<AMQP::Channel>(connection);
 
     // 设置错误回调
-    new_channel.onError
+    new_channel->onError
     (
         [this, handlerIndex](const char *message)
         {

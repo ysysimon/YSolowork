@@ -31,7 +31,8 @@ public:
     inline const uint16_t
     port() const { return m_port; }
 
-    std::optional<AMQP::Channel>
+    // rember to check if the return value is nullptr
+    std::unique_ptr<AMQP::Channel>
     make_channel();
 
 private:

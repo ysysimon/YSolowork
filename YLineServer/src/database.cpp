@@ -6,8 +6,6 @@
 #include "UTdbmate.h"
 #include "spdlog/spdlog.h"
 
-#include <drogon/orm/DbClient.h>
-
 namespace YLineServer::DB {
 
 
@@ -27,12 +25,8 @@ void initDataBasePostgres(const Config& config) {
         // 注意这不是真正用于数据库的连接池，只是在 Windows 上无法在安装 PgSQL 时指定数据库名称
         // 所以我们需要进行一次连接以创建数据库，完成后这个 dbclient 就会被销毁
         spdlog::info("Initializing database 初始化数据库...");
-        const auto& PgClient = drogon::orm::DbClient::newPgClient(
-            std::format(
-                "host={} port={} dbname={} user={} password={}",
-                config.db_host, config.db_port, "postgres", config.db_user, config.db_password
-            ), // connInfo
-            1 // connection number
+        const auto PgClient = getTempPgClient(
+            config.db_host, config.db_port, "postgres", config.db_user, config.db_password
         );
 
         // 查询是否存在目标数据库
