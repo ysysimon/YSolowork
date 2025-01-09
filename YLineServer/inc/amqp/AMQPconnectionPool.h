@@ -12,6 +12,11 @@
 namespace YLineServer
 {
 
+namespace Queue
+{
+    const std::string default_queue = "default";
+}
+
 class AMQPConnectionPool
 {
 public:

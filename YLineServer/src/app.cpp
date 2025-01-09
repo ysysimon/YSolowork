@@ -1,5 +1,6 @@
 #include "app.h"
 
+#include "AMQP/AMQPconnectionPool.h"
 #include "drogon/HttpAppFramework.h"
 #include "drogon/IntranetIpFilter.h"
 #include "drogon/LocalHostFilter.h"
@@ -14,7 +15,6 @@
 #include <drogon/drogon.h>
 #include <string>
 #include <trantor/utils/Logger.h>
-#include <vector>
 
 #include "utils/server.h"
 
@@ -128,7 +128,7 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
             {
                 throw std::runtime_error("AMQP Connection Pool creation failed AMQP 连接池创建失败");
             }
-            
+
             spdlog::info("AMQP Connection Pool created AMQP 连接池已创建");
 
             // 声明已经创建的 AMQP 通道
@@ -152,19 +152,19 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
             AMQP::Table arguments;
             arguments["x-max-priority"] = 100; // 设置最大优先级
 
-            channel->declareQueue("default", AMQP::durable, arguments)
+            channel->declareQueue(Queue::default_queue, AMQP::durable, arguments)
                 .onSuccess
                 (
                     [](const std::string &name, uint32_t messageCount, uint32_t consumerCount)
                     {
-                        spdlog::info("Queue `{}` declared Success, 队列声明成功", name);
+                        spdlog::info("Queue `{}` declared Success, 默认队列声明成功", name);
                     }
                 )
                 .onError
                 (
                     [](const char *message)
                     {
-                        throw std::runtime_error("Queue `default` declare failed, 队列声明失败: " + std::string(message));
+                        throw std::runtime_error("Queue `default` declare failed, 默认队列声明失败: " + std::string(message));
                     }
                 );
                 
