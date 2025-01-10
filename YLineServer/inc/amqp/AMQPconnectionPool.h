@@ -8,6 +8,7 @@
 #include <drogon/HttpAppFramework.h>
 #include "amqp/TrantorHandler.h"
 #include "amqpcpp/channel.h"
+#include "trantor/net/EventLoop.h"
 
 namespace YLineServer
 {
@@ -20,12 +21,26 @@ namespace Queue
 class AMQPConnectionPool
 {
 public:
+    // 默认在 drogon 的所有 I/O 线程上创建 AMQP 连接
     explicit
     AMQPConnectionPool(
-        const std::string &host,
+        const std::string & host,
         const uint16_t port,
-        const std::string &username,
-        const std::string &password
+        const std::string & username,
+        const std::string & password,
+        const std::string & pool_name
+    );
+
+    // 在指定的 EventLoop 上创建 AMQP 连接池
+    explicit
+    AMQPConnectionPool(
+        const std::string & host,
+        const uint16_t port,
+        const std::string & username,
+        const std::string & password,
+        trantor::EventLoop * loop,
+        const std::uint32_t connectionNum,
+         const std::string & pool_name
     );
 
     ~AMQPConnectionPool() = default;
@@ -44,6 +59,7 @@ private:
     std::vector<std::shared_ptr<TrantorHandler>> m_AMQPHandler;
     std::string m_host;
     uint16_t m_port;
+    std::string m_pool_name;
 };
 
 } // namespace YLineServer

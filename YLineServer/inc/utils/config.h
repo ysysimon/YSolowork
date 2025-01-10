@@ -18,6 +18,7 @@ struct Config {
 
     // worker
     std::string register_secret;
+    std::uint32_t consumer_AMQP_connection;
 
     // middleware
     bool intranet_ip_filter;

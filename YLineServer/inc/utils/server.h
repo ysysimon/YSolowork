@@ -1,6 +1,7 @@
 #ifndef YLINESERVER_SERVER_H
 #define YLINESERVER_SERVER_H
 
+#include "trantor/net/EventLoopThread.h"
 #include "utils/config.h"
 
 #include <boost/uuid/uuid.hpp>
@@ -83,8 +84,17 @@ public:
     std::shared_mutex workerUUIDMapMutex;
     std::shared_mutex wsConnMapMutex;
 
-    // AMQP 连接池
+    // AMQP 连接池 for Producer
     std::shared_ptr<AMQPConnectionPool> amqpConnectionPool;
+
+    // 消费者线程
+    std::shared_ptr<trantor::EventLoopThread> consumerLoopThread;
+
+    // 消费者 I/O 线程
+    std::shared_ptr<trantor::EventLoopThread> consumerLoopIOThread;
+
+    // AMQP 连接池 for Consumer
+    std::shared_ptr<AMQPConnectionPool> consumer_amqpConnectionPool;
 private:
     inline ServerSingleton()  // 私有构造函数，防止外部实例化
         : server_instance_uuid(boost::uuids::random_generator()())

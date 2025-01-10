@@ -18,6 +18,8 @@
 
 #include "utils/server.h"
 
+#include "task/consumer.h"
+
 namespace YLineServer {
 
 void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom_logger)
@@ -108,7 +110,7 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
         spdlog::info("CORS middleware enabled 跨域请求中间件已启用");
     }
 
-    // AMQP 连接池
+    // AMQP 连接池 for Producer
     auto & amqpConnectionPool = YLineServer::ServerSingleton::getInstance().amqpConnectionPool;
     app().getLoop()->queueInLoop
     (
@@ -121,15 +123,16 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
                 config.amqp_host,
                 config.amqp_port,
                 config.amqp_user,
-                config.amqp_password
+                config.amqp_password,
+                "Producer"
             );
 
             if (!amqpConnectionPool)
             {
-                throw std::runtime_error("AMQP Connection Pool creation failed AMQP 连接池创建失败");
+                throw std::runtime_error("AMQP Connection Pool creation for `Producer` failed AMQP 消费者连接池创建失败");
             }
 
-            spdlog::info("AMQP Connection Pool created AMQP 连接池已创建");
+            spdlog::info("AMQP Connection Pool for `Producer` created AMQP 消费者连接池已创建");
 
             // 声明已经创建的 AMQP 通道
             const auto PgClient = YLineServer::DB::getTempPgClient
@@ -168,6 +171,15 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
                     }
                 );
                 
+        }
+    );
+
+    // 初始化消费者线程
+    app().getLoop()->queueInLoop
+    (
+        [ &config ]()
+        {
+            task::initConsumerLoop(config);
         }
     );
 

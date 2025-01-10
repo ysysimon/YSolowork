@@ -53,6 +53,7 @@ Config parseConfig() {
         spdlog::error("Worker Register secret is empty 工作机注册密钥为空");
         throw std::runtime_error("Register secret is empty");
     }
+    std::uint32_t consumerAMQPConnection = worker["consumer_AMQP_connection"].value_or(1); // 默认 4
 
     // 读取 middleware 部分
     const auto& middleware = getTable("middleware", YLineServerConfig);
@@ -148,6 +149,7 @@ Config parseConfig() {
         serverPort,
         serverThreadNum,
         registerSecret,
+        consumerAMQPConnection,
         intranetIpFilter,
         localHostFilter,
         cors,

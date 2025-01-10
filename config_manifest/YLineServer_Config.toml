@@ -1,11 +1,12 @@
 [server]
 ip = "0.0.0.0"
 port = 33383
-work_thread = 4
+work_thread = 4 # 注意 AMQP 消费者使用的连接池中的连接数，也等于该值，也就是说每个 I/O Loop 一个，这也许会在以后改变
 
 [worker]
 # worker 的注册密钥，目前是对称加密，需要和 YLineWorker 保持一致
 register_secret = "your_register_secret"
+consumer_AMQP_connection = 4 # AMQP 消费者使用的连接池中的连接数，所有连接都注册在同一个独立的 I/O Loop 中
 
 [middleware]
 # 只放行内网ip发来的http请求 only allow intranet ip

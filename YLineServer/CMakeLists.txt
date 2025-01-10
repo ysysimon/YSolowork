@@ -42,6 +42,8 @@ set(YLineServer_SOURCES
     # AMQP
     src/AMQP/TrantorHandler.cpp
     src/AMQP/AMQPconnectionPool.cpp
+    # task
+    src/task/consumer.cpp
 )
 
 # 创建 YLineServer 可执行文件
