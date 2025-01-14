@@ -1,4 +1,5 @@
 #include "components/worker.h"
+#include <memory>
 #include <spdlog/spdlog.h>
 
 #include "trantor/net/EventLoop.h"
@@ -35,29 +36,6 @@ Consumer::createChannel(std::unique_ptr<AMQP::Channel> & channel, const std::str
             );
             // 重建 Channel
             rebuildChannel(channel, queueName);
-        }
-    );
-
-    // 注册一个检测
-    auto weakSelf = weak_from_this();  // 捕获 weak_ptr
-    resume_timerId = YLineServer::ServerSingleton::getInstance().consumerLoopThread->getLoop()->runEvery
-    (
-        1,
-        [weakSelf, queueName]()
-        {
-            if(auto self = weakSelf.lock())
-            {
-                if (self->channel->usable())
-                {
-                    spdlog::warn("Channel for queue `{0}` is not usable, trying to rebuild 通道 `{0}` 不可用，尝试重建", queueName);
-                    // 重建 Channel
-                    self->rebuildChannel(self->channel, queueName);
-                }
-            }
-            else 
-            {
-                spdlog::debug("Resume cancle, Consumer for queue `{0}` is destroyed 恢复取消, 消费者 `{0}` 已销毁", queueName);
-            }
         }
     );
 }

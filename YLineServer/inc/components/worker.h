@@ -5,7 +5,9 @@
 #include "drogon/WebSocketConnection.h"
 
 #include <amqpcpp/include/amqpcpp.h>
+#include <memory>
 #include "AMQP/AMQPconnectionPool.h"// get default_queue name
+#include "trantor/net/EventLoop.h"
 
 
 
@@ -19,7 +21,7 @@ struct Worker {
     drogon::WebSocketConnectionPtr wsConnPtr;
 };
 
-struct Consumer : public std::enable_shared_from_this<Consumer>
+struct Consumer
 {
     explicit inline
     Consumer(const std::string & queueName = Queue::default_queue)
@@ -28,10 +30,10 @@ struct Consumer : public std::enable_shared_from_this<Consumer>
     }
 
     ~Consumer();
-
 private:
     std::unique_ptr<AMQP::Channel> channel;
-    trantor::TimerId resume_timerId;
+    std::shared_ptr<int> lifecycleHelper;
+    trantor::TimerId resume_timerId = trantor::InvalidTimerId;
 
     void // 重建 Channel 的函数
     rebuildChannel(std::unique_ptr<AMQP::Channel> & channel, const std::string & queueName);
