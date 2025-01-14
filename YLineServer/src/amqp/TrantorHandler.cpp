@@ -32,7 +32,7 @@ TrantorHandler::reConnectTcpClient
             }
             else 
             {
-                spdlog::error("Weak pointer `{}` is expired 弱指针已过期", name);
+                spdlog::debug("Weak pointer `{}` is expired 弱指针已过期", name);
             }
         }
     );
@@ -103,7 +103,7 @@ TrantorHandler::setupTcpClient
             }
             else
             {
-                spdlog::error("Weak pointer `{}` is expired 弱指针已过期", name);
+                spdlog::debug("Weak pointer `{}` is expired 弱指针已过期", name);
             }
         }
     );

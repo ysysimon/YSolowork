@@ -111,20 +111,8 @@ private:
 // Since ORM APIs usually update objects as a whole, 
 // we also store the entity components as a whole and do not split them up for now.
 
-struct Worker {
-    boost::uuids::uuid worker_uuid;
-    boost::uuids::uuid server_instance_uuid;
-    Json::Value worker_info;
-    WebSocketConnectionPtr wsConnPtr;
-};
+
 namespace Components {
-
-
-
-// decided to remove this component
-// struct WSConnection {
-//     WebSocketConnectionPtr wsConnPtr;
-// };
 
 struct User {
     Users::PrimaryKeyType userId;

@@ -44,6 +44,8 @@ set(YLineServer_SOURCES
     src/AMQP/AMQPconnectionPool.cpp
     # task
     src/task/consumer.cpp
+    # components
+    src/components/worker.cpp
 )
 
 # 创建 YLineServer 可执行文件

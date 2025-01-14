@@ -11,6 +11,8 @@
 #include <json/value.h>
 #include <mutex>
 
+#include "components/worker.h"
+
 using EnTTidType = entt::registry::entity_type;
 
 using namespace YLineServer;
@@ -59,10 +61,10 @@ void registerNewWorkerDatabase(
 EnTTidType findRegisteredWorkerEnTTbyUUIDSync(const boost::uuids::uuid& worker_uuid) noexcept
 {
     auto &registry = ServerSingleton::getInstance().Registry;
-    auto view = registry.view<Worker>();
+    auto view = registry.view<Components::Worker>();
     for (auto entity : view)
     {
-        auto& workerMeta = view.get<Worker>(entity);
+        auto& workerMeta = view.get<Components::Worker>(entity);
         if (workerMeta.worker_uuid == worker_uuid)
         {
             return entity;
@@ -111,13 +113,16 @@ EnTTidType registerNewWorkerEnTT(
     // 注册 worker 实体
     auto workerEntity = registry.create();
     // 添加 worker 元数据组件
-    registry.emplace<Worker>(
+    registry.emplace<Components::Worker>(
         workerEntity,
         worker_uuid,
         server_instance_uuid,
         workerInfo,
         wsConnPtr
     );
+
+    // 添加 consumer 组件
+    registry.emplace<Components::Consumer>(workerEntity);
 
     return workerEntity;
 }

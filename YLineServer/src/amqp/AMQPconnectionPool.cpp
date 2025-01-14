@@ -1,4 +1,5 @@
 #include "AMQP/AMQPconnectionPool.h"
+#include <drogon/HttpAppFramework.h>
 #include "spdlog/spdlog.h"
 #include <cstddef>
 #include <memory>

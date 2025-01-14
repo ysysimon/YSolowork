@@ -5,9 +5,7 @@
 #include <string>
 #include <vector>
 #include <amqpcpp/include/amqpcpp.h>
-#include <drogon/HttpAppFramework.h>
-#include "amqp/TrantorHandler.h"
-#include "amqpcpp/channel.h"
+#include "AMQP/TrantorHandler.h"
 #include "trantor/net/EventLoop.h"
 
 namespace YLineServer
@@ -40,7 +38,7 @@ public:
         const std::string & password,
         trantor::EventLoop * loop,
         const std::uint32_t connectionNum,
-         const std::string & pool_name
+        const std::string & pool_name
     );
 
     ~AMQPConnectionPool() = default;

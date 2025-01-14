@@ -174,6 +174,24 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
         }
     );
 
+    // 测试发布消息
+    app().getLoop()->runEvery(
+        2,
+        []()
+        {
+            // 发布消息
+            auto channel = YLineServer::ServerSingleton::getInstance().amqpConnectionPool->make_channel();
+
+            if (!channel)
+            {
+                spdlog::error("Failed to create AMQP Channel for Producer, 无法创建 AMQP 通道");
+                return;
+            }
+            
+            channel->publish("", Queue::default_queue, "Hello, World!");
+        }
+    );
+
     // 初始化消费者线程
     app().getLoop()->queueInLoop
     (
