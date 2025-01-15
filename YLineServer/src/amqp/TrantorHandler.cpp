@@ -117,10 +117,10 @@ TrantorHandler::onData(AMQP::Connection *connection, const char *data, size_t si
         spdlog::debug("{} Sending data to TCP connection 发送数据到 TCP 连接", m_name);
         m_tcpClient->connection()->send(data, size); // 发送数据到 TCP 连接
     } 
-    else 
-    {
-        spdlog::error("{} - [onData] TCP connection is not available TCP 连接不可用", m_name);
-    }
+    // else 
+    // {
+    //     spdlog::error("`{}` TCP connection is not available TCP 连接不可用", m_name);
+    // }
 }
 
 void 

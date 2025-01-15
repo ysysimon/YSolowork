@@ -41,13 +41,14 @@ public:
     inline void
     onError(AMQP::Connection *connection, const char *message) override
     {
-        spdlog::error("{} AMQP error 错误: {}", m_name, message);
+        // spdlog::error("{} AMQP error 错误: {}", m_name, message);
+        // spdlog::info("test state: {}",connection->usable());
     }
 
     inline void
     onClosed(AMQP::Connection *connection) override 
     {
-        spdlog::debug("{} connection closed 连接已关闭", m_name);
+        // spdlog::debug("{} connection closed 连接已关闭", m_name);
     }
 
     inline void

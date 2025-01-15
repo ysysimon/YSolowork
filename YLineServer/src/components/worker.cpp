@@ -2,31 +2,30 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 
-#include "trantor/net/EventLoop.h"
 #include "utils/server.h"
 
 namespace YLineServer::Components
 {
 
 void // 重建 Channel 的函数
-Consumer::createChannel(std::unique_ptr<AMQP::Channel> & channel, const std::string & queueName)
+Consumer::createChannel()
 {
     // 创建新的 Channel
     channel = YLineServer::ServerSingleton::getInstance().consumer_amqpConnectionPool->make_channel();
 
     // 设置消费者
-    channel->consume(queueName)
-        .onReceived([queueName](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered) {
+    channel->consume(this->m_queueName)
+        .onReceived([queueName = this->m_queueName](const AMQP::Message &message, uint64_t deliveryTag, bool redelivered) {
             spdlog::info("Received message from queue `{0}`: {1}", queueName, std::string(message.body(), message.bodySize()));
         })
-        .onSuccess([queueName]() {
+        .onSuccess([queueName = this->m_queueName]() {
             spdlog::info("Consumer for queue `{0}` has been started", queueName);
         });
 
     // 设置错误回调
     channel->onError
     (
-        [this, &channel, queueName](const char * message) 
+        [this, queueName = this->m_queueName](const char * message) 
         {
             spdlog::error
             (
@@ -35,25 +34,16 @@ Consumer::createChannel(std::unique_ptr<AMQP::Channel> & channel, const std::str
                 message
             );
             // 重建 Channel
-            rebuildChannel(channel, queueName);
+            rebuildChannel();
         }
     );
 }
 
-Consumer::~Consumer()
-{
-    // 取消定时器
-    if (resume_timerId != trantor::InvalidTimerId)
-    {
-        YLineServer::ServerSingleton::getInstance().consumerLoopThread->getLoop()->invalidateTimer(resume_timerId);
-    }
-}
-
 void
-Consumer::rebuildChannel(std::unique_ptr<AMQP::Channel> & channel, const std::string & queueName)
+Consumer::rebuildChannel()
 {
     
-    createChannel(channel, queueName);  // 重建 Channel
+    createChannel();  // 重建 Channel
 }
 
 } // namespace YLineServer::Components

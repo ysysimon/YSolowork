@@ -1,14 +1,17 @@
 #include "task/consumer.h"
 #include "utils/server.h"
 
+#include "components/worker.h"
+
 namespace YLineServer::task
 {
-void initConsumerLoop(const Config & config)
+void 
+initConsumerLoop(const Config & config)
 {
     // 启动 消费者 线程
-    auto & consumerLoopThread = YLineServer::ServerSingleton::getInstance().consumerLoopThread;
-    consumerLoopThread = std::make_shared<trantor::EventLoopThread>();
-    consumerLoopThread->run(); // this won't block
+    // auto & consumerLoopThread = YLineServer::ServerSingleton::getInstance().consumerLoopThread;
+    // consumerLoopThread = std::make_shared<trantor::EventLoopThread>();
+    // consumerLoopThread->run(); // this won't block
     // 启动 消费者 I/O 线程 并连接属于消费者的连接池
     auto & consumerLoopIOThread = YLineServer::ServerSingleton::getInstance().consumerLoopIOThread;
     consumerLoopIOThread = std::make_shared<trantor::EventLoopThread>();
@@ -38,6 +41,33 @@ void initConsumerLoop(const Config & config)
             }
 
             spdlog::info("AMQP Connection Pool created for `Consumer` AMQP 消费者连接池已创建");
+        }
+    );
+
+    
+}
+
+void
+recoverConsumerChannel()
+{
+    // 获取 register
+    auto &registry = ServerSingleton::getInstance().Registry;
+    // 遍历所有拥有 Consumer 组件的实体
+    registry.view<Components::Consumer>().each
+    (
+        [](Components::Consumer & consumer)
+        {
+            // 检查 Channel 是否可用
+            if (!consumer.usable())
+            {
+                // 重建 Channel
+                spdlog::warn("Rebuilding Channel for Consumer 重建消费者 Channel");
+                consumer.rebuildChannel();
+            }
+            else 
+            {
+                spdlog::info("Consumer Channel is usable 消费者 Channel 可用");
+            }
         }
     );
 }

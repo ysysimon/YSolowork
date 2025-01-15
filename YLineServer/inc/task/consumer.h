@@ -5,8 +5,12 @@
 
 namespace YLineServer::task
 {
-// 初始化消费者线程
-void initConsumerLoop(const Config & config);
+
+void // 初始化消费者线程
+initConsumerLoop(const Config & config);
+
+void // 检测并恢复无效的消费者通道
+recoverConsumerChannel();
 
 }
 

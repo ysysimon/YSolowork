@@ -25,21 +25,31 @@ struct Consumer
 {
     explicit inline
     Consumer(const std::string & queueName = Queue::default_queue)
+        :m_queueName(queueName)
     {
-        createChannel(channel, queueName);
+        createChannel();
     }
 
-    ~Consumer();
+    bool inline
+    usable() const
+    {
+        if (channel && channel->usable())
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    void // 重建 Channel 的函数
+    rebuildChannel();
 private:
     std::unique_ptr<AMQP::Channel> channel;
     std::shared_ptr<int> lifecycleHelper;
-    trantor::TimerId resume_timerId = trantor::InvalidTimerId;
-
-    void // 重建 Channel 的函数
-    rebuildChannel(std::unique_ptr<AMQP::Channel> & channel, const std::string & queueName);
+    std::string m_queueName;
 
     void // 创建 Channel 的函数
-    createChannel(std::unique_ptr<AMQP::Channel> & channel, const std::string & queueName);
+    createChannel();
 
 };
 

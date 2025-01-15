@@ -88,7 +88,7 @@ public:
     std::shared_ptr<AMQPConnectionPool> amqpConnectionPool;
 
     // 消费者线程
-    std::shared_ptr<trantor::EventLoopThread> consumerLoopThread;
+    // std::shared_ptr<trantor::EventLoopThread> consumerLoopThread;
 
     // 消费者 I/O 线程
     std::shared_ptr<trantor::EventLoopThread> consumerLoopIOThread;
