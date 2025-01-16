@@ -10,6 +10,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include <entt/signal/sigh.hpp>
+
 namespace YLineServer{
 
 class TrantorHandler
@@ -69,11 +71,18 @@ public:
         return _amqpConnection.get();
     }
 
+    inline entt::sigh<void()> &
+    getRecoonectSignal()
+    {
+        return m_onReconnect;
+    }
+
 private:
     std::shared_ptr<trantor::TcpClient> m_tcpClient;
     std::unique_ptr<AMQP::Connection> _amqpConnection;
     std::string m_name;
     trantor::EventLoop * m_loop;
+    entt::sigh<void()> m_onReconnect;
 
     explicit inline
     TrantorHandler(

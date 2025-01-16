@@ -7,6 +7,20 @@
 namespace YLineServer
 {
 
+bool
+AMQPConnectionPool::ready() const
+{
+    for (const auto & handler : m_AMQPHandler)
+    {
+        if (!handler->getAMQPConnection())
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 AMQPConnectionPool::AMQPConnectionPool
 (
     const std::string & host,

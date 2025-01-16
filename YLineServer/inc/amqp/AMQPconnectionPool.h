@@ -8,13 +8,29 @@
 #include "AMQP/TrantorHandler.h"
 #include "trantor/net/EventLoop.h"
 
+
+namespace YLineServer::Components
+{
+    // forward declaration
+    struct Consumer;
+}
+
 namespace YLineServer
 {
-
-namespace Queue
-{
-    const std::string default_queue = "default";
+    // forward declaration
+    class AMQPConnectionPool;
 }
+
+namespace YLineServer::task
+{
+
+Components::Consumer // 创建消费者
+make_Consumer(const AMQPConnectionPool& pool, const std::string & queueName);
+
+} // namespace YLineServer::task
+
+namespace YLineServer
+{
 
 class AMQPConnectionPool
 {
@@ -53,6 +69,11 @@ public:
     std::unique_ptr<AMQP::Channel>
     make_channel();
 
+    bool
+    ready() const;
+
+    friend Components::Consumer // 创建消费者
+    task::make_Consumer(const AMQPConnectionPool & pool, const std::string & queueName);
 private:
     std::vector<std::shared_ptr<TrantorHandler>> m_AMQPHandler;
     std::string m_host;

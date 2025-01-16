@@ -18,7 +18,7 @@
 
 #include "utils/server.h"
 
-#include "task/consumer.h"
+#include "components/consumer.h"
 
 namespace YLineServer {
 
@@ -132,25 +132,31 @@ void spawnApp(const Config& config, const std::shared_ptr<spdlog::logger> custom
                 throw std::runtime_error("AMQP Connection Pool creation for `Producer` failed AMQP 消费者连接池创建失败");
             }
 
-            spdlog::info("AMQP Connection Pool for `Producer` created AMQP 消费者连接池已创建");
+            // 等待 AMQP 连接池就绪
+            spdlog::info("Waiting for AMQP Connection Pool for `Producer` to be ready 等待 AMQP 消费者连接池就绪");
+            while(!amqpConnectionPool->ready());
 
-            // 声明已经创建的 AMQP 通道
-            const auto PgClient = YLineServer::DB::getTempPgClient
-            (
-                config.db_host, config.db_port, config.db_name, config.db_user, config.db_password
-            );
+            spdlog::info("AMQP Connection Pool for `Producer` created AMQP 消费者连接池已创建");
+        }
+    );
+
+    // 声明默认队列
+    app().getLoop()->queueInLoop
+    (
+        
+        [ &config, &amqpConnectionPool]()
+        {
 
             // TODO: 从数据库中读取已经创建的 AMQP 队列
+            // 声明已经创建的 AMQP 通道
+            // const auto PgClient = YLineServer::DB::getTempPgClient
+            // (
+            //     config.db_host, config.db_port, config.db_name, config.db_user, config.db_password
+            // );
 
+            
             // 声明默认队列
             auto channel = amqpConnectionPool->make_channel();
-            while (!channel)
-            {
-                spdlog::warn("Failed to create default Queue, because of AMQP Channel creation failed 无法创建默认队列，因为 AMQP 通道创建失败");
-                spdlog::warn("Retrying in 1 seconds 1 秒后重试");
-                std::this_thread::sleep_for(std::chrono::seconds(1));
-                channel = amqpConnectionPool->make_channel();
-            }
 
             AMQP::Table arguments;
             arguments["x-max-priority"] = 100; // 设置最大优先级

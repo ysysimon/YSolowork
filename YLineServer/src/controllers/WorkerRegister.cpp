@@ -12,6 +12,7 @@
 #include <mutex>
 
 #include "components/worker.h"
+#include "components/consumer.h"
 
 using EnTTidType = entt::registry::entity_type;
 

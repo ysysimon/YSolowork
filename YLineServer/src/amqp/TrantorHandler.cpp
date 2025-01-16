@@ -140,8 +140,10 @@ TrantorHandler::setConnection(
     if (conn && conn->connected()) 
     {
         spdlog::debug("Initializing {} AMQP connection 初始化 AMQP 连接 ...", m_name);
+
         // pass `this` to AMQP::Connection, when it's ready, it will call onReady()
-        _amqpConnection = std::make_unique<AMQP::Connection>(
+        _amqpConnection = std::make_unique<AMQP::Connection>
+        (
             this, 
             AMQP::Login( username, password),
             "/"
@@ -152,12 +154,9 @@ TrantorHandler::setConnection(
         (
             [this](const trantor::TcpConnectionPtr& conn, trantor::MsgBuffer* buffer) 
             {
-                if (_amqpConnection) 
-                {
-                    // 将数据传递给 AMQP::Connection 进行解析
-                    _amqpConnection->parse(buffer->peek(), buffer->readableBytes());
-                    buffer->retrieveAll(); // 清空缓冲区
-                }
+                // 将数据传递给 AMQP::Connection 进行解析
+                _amqpConnection->parse(buffer->peek(), buffer->readableBytes());
+                buffer->retrieveAll(); // 清空缓冲区
             }
         );
     }
