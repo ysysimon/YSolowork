@@ -41,30 +41,21 @@ initConsumerLoop(const Config & config)
     
 }
 
-
-Components::Consumer
-make_Consumer(const AMQPConnectionPool& pool, const std::string & queueName)
+std::pair<AMQP::Connection *, entt::sigh<void()> &>
+get_rebuild_Connection_and_signal(const AMQPConnectionPool & pool)
 {
     static std::atomic<size_t> index = 0; // 使用原子变量保证线程安全
     size_t handlerIndex = index.fetch_add(1, std::memory_order_relaxed) % pool.m_AMQPHandler.size();
     spdlog::debug("Pool `{0}` Try to create AMQP Channel comes from Handler {1} 尝试创建 AMQP 通道来自 Handler {1}", pool.m_pool_name, handlerIndex);
 
-    // 获取 AMQP 连接
+    // 获取 AMQP 连接 和 重连信号
     auto connection = pool.m_AMQPHandler[handlerIndex]->getAMQPConnection();
     auto  & signal = pool.m_AMQPHandler[handlerIndex]->getRecoonectSignal();
-    
+
+    return std::make_pair(connection, std::ref(signal));
 }
 
-
-
-
 }; // namespace YLineServer::task
-
-
-
-
-
-
 
 namespace YLineServer::Components
 {
@@ -73,7 +64,11 @@ void // 重建 Channel 的函数
 Consumer::createChannel()
 {
     // 创建新的 Channel
-    m_channel = YLineServer::ServerSingleton::getInstance().consumer_amqpConnectionPool->make_channel();
+    auto [connection, signal] = YLineServer::task::get_rebuild_Connection_and_signal(*YLineServer::ServerSingleton::getInstance().consumer_amqpConnectionPool);
+    m_channel = std::make_unique<AMQP::Channel>(connection);
+    m_onReconnect.disconnect(); // 断开之前的连接
+    m_onReconnect = entt::sink {signal};
+    m_onReconnect.connect<&Consumer::rebuildChannel>(*this); // 连接重建信号
 
     // 设置消费者
     m_channel->consume(this->m_queueName)
@@ -104,7 +99,7 @@ Consumer::createChannel()
 void
 Consumer::rebuildChannel()
 {
-    
+    spdlog::warn("Rebuilding Channel 重建通道");
     createChannel();  // 重建 Channel
 }
 

@@ -128,6 +128,8 @@ TrantorHandler::onReady(AMQP::Connection *connection)
 {
     // the input connection is _amqpConnection
     spdlog::info("{} connection is ready 连接已准备就绪", m_name);
+    // 发布重建通道信号
+    m_onReconnect.publish();
 }
 
 void

@@ -21,11 +21,10 @@ namespace YLineServer
     class AMQPConnectionPool;
 }
 
-namespace YLineServer::task
+namespace YLineServer::task // forward declaration
 {
-
-Components::Consumer // 创建消费者
-make_Consumer(const AMQPConnectionPool& pool, const std::string & queueName);
+std::pair<AMQP::Connection *, entt::sigh<void()> &>
+get_rebuild_Connection_and_signal(const AMQPConnectionPool & pool);
 
 } // namespace YLineServer::task
 
@@ -72,8 +71,9 @@ public:
     bool
     ready() const;
 
-    friend Components::Consumer // 创建消费者
-    task::make_Consumer(const AMQPConnectionPool & pool, const std::string & queueName);
+    // ----------------- friend --------------------
+    friend std::pair<AMQP::Connection *, entt::sigh<void()> &>
+    task::get_rebuild_Connection_and_signal(const AMQPConnectionPool & pool);
 private:
     std::vector<std::shared_ptr<TrantorHandler>> m_AMQPHandler;
     std::string m_host;
