@@ -1,4 +1,6 @@
 # YSolowork
+注意，本项目仍属半成品。
+
 YSolowork 我对一系列用着不舒服的 CG 生产工具重新造的轮子，包含
 1. **YLineServer**: 分布式任务执行系统的服务端
 2. **YLineWorker**: 分布式任务执行系统的执行端 
